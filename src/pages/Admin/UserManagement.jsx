@@ -1,0 +1,507 @@
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  TextField,
+  Tab,
+  Tabs,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  IconButton,
+  Chip,
+  Avatar,
+  Menu,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  Stack,
+  alpha,
+  Tooltip,
+} from '@mui/material';
+import Grid from '@mui/material/Grid';
+import {
+  Search,
+  Add,
+  MoreVert,
+  Edit,
+  Delete,
+  Block,
+  CheckCircle,
+  FilterList,
+  Download,
+  Upload,
+  PersonAdd,
+  Email,
+  Phone,
+  LocationOn,
+} from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
+import PageHeader from '../../components/Common/PageHeader';
+import StatusBadge from '../../components/Common/StatusBadge';
+import { pageTransition } from '../../utils/animations';
+
+const UserManagement = () => {
+  const theme = useTheme();
+  const [activeTab, setActiveTab] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [filterDepartment, setFilterDepartment] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+
+  // Mock data
+  const students = [
+    {
+      id: 1,
+      name: 'Muhammad Asad',
+      rollNo: 'CS-2023-001',
+      email: 'asad@nexus.edu',
+      phone: '+92 300 1234567',
+      department: 'Computer Science',
+      semester: 6,
+      cgpa: 3.85,
+      status: 'active',
+      enrollDate: '2023-09-01',
+      avatar: 'https://i.pravatar.cc/150?img=12',
+    },
+    {
+      id: 2,
+      name: 'Ayesha Khan',
+      rollNo: 'BBA-2022-045',
+      email: 'ayesha@nexus.edu',
+      phone: '+92 301 9876543',
+      department: 'Business Admin',
+      semester: 8,
+      cgpa: 3.92,
+      status: 'active',
+      enrollDate: '2022-09-01',
+      avatar: 'https://i.pravatar.cc/150?img=5',
+    },
+    {
+      id: 3,
+      name: 'Ali Ahmed',
+      rollNo: 'ENG-2023-112',
+      email: 'ali@nexus.edu',
+      phone: '+92 302 5551234',
+      department: 'Engineering',
+      semester: 5,
+      cgpa: 3.45,
+      status: 'probation',
+      enrollDate: '2023-09-01',
+      avatar: 'https://i.pravatar.cc/150?img=8',
+    },
+  ];
+
+  const faculty = [
+    {
+      id: 1,
+      name: 'Dr. Ahmed Hassan',
+      empId: 'FAC-001',
+      email: 'ahmed.hassan@nexus.edu',
+      phone: '+92 300 1111111',
+      department: 'Computer Science',
+      designation: 'Professor',
+      qualification: 'PhD CS',
+      experience: '15 years',
+      status: 'active',
+      joinDate: '2010-08-01',
+      avatar: 'https://i.pravatar.cc/150?img=33',
+    },
+    {
+      id: 2,
+      name: 'Prof. Sarah Khan',
+      empId: 'FAC-002',
+      email: 'sarah.khan@nexus.edu',
+      phone: '+92 301 2222222',
+      department: 'Business Admin',
+      designation: 'Associate Professor',
+      qualification: 'PhD Management',
+      experience: '12 years',
+      status: 'active',
+      joinDate: '2012-09-01',
+      avatar: 'https://i.pravatar.cc/150?img=20',
+    },
+    {
+      id: 3,
+      name: 'Dr. Usman Ali',
+      empId: 'FAC-003',
+      email: 'usman@nexus.edu',
+      phone: '+92 302 3333333',
+      department: 'Engineering',
+      designation: 'Assistant Professor',
+      qualification: 'PhD Engineering',
+      experience: '8 years',
+      status: 'leave',
+      joinDate: '2016-08-15',
+      avatar: 'https://i.pravatar.cc/150?img=15',
+    },
+  ];
+
+  const admins = [
+    {
+      id: 1,
+      name: 'Admin User',
+      empId: 'ADM-001',
+      email: 'admin@nexus.edu',
+      phone: '+92 300 9999999',
+      role: 'Super Admin',
+      department: 'Administration',
+      status: 'active',
+      lastLogin: '2026-01-12 09:30 AM',
+      avatar: 'https://i.pravatar.cc/150?img=25',
+    },
+    {
+      id: 2,
+      name: 'Registrar Office',
+      empId: 'ADM-002',
+      email: 'registrar@nexus.edu',
+      phone: '+92 301 8888888',
+      role: 'Registrar',
+      department: 'Admissions',
+      status: 'active',
+      lastLogin: '2026-01-12 08:15 AM',
+      avatar: 'https://i.pravatar.cc/150?img=30',
+    },
+  ];
+
+  const handleMenuOpen = (event, user) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedUser(user);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedUser(null);
+  };
+
+  const handleAddUser = () => {
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active':
+        return 'success';
+      case 'inactive':
+        return 'default';
+      case 'probation':
+        return 'warning';
+      case 'leave':
+        return 'info';
+      case 'suspended':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
+
+  const renderStudentTable = () => (
+    <TableContainer>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>Student</TableCell>
+            <TableCell>Roll No</TableCell>
+            <TableCell>Department</TableCell>
+            <TableCell>Semester</TableCell>
+            <TableCell>CGPA</TableCell>
+            <TableCell>Status</TableCell>
+            <TableCell>Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {students.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((student) => (
+            <TableRow key={student.id} hover>
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar src={student.avatar} alt={student.name} />
+                  <Box>
+                    <Typography variant="body2" fontWeight="bold">
+                      {student.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {student.email}
+                    </Typography>
+                  </Box>
+                </Box>
+              </TableCell>
+              <TableCell>{student.rollNo}</TableCell>
+              <TableCell>{student.department}</TableCell>
+              <TableCell>{student.semester}</TableCell>
+              <TableCell>
+                <Chip
+                  label={student.cgpa}
+                  size="small"
+                  color={student.cgpa >= 3.5 ? 'success' : student.cgpa >= 3.0 ? 'info' : 'warning'}
+                />
+              </TableCell>
+              <TableCell>
+                <Chip label={student.status} size="small" color={getStatusColor(student.status)} />
+              </TableCell>
+              <TableCell>
+                <IconButton size="small" onClick={(e) => handleMenuOpen(e, student)}>
+                  <MoreVert />
+                </IconButton>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+
+  const renderFacultyTable = () => (
+    <TableContainer>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>Faculty</TableCell>
+            <TableCell>Emp ID</TableCell>
+            <TableCell>Department</TableCell>
+            <TableCell>Designation</TableCell>
+            <TableCell>Experience</TableCell>
+            <TableCell>Status</TableCell>
+            <TableCell>Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {faculty.map((member) => (
+            <TableRow key={member.id} hover>
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar src={member.avatar} alt={member.name} />
+                  <Box>
+                    <Typography variant="body2" fontWeight="bold">
+                      {member.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {member.email}
+                    </Typography>
+                  </Box>
+                </Box>
+              </TableCell>
+              <TableCell>{member.empId}</TableCell>
+              <TableCell>{member.department}</TableCell>
+              <TableCell>{member.designation}</TableCell>
+              <TableCell>{member.experience}</TableCell>
+              <TableCell>
+                <Chip label={member.status} size="small" color={getStatusColor(member.status)} />
+              </TableCell>
+              <TableCell>
+                <IconButton size="small" onClick={(e) => handleMenuOpen(e, member)}>
+                  <MoreVert />
+                </IconButton>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+
+  const renderAdminTable = () => (
+    <TableContainer>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>Admin</TableCell>
+            <TableCell>Emp ID</TableCell>
+            <TableCell>Role</TableCell>
+            <TableCell>Department</TableCell>
+            <TableCell>Last Login</TableCell>
+            <TableCell>Status</TableCell>
+            <TableCell>Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {admins.map((admin) => (
+            <TableRow key={admin.id} hover>
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar src={admin.avatar} alt={admin.name} />
+                  <Box>
+                    <Typography variant="body2" fontWeight="bold">
+                      {admin.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {admin.email}
+                    </Typography>
+                  </Box>
+                </Box>
+              </TableCell>
+              <TableCell>{admin.empId}</TableCell>
+              <TableCell>
+                <Chip label={admin.role} size="small" color="primary" />
+              </TableCell>
+              <TableCell>{admin.department}</TableCell>
+              <TableCell>
+                <Typography variant="caption">{admin.lastLogin}</Typography>
+              </TableCell>
+              <TableCell>
+                <Chip label={admin.status} size="small" color={getStatusColor(admin.status)} />
+              </TableCell>
+              <TableCell>
+                <IconButton size="small" onClick={(e) => handleMenuOpen(e, admin)}>
+                  <MoreVert />
+                </IconButton>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+
+  return (
+    <motion.div {...pageTransition}>
+      <Box className="page-container">
+        <PageHeader
+          title="User Management"
+          subtitle="Manage students, faculty, and administrative users"
+        />
+
+        <Card>
+          <CardContent>
+            {/* Tabs */}
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+              <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
+                <Tab label={`Students (${students.length})`} />
+                <Tab label={`Faculty (${faculty.length})`} />
+                <Tab label={`Admin (${admins.length})`} />
+              </Tabs>
+            </Box>
+
+            {/* Toolbar */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Search users..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 8 }}>
+                <Stack direction="row" spacing={2} justifyContent="flex-end">
+                  <Button
+                    startIcon={<FilterList />}
+                    variant="outlined"
+                    size="small"
+                  >
+                    Filters
+                  </Button>
+                  <Button startIcon={<Download />} variant="outlined" size="small">
+                    Export
+                  </Button>
+                  <Button startIcon={<Upload />} variant="outlined" size="small">
+                    Import
+                  </Button>
+                  <Button startIcon={<Add />} variant="contained" size="small" onClick={handleAddUser}>
+                    Add User
+                  </Button>
+                </Stack>
+              </Grid>
+            </Grid>
+
+            {/* Table */}
+            {activeTab === 0 && renderStudentTable()}
+            {activeTab === 1 && renderFacultyTable()}
+            {activeTab === 2 && renderAdminTable()}
+
+            {/* Pagination */}
+            <TablePagination
+              component="div"
+              count={activeTab === 0 ? students.length : activeTab === 1 ? faculty.length : admins.length}
+              page={page}
+              onPageChange={(e, newPage) => setPage(newPage)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(e) => setRowsPerPage(parseInt(e.target.value, 10))}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Actions Menu */}
+        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+          <MenuItem onClick={handleMenuClose}>
+            <Edit fontSize="small" sx={{ mr: 1 }} /> Edit
+          </MenuItem>
+          <MenuItem onClick={handleMenuClose}>
+            <Email fontSize="small" sx={{ mr: 1 }} /> Send Email
+          </MenuItem>
+          <MenuItem onClick={handleMenuClose}>
+            <Block fontSize="small" sx={{ mr: 1 }} /> Suspend
+          </MenuItem>
+          <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>
+            <Delete fontSize="small" sx={{ mr: 1 }} /> Delete
+          </MenuItem>
+        </Menu>
+
+        {/* Add User Dialog */}
+        <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+          <DialogTitle>Add New User</DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ mt: 2 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>User Type</InputLabel>
+                <Select label="User Type">
+                  <MenuItem value="student">Student</MenuItem>
+                  <MenuItem value="faculty">Faculty</MenuItem>
+                  <MenuItem value="admin">Admin</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField fullWidth size="small" label="Full Name" />
+              <TextField fullWidth size="small" label="Email" type="email" />
+              <TextField fullWidth size="small" label="Phone" />
+              <FormControl fullWidth size="small">
+                <InputLabel>Department</InputLabel>
+                <Select label="Department">
+                  <MenuItem value="cs">Computer Science</MenuItem>
+                  <MenuItem value="bba">Business Admin</MenuItem>
+                  <MenuItem value="eng">Engineering</MenuItem>
+                </Select>
+              </FormControl>
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog}>Cancel</Button>
+            <Button variant="contained" onClick={handleCloseDialog}>
+              Add User
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </motion.div>
+  );
+};
+
+export default UserManagement;
