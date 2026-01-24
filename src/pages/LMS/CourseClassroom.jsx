@@ -883,15 +883,40 @@ const CourseClassroom = () => {
                             Grade Distribution
                           </Typography>
                           <ResponsiveContainer width="100%" height={150}>
-                            <RechartsBarChart data={chartData}>
+                            <RechartsBarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                              <defs>
+                                <linearGradient id="yourGradeGradient" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="#90caf9" stopOpacity={1}/>
+                                  <stop offset="100%" stopColor="#64b5f6" stopOpacity={0.7}/>
+                                </linearGradient>
+                                <linearGradient id="avgGradeGradient" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="#fff" stopOpacity={0.9}/>
+                                  <stop offset="100%" stopColor="#fff" stopOpacity={0.6}/>
+                                </linearGradient>
+                              </defs>
                               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
-                              <XAxis dataKey="name" stroke="white" />
-                              <YAxis stroke="white" />
-                              <RechartsTooltip />
-                              <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                                {chartData.map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={index === 0 ? '#90caf9' : '#fff'} />
-                                ))}
+                              <XAxis 
+                                dataKey="name" 
+                                stroke="white" 
+                                style={{ fontSize: '0.85rem' }}
+                                tickLine={false}
+                              />
+                              <YAxis 
+                                stroke="white" 
+                                style={{ fontSize: '0.85rem' }}
+                                tickLine={false}
+                                axisLine={false}
+                              />
+                              <RechartsTooltip 
+                                contentStyle={{ 
+                                  borderRadius: 8, 
+                                  border: 'none',
+                                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                                }}
+                              />
+                              <Bar dataKey="value" radius={[8, 8, 0, 0]} maxBarSize={60}>
+                                <Cell fill="url(#yourGradeGradient)" />
+                                <Cell fill="url(#avgGradeGradient)" />
                               </Bar>
                             </RechartsBarChart>
                           </ResponsiveContainer>

@@ -132,6 +132,29 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
       chat: 'Nexus Chat',
       library: 'Library',
       grievances: 'Grievances',
+      admin: 'Admin',
+      users: 'User Management',
+      courses: 'Course Management',
+      departments: 'Departments',
+      alumni: 'Alumni Management',
+      reports: 'Reports',
+      settings: 'Settings',
+      teacher: 'Teacher',
+      students: 'Students',
+      quizzes: 'Quizzes',
+      librarian: 'Librarian',
+      books: 'Book Management',
+      issued: 'Issued Books',
+      reservations: 'Reservations',
+      network: 'Alumni Network',
+      events: 'Events',
+      jobs: 'Job Board',
+      mentorship: 'Mentorship Program',
+      stories: 'Success Stories',
+      support: 'My Tickets',
+      notifications: 'Notifications',
+      'alumni-directory': 'Alumni Directory',
+      'smart-attendance': 'Smart Attendance',
     };
 
     pathnames.forEach((value, index) => {
@@ -251,10 +274,12 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
       sx={{
         width: { sm: `calc(100% - ${drawerWidth}px)` },
         ml: { sm: `${drawerWidth}px` },
-        backgroundColor: 'white',
+        backgroundColor: 'background.paper',
         color: 'text.primary',
+        borderBottom: '1px solid',
+        borderColor: 'divider',
       }}
-      elevation={1}
+      elevation={0}
     >
       <Toolbar sx={{ minHeight: 64, px: { xs: 2, sm: 3 } }}>
         {/* Left: Hamburger Menu + Breadcrumbs */}
@@ -566,7 +591,7 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
               variant="body2"
               onClick={() => {
                 handleNotificationsClose();
-                // Navigate to notifications page
+                navigate('/notifications');
               }}
               sx={{
                 fontWeight: 600,

@@ -55,7 +55,7 @@ const AdminDashboard = () => {
       change: '+12.5%',
       trend: 'up',
       icon: People,
-      color: theme.palette.primary.main,
+      color: 'primary',
     },
     {
       title: 'Faculty Members',
@@ -63,7 +63,7 @@ const AdminDashboard = () => {
       change: '+3.2%',
       trend: 'up',
       icon: School,
-      color: theme.palette.success.main,
+      color: 'success',
     },
     {
       title: 'Active Courses',
@@ -71,7 +71,7 @@ const AdminDashboard = () => {
       change: '+8.1%',
       trend: 'up',
       icon: Assignment,
-      color: theme.palette.info.main,
+      color: 'info',
     },
     {
       title: 'Revenue (This Month)',
@@ -79,7 +79,7 @@ const AdminDashboard = () => {
       change: '+15.3%',
       trend: 'up',
       icon: AccountBalance,
-      color: theme.palette.warning.main,
+      color: 'warning',
     },
   ];
 
@@ -157,173 +157,9 @@ const AdminDashboard = () => {
           ))}
         </Grid>
 
-        {/* Enrollment & Attendance Overview */}
+        {/* Pending Approvals - Full Width */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
-          {/* Enrollment Overview */}
-          <Grid size={{ xs: 12, lg: 6 }}>
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                  <Typography variant="h6" fontWeight="bold">
-                    Enrollment Overview
-                  </Typography>
-                  <Button size="small" endIcon={<ArrowForward />}>
-                    View Details
-                  </Button>
-                </Box>
-                <Stack spacing={2}>
-                  {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map((month, idx) => {
-                    const value = [120, 150, 180, 220, 280, 320][idx];
-                    return (
-                      <Box key={month}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                          <Typography variant="body2">{month}</Typography>
-                          <Typography variant="body2" fontWeight="bold">{value} students</Typography>
-                        </Box>
-                        <LinearProgress variant="determinate" value={(value / 320) * 100} sx={{ height: 8, borderRadius: 4 }} />
-                      </Box>
-                    );
-                  })}
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Attendance Overview */}
-          <Grid size={{ xs: 12, lg: 6 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-                  Today's Attendance
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid size={4}>
-                    <Paper elevation={0} sx={{ p: 2, textAlign: 'center', backgroundColor: alpha(theme.palette.success.main, 0.1) }}>
-                      <Typography variant="h4" fontWeight="bold" color="success.main">85%</Typography>
-                      <Typography variant="caption" color="text.secondary">Present</Typography>
-                    </Paper>
-                  </Grid>
-                  <Grid size={4}>
-                    <Paper elevation={0} sx={{ p: 2, textAlign: 'center', backgroundColor: alpha(theme.palette.error.main, 0.1) }}>
-                      <Typography variant="h4" fontWeight="bold" color="error.main">10%</Typography>
-                      <Typography variant="caption" color="text.secondary">Absent</Typography>
-                    </Paper>
-                  </Grid>
-                  <Grid size={4}>
-                    <Paper elevation={0} sx={{ p: 2, textAlign: 'center', backgroundColor: alpha(theme.palette.warning.main, 0.1) }}>
-                      <Typography variant="h4" fontWeight="bold" color="warning.main">5%</Typography>
-                      <Typography variant="caption" color="text.secondary">Leave</Typography>
-                    </Paper>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        {/* Revenue & Department Overview */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          {/* Revenue Overview */}
-          <Grid size={{ xs: 12, lg: 6 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-                  Monthly Revenue
-                </Typography>
-                <Stack spacing={1.5}>
-                  {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map((month, idx) => {
-                    const revenue = [6.5, 7.2, 6.8, 7.5, 8.1, 8.5][idx];
-                    return (
-                      <Box key={month} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="body2">{month}</Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, mx: 2 }}>
-                          <LinearProgress 
-                            variant="determinate" 
-                            value={(revenue / 8.5) * 100} 
-                            sx={{ flex: 1, height: 6, borderRadius: 3 }} 
-                          />
-                        </Box>
-                        <Typography variant="body2" fontWeight="bold">₨{revenue}M</Typography>
-                      </Box>
-                    );
-                  })}
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Departments Overview */}
-          <Grid size={{ xs: 12, lg: 6 }}>
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                  <Typography variant="h6" fontWeight="bold">
-                    Departments Overview
-                  </Typography>
-                  <IconButton size="small">
-                    <MoreVert />
-                  </IconButton>
-                </Box>
-                <Stack spacing={2}>
-                  {departments.map((dept, index) => (
-                    <Paper
-                      key={index}
-                      elevation={0}
-                      sx={{
-                        p: 2,
-                        backgroundColor: alpha(theme.palette.primary.main, 0.05),
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                        <Typography variant="subtitle2" fontWeight="bold">
-                          {dept.name}
-                        </Typography>
-                        <Chip
-                          label={`+${dept.growth}%`}
-                          size="small"
-                          color="success"
-                          sx={{ height: 20, fontSize: '0.7rem' }}
-                        />
-                      </Box>
-                      <Grid container spacing={2}>
-                        <Grid size={4}>
-                          <Typography variant="caption" color="text.secondary">
-                            Students
-                          </Typography>
-                          <Typography variant="body2" fontWeight="bold">
-                            {dept.students}
-                          </Typography>
-                        </Grid>
-                        <Grid size={4}>
-                          <Typography variant="caption" color="text.secondary">
-                            Faculty
-                          </Typography>
-                          <Typography variant="body2" fontWeight="bold">
-                            {dept.faculty}
-                          </Typography>
-                        </Grid>
-                        <Grid size={4}>
-                          <Typography variant="caption" color="text.secondary">
-                            Courses
-                          </Typography>
-                          <Typography variant="body2" fontWeight="bold">
-                            {dept.courses}
-                          </Typography>
-                        </Grid>
-                      </Grid>
-                    </Paper>
-                  ))}
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        {/* Pending Approvals & Recent Activities */}
-        <Grid container spacing={3}>
-          {/* Pending Approvals */}
-          <Grid size={{ xs: 12, lg: 6 }}>
+          <Grid size={12}>
             <Card>
               <CardContent>
                 <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
@@ -333,35 +169,41 @@ const AdminDashboard = () => {
                   {pendingApprovals.map((item, index) => {
                     const Icon = item.icon;
                     return (
-                      <Grid key={index} size={{ xs: 12, sm: 6 }}>
+                      <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
                         <Paper
                           elevation={0}
                           sx={{
-                            p: 2,
+                            p: 3,
                             backgroundColor: alpha(theme.palette.warning.main, 0.08),
+                            borderRadius: 2,
                             borderLeft: 4,
                             borderColor: theme.palette.warning.main,
                             cursor: 'pointer',
                             transition: 'all 0.3s',
                             '&:hover': {
                               backgroundColor: alpha(theme.palette.warning.main, 0.12),
-                              transform: 'translateY(-2px)',
+                              transform: 'translateY(-4px)',
+                              boxShadow: theme.shadows[4],
                             },
                           }}
                         >
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Avatar sx={{ bgcolor: theme.palette.warning.main }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                            <Avatar 
+                              sx={{ 
+                                bgcolor: theme.palette.warning.main,
+                                width: 48,
+                                height: 48,
+                              }}
+                            >
                               <Icon />
                             </Avatar>
-                            <Box>
-                              <Typography variant="h5" fontWeight="bold">
-                                {item.count}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {item.type}
-                              </Typography>
-                            </Box>
+                            <Typography variant="h4" fontWeight="bold" color="warning.main">
+                              {item.count}
+                            </Typography>
                           </Box>
+                          <Typography variant="body2" color="text.secondary" fontWeight={600}>
+                            {item.type}
+                          </Typography>
                         </Paper>
                       </Grid>
                     );
@@ -370,55 +212,406 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
           </Grid>
+        </Grid>
 
-          {/* Recent Activities */}
-          <Grid size={{ xs: 12, lg: 6 }}>
-            <Card>
+        {/* Main Content Grid - Better Layout */}
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          {/* Departments Overview - Takes Priority */}
+          <Grid size={{ xs: 12, lg: 8 }}>
+            <Card sx={{ height: '100%' }}>
               <CardContent>
-                <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-                  Recent Activities
-                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Box>
+                    <Typography variant="h6" fontWeight="bold">
+                      Departments Overview
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Top performing departments
+                    </Typography>
+                  </Box>
+                  <Button 
+                    size="small" 
+                    endIcon={<ArrowForward />}
+                    onClick={() => navigate('/admin/departments')}
+                  >
+                    View All
+                  </Button>
+                </Box>
                 <Stack spacing={2}>
-                  {recentActivities.map((activity) => (
-                    <Box
-                      key={activity.id}
+                  {departments.map((dept, index) => (
+                    <Paper
+                      key={index}
+                      elevation={0}
                       sx={{
-                        p: 2,
+                        p: 2.5,
+                        backgroundColor: alpha(theme.palette.primary.main, 0.04),
                         borderRadius: 2,
-                        border: 1,
+                        border: '1px solid',
                         borderColor: 'divider',
+                        transition: 'all 0.3s',
                         '&:hover': {
                           borderColor: theme.palette.primary.main,
-                          backgroundColor: alpha(theme.palette.primary.main, 0.02),
+                          backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                          transform: 'translateX(4px)',
                         },
                       }}
                     >
-                      <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Box
-                          sx={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: '50%',
-                            backgroundColor: `${activity.status}.main`,
-                            mt: 1,
-                            flexShrink: 0,
-                          }}
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          {dept.name}
+                        </Typography>
+                        <Chip
+                          icon={<TrendingUp />}
+                          label={`+${dept.growth}%`}
+                          size="small"
+                          color="success"
+                          sx={{ fontWeight: 700 }}
                         />
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                            {activity.title}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" gutterBottom>
-                            {activity.description}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {activity.time}
-                          </Typography>
-                        </Box>
                       </Box>
-                    </Box>
+                      <Grid container spacing={3}>
+                        <Grid size={4}>
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="h5" fontWeight="bold" color="primary.main">
+                              {dept.students}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Students
+                            </Typography>
+                          </Box>
+                        </Grid>
+                        <Grid size={4}>
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="h5" fontWeight="bold" color="success.main">
+                              {dept.faculty}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Faculty
+                            </Typography>
+                          </Box>
+                        </Grid>
+                        <Grid size={4}>
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="h5" fontWeight="bold" color="info.main">
+                              {dept.courses}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Courses
+                            </Typography>
+                          </Box>
+                        </Grid>
+                      </Grid>
+                    </Paper>
                   ))}
                 </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Today's Attendance - Sidebar */}
+          <Grid size={{ xs: 12, lg: 4 }}>
+            <Card sx={{ mb: 3, height: 'auto' }}>
+              <CardContent>
+                <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
+                  Today's Attendance
+                </Typography>
+                <Stack spacing={2}>
+                  <Paper 
+                    elevation={0} 
+                    sx={{ 
+                      p: 3, 
+                      textAlign: 'center',
+                      background: `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.main, 0.05)} 100%)`,
+                      border: '2px solid',
+                      borderColor: alpha(theme.palette.success.main, 0.3),
+                      borderRadius: 2,
+                    }}
+                  >
+                    <CheckCircle sx={{ fontSize: 48, color: 'success.main', mb: 1 }} />
+                    <Typography variant="h3" fontWeight="bold" color="success.main">
+                      85%
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" fontWeight={600}>
+                      Present Students
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      2,420 out of 2,847 students
+                    </Typography>
+                  </Paper>
+                  
+                  <Grid container spacing={2}>
+                    <Grid size={6}>
+                      <Paper 
+                        elevation={0} 
+                        sx={{ 
+                          p: 2, 
+                          textAlign: 'center',
+                          backgroundColor: alpha(theme.palette.error.main, 0.08),
+                          borderRadius: 2,
+                        }}
+                      >
+                        <Typography variant="h4" fontWeight="bold" color="error.main">
+                          10%
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Absent (285)
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                    <Grid size={6}>
+                      <Paper 
+                        elevation={0} 
+                        sx={{ 
+                          p: 2, 
+                          textAlign: 'center',
+                          backgroundColor: alpha(theme.palette.warning.main, 0.08),
+                          borderRadius: 2,
+                        }}
+                      >
+                        <Typography variant="h4" fontWeight="bold" color="warning.main">
+                          5%
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          On Leave (142)
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                  </Grid>
+                </Stack>
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            <Card>
+              <CardContent>
+                <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                  Quick Actions
+                </Typography>
+                <Stack spacing={1.5}>
+                  <Button 
+                    variant="outlined" 
+                    fullWidth 
+                    startIcon={<PersonAdd />}
+                    onClick={() => navigate('/admin/users')}
+                    sx={{ justifyContent: 'flex-start', py: 1.5 }}
+                  >
+                    Add New User
+                  </Button>
+                  <Button 
+                    variant="outlined" 
+                    fullWidth 
+                    startIcon={<School />}
+                    onClick={() => navigate('/admin/courses')}
+                    sx={{ justifyContent: 'flex-start', py: 1.5 }}
+                  >
+                    Manage Courses
+                  </Button>
+                  <Button 
+                    variant="outlined" 
+                    fullWidth 
+                    startIcon={<Payment />}
+                    onClick={() => navigate('/admin/finance')}
+                    sx={{ justifyContent: 'flex-start', py: 1.5 }}
+                  >
+                    View Finances
+                  </Button>
+                  <Button 
+                    variant="outlined" 
+                    fullWidth 
+                    startIcon={<Assignment />}
+                    onClick={() => navigate('/admin/reports')}
+                    sx={{ justifyContent: 'flex-start', py: 1.5 }}
+                  >
+                    Generate Report
+                  </Button>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
+        {/* Bottom Section - Enrollment & Revenue */}
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          {/* Monthly Enrollment Trend */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Box>
+                    <Typography variant="h6" fontWeight="bold">
+                      Monthly Enrollment
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      New student registrations per month
+                    </Typography>
+                  </Box>
+                  <Chip label="2026" size="small" color="primary" />
+                </Box>
+                <Stack spacing={2}>
+                  {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map((month, idx) => {
+                    const value = [120, 150, 180, 220, 280, 320][idx];
+                    const percentage = (value / 320) * 100;
+                    return (
+                      <Box key={month}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2" fontWeight={600}>
+                            {month}
+                          </Typography>
+                          <Typography variant="body2" fontWeight="bold" color="primary.main">
+                            {value} students
+                          </Typography>
+                        </Box>
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={percentage} 
+                          sx={{ 
+                            height: 10, 
+                            borderRadius: 5,
+                            backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                            '& .MuiLinearProgress-bar': {
+                              borderRadius: 5,
+                              background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
+                            }
+                          }} 
+                        />
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Monthly Revenue */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Box>
+                    <Typography variant="h6" fontWeight="bold">
+                      Monthly Revenue
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Total revenue collected per month
+                    </Typography>
+                  </Box>
+                  <Chip label="PKR" size="small" color="success" />
+                </Box>
+                <Stack spacing={2}>
+                  {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map((month, idx) => {
+                    const revenue = [6.5, 7.2, 6.8, 7.5, 8.1, 8.5][idx];
+                    const percentage = (revenue / 8.5) * 100;
+                    return (
+                      <Box key={month}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2" fontWeight={600}>
+                            {month}
+                          </Typography>
+                          <Typography variant="body2" fontWeight="bold" color="success.main">
+                            ₨{revenue}M
+                          </Typography>
+                        </Box>
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={percentage} 
+                          color="success"
+                          sx={{ 
+                            height: 10, 
+                            borderRadius: 5,
+                            backgroundColor: alpha(theme.palette.success.main, 0.1),
+                            '& .MuiLinearProgress-bar': {
+                              borderRadius: 5,
+                              background: `linear-gradient(90deg, ${theme.palette.success.main} 0%, ${theme.palette.success.light} 100%)`,
+                            }
+                          }} 
+                        />
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
+        {/* Recent Activities - Full Width */}
+        <Grid container spacing={3}>
+          <Grid size={12}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Typography variant="h6" fontWeight="bold">
+                    Recent Activities
+                  </Typography>
+                  <Button size="small" endIcon={<ArrowForward />}>
+                    View All
+                  </Button>
+                </Box>
+                <Grid container spacing={2}>
+                  {recentActivities.map((activity) => (
+                    <Grid key={activity.id} size={{ xs: 12, sm: 6, md: 3 }}>
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          p: 2.5,
+                          borderRadius: 2,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          height: '100%',
+                          transition: 'all 0.3s',
+                          cursor: 'pointer',
+                          '&:hover': {
+                            borderColor: `${activity.status}.main`,
+                            backgroundColor: alpha(theme.palette[activity.status].main, 0.02),
+                            transform: 'translateY(-4px)',
+                            boxShadow: theme.shadows[4],
+                          },
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 2 }}>
+                          <Box
+                            sx={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: '50%',
+                              backgroundColor: `${activity.status}.main`,
+                              mt: 0.5,
+                              flexShrink: 0,
+                            }}
+                          />
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography variant="subtitle2" fontWeight="bold" gutterBottom noWrap>
+                              {activity.title}
+                            </Typography>
+                            <Typography 
+                              variant="body2" 
+                              color="text.secondary" 
+                              sx={{ 
+                                mb: 1.5,
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                              }}
+                            >
+                              {activity.description}
+                            </Typography>
+                            <Chip 
+                              label={activity.time} 
+                              size="small" 
+                              sx={{ 
+                                height: 20,
+                                fontSize: '0.7rem',
+                                backgroundColor: alpha(theme.palette[activity.status].main, 0.1),
+                                color: `${activity.status}.main`,
+                                fontWeight: 600,
+                              }}
+                            />
+                          </Box>
+                        </Box>
+                      </Paper>
+                    </Grid>
+                  ))}
+                </Grid>
               </CardContent>
             </Card>
           </Grid>

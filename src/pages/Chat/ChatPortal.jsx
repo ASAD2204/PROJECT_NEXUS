@@ -1,16 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+﻿import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
   TextField,
   IconButton,
   Avatar,
-  Chip,
-  Switch,
-  Divider,
+  Badge,
   Paper,
   Button,
   List,
@@ -19,24 +15,16 @@ import {
   ListItemText,
   ListItemAvatar,
   InputAdornment,
-  Badge,
-  Drawer,
-  useMediaQuery,
-  useTheme,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Table,
-  TableBody,
-  TableRow,
-  TableCell,
   Stack,
+  Tabs,
+  Tab,
   Tooltip,
-  Menu,
-  MenuItem,
-  Fade,
-  Collapse,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   Send,
@@ -44,1208 +32,918 @@ import {
   Person,
   Add,
   Search,
-  Settings,
   Mic,
   AttachFile,
   MoreVert,
-  Circle,
-  Delete,
-  ThumbUp,
-  ThumbDown,
-  Download,
-  ContentCopy,
-  HelpOutline,
   EmojiEmotions,
-  Stop,
-  Menu as MenuIcon,
+  ArrowBack,
+  Group as GroupIcon,
   Close,
-  Lightbulb,
-  School,
-  Event,
-  AccountBalance,
-  TrendingUp,
+  Check,
+  VideoCall,
+  Call,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
-import { currentUser } from '../../data/dummyData';
-import { ChatSkeleton } from '../../components/Common/LoadingSkeleton';
-import { pageTransition, staggerContainer, fadeInUp } from '../../utils/animations';
-
+import { useNavigate } from 'react-router-dom';
 
 const ChatPortal = () => {
   const { user } = useAuth();
   const theme = useTheme();
+  const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [loading, setLoading] = useState(true);
-
-  // State management
-  const [conversations, setConversations] = useState([
-    { id: 1, title: 'What is my CGPA?', lastMessage: 'Your current CGPA is 3.85', timestamp: '2 hours ago', active: true },
-    { id: 2, title: 'Show my timetable', lastMessage: 'Here is your class schedule for this week', timestamp: 'Yesterday', active: false },
-    { id: 3, title: 'Check dues', lastMessage: 'You have PKR 15,000 in pending dues', timestamp: '2 days ago', active: false },
-  ]);
-  const [activeConversation, setActiveConversation] = useState(1);
-  const [messages, setMessages] = useState([]);
-  const [inputMessage, setInputMessage] = useState('');
-  const [isAiMode, setIsAiMode] = useState(true);
-  const [isTyping, setIsTyping] = useState(false);
-  const [streamingText, setStreamingText] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [citationModal, setCitationModal] = useState({ open: false, content: '' });
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [charCount, setCharCount] = useState(0);
-  const [hoveredMessage, setHoveredMessage] = useState(null);
-  
   const messagesEndRef = useRef(null);
-  const chatContainerRef = useRef(null);
 
-  // Loading effect
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, []);
+  // WhatsApp Color Scheme
+  const whatsappGreen = '#128C7E';
+  const whatsappDarkGreen = '#075E54';
+  const whatsappLightGreen = '#25D366';
+  const userBubbleColor = '#DCF8C6';
+  const otherBubbleColor = theme.palette.mode === 'dark' ? '#2A2A2A' : '#FFFFFF';
+  const chatBgColor = theme.palette.mode === 'dark' ? '#0D1418' : '#E5DDD5';
 
-  // Quick action queries
-  const quickActions = [
-    { label: 'What is my CGPA?', icon: <TrendingUp /> },
-    { label: 'View Attendance', icon: <Event /> },
-    { label: 'Fee Status', icon: <AccountBalance /> },
-    { label: 'Course Schedule', icon: <School /> },
-  ];
+  // State Management
+  const [mode, setMode] = useState('ai'); // 'ai' or 'human'
+  const [currentTab, setCurrentTab] = useState(0); // 0: contacts, 1: groups
+  const [selectedChat, setSelectedChat] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [inputMessage, setInputMessage] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [isTyping, setIsTyping] = useState(false);
+  const [createGroupOpen, setCreateGroupOpen] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupDescription, setNewGroupDescription] = useState('');
+  const [selectedMembers, setSelectedMembers] = useState([]);
+  const [aiChatHistory, setAiChatHistory] = useState([]);
 
-  // Suggested follow-ups
-  const [suggestedQuestions, setSuggestedQuestions] = useState([
-    "What is my attendance percentage?",
-    "Show my upcoming assignments",
-    "When is the next exam?"
+  // Mock Data
+  const [contacts] = useState([
+    {
+      id: 1,
+      name: 'Dr. Sarah Ahmed',
+      role: 'Database Professor',
+      avatar: '/avatars/sarah.jpg',
+      status: 'online',
+      lastMessage: 'Please review the assignment',
+      lastTime: '10:30 AM',
+    },
+    {
+      id: 2,
+      name: 'Ayesha Khan',
+      role: 'Class Representative',
+      avatar: '/avatars/ayesha.jpg',
+      status: 'online',
+      lastMessage: 'Notes shared in group',
+      lastTime: '9:15 AM',
+    },
+    {
+      id: 3,
+      name: 'Ali Ahmed',
+      role: 'Study Partner',
+      avatar: '/avatars/ali.jpg',
+      status: 'away',
+      lastMessage: 'See you tomorrow',
+      lastTime: 'Yesterday',
+    },
+    {
+      id: 4,
+      name: 'Prof. Hassan Khan',
+      role: 'AI Course Instructor',
+      avatar: '/avatars/hassan.jpg',
+      status: 'offline',
+      lastMessage: 'Lab session at 2 PM',
+      lastTime: 'Yesterday',
+    },
   ]);
 
-  // Common questions
-  const commonQuestions = [
-    "How do I submit an assignment?",
-    "What are my library timings?",
-    "How do I pay my fees?",
-    "How do I mark attendance?",
-    "Where can I see my transcript?"
-  ];
+  const [groups, setGroups] = useState([
+    {
+      id: 'G1',
+      name: 'BSIT Batch 2024',
+      description: 'Official batch group',
+      avatar: '',
+      members: 48,
+      lastMessage: 'Quiz on Friday',
+      lastTime: '11:45 AM',
+    },
+    {
+      id: 'G2',
+      name: 'Database Project Team',
+      description: 'Semester project collaboration',
+      avatar: '',
+      members: 5,
+      lastMessage: 'Schema finalized',
+      lastTime: 'Yesterday',
+    },
+    {
+      id: 'G3',
+      name: 'Study Group - AI',
+      description: 'AI course study materials',
+      avatar: '',
+      members: 12,
+      lastMessage: 'New resource shared',
+      lastTime: '2 days ago',
+    },
+  ]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
+  // Initialize AI chat
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, streamingText]);
-
-  // Initialize with welcome message
-  useEffect(() => {
-    if (messages.length === 0) {
-      setMessages([{
-        id: Date.now(),
-        text: `Hello ${currentUser?.name || 'Student'}! 👋 I'm Nexus AI, your intelligent campus assistant. I'm here to help you with anything related to your academics, fees, attendance, courses, and more. How can I assist you today?`,
-        isAi: true,
-        timestamp: new Date().toLocaleTimeString(),
-        isWelcome: true,
-      }]);
-    }
-  }, []);
-
-  const getAiResponse = (userMessage) => {
-    const lowerMessage = userMessage.toLowerCase();
-    
-    // Context-aware responses with special content
-    if (lowerMessage.includes('cgpa') || lowerMessage.includes('gpa') || lowerMessage.includes('grade')) {
-      return {
-        text: 'Based on your academic record, here are your current grades:',
-        type: 'table',
-        tableData: [
-          { course: 'Data Structures', grade: 'A', gpa: '4.0', credits: '3' },
-          { course: 'Database Systems', grade: 'A-', gpa: '3.7', credits: '3' },
-          { course: 'Web Development', grade: 'B+', gpa: '3.3', credits: '3' },
-          { course: 'Operating Systems', grade: 'A', gpa: '4.0', credits: '4' },
-        ],
-        summary: 'Your current CGPA is **3.85** which is excellent! Keep up the great work.',
-        citations: ['Source: Academic Transcript', 'Updated: Jan 2026'],
-        followUps: ['How can I improve my grades?', 'Show my semester-wise performance', 'What is the highest CGPA in my class?']
-      };
-    } else if (lowerMessage.includes('fee') || lowerMessage.includes('payment') || lowerMessage.includes('dues')) {
-      return {
-        text: 'I found the following information about your fee status:',
-        type: 'action',
-        summary: `• Total Fees: PKR 85,000\n• Paid: PKR 70,000\n• Outstanding: PKR 15,000\n• Due Date: January 15, 2026`,
-        actionButton: { label: 'Pay Now', action: 'navigate-fees' },
-        citations: ['Source: Finance Portal', 'Last Updated: Jan 4, 2026'],
-        followUps: ['What happens if I pay late?', 'Can I get a payment plan?', 'Show payment history']
-      };
-    } else if (lowerMessage.includes('attendance')) {
-      return {
-        text: 'Here is your current attendance summary:',
-        type: 'data',
-        summary: `• Overall Attendance: **87%**\n• Data Structures: 92%\n• Database Systems: 85%\n• Web Development: 88%\n• Operating Systems: 83%\n\n⚠️ Note: Operating Systems attendance is below the required 85% threshold.`,
-        citations: ['Source: Attendance System', 'Real-time Data'],
-        followUps: ['How many more classes can I miss?', 'Mark my attendance now', 'Request attendance condonation']
-      };
-    } else if (lowerMessage.includes('assignment') || lowerMessage.includes('homework')) {
-      return {
-        text: 'You have 3 upcoming assignments:',
-        type: 'list',
-        items: [
-          '📝 **Database Design Project** - Due: Jan 10, 2026 (6 days left)',
-          '💻 **Web Dev Portfolio** - Due: Jan 15, 2026 (11 days left)',
-          '🧮 **Algorithm Analysis** - Due: Jan 20, 2026 (16 days left)'
-        ],
-        summary: 'To submit an assignment, go to LMS > My Courses, select your course, and click on the assignment.',
-        citations: ['Source: LMS Portal'],
-        followUps: ['Show assignment details', 'How do I submit?', 'Can I get an extension?']
-      };
-    } else if (lowerMessage.includes('timetable') || lowerMessage.includes('schedule') || lowerMessage.includes('class')) {
-      return {
-        text: 'Here is your class schedule for today (Monday):',
-        type: 'schedule',
-        summary: `🕐 **09:00 - 10:30** - Data Structures (Room 301)\n🕐 **11:00 - 12:30** - Database Systems (Lab 2)\n🕐 **02:00 - 03:30** - Web Development (Room 205)\n🕐 **04:00 - 05:30** - Operating Systems (Room 401)`,
-        citations: ['Source: Academic Schedule'],
-        followUps: ['Show full week schedule', 'Any class cancellations?', 'Download timetable PDF']
-      };
-    } else if (lowerMessage.includes('library')) {
-      return {
-        text: 'University Library Information:',
-        type: 'info',
-        summary: `📚 **Operating Hours:**\n• Monday - Friday: 8:00 AM - 8:00 PM\n• Saturday: 9:00 AM - 5:00 PM\n• Sunday: Closed\n\n📖 **Services Available:**\n• Book borrowing & returns\n• Study rooms (bookable)\n• Digital resources access\n• Printing & scanning`,
-        citations: ['Source: Library Portal', 'Student Handbook 2026'],
-        followUps: ['Search for a book', 'Book a study room', 'Check my borrowed books']
-      };
-    } else if (lowerMessage.includes('help') || lowerMessage.includes('how') || lowerMessage.includes('?')) {
-      return {
-        text: 'I can help you with various queries related to:',
-        type: 'list',
-        items: [
-          '🎓 Academics (grades, CGPA, transcripts)',
-          '📚 Courses (schedule, assignments, exams)',
-          '💰 Finance (fees, payments, vouchers)',
-          '✅ Attendance (status, marking, history)',
-          '📖 Library (timings, book search, reservations)',
-          '🎯 And much more!'
-        ],
-        summary: 'Just ask me anything in natural language, and I\'ll do my best to help!',
-        citations: ['Source: Nexus AI Knowledge Base'],
-        followUps: ['Show common questions', 'Connect with human support', 'Take a tour']
-      };
-    } else {
-      return {
-        text: 'I\'m not quite sure I understood that correctly. Could you please rephrase your question or try one of these common queries?',
-        type: 'error',
-        items: commonQuestions.slice(0, 3),
-        actionButton: { label: 'Connect with Human Support', action: 'switch-human' },
-        citations: ['Source: Nexus AI'],
-        followUps: ['View all common questions', 'Start a new chat', 'Report an issue']
-      };
-    }
-  };
-
-  const streamResponse = (responseText, callback) => {
-    setIsTyping(false);
-    setStreamingText('');
-    const words = responseText.split(' ');
-    let currentIndex = 0;
-
-    const interval = setInterval(() => {
-      if (currentIndex < words.length) {
-        setStreamingText(prev => prev + (currentIndex > 0 ? ' ' : '') + words[currentIndex]);
-        currentIndex++;
-      } else {
-        clearInterval(interval);
-        callback();
+    if (mode === 'ai') {
+      // Restore history if available, otherwise show welcome message
+      if (aiChatHistory.length > 0) {
+        setMessages(aiChatHistory);
+      } else if (messages.length === 0) {
+        setMessages([
+          {
+            id: Date.now(),
+            text: `Hello ${user?.name || 'Student'}!  I'm Nexus AI, your intelligent campus assistant. How can I help you today?`,
+            sender: 'ai',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
       }
-    }, 50);
-  };
+      setSelectedChat({ name: 'Nexus AI Assistant', avatar: '🤖', status: 'online' });
+    }
+  }, [mode]);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Handlers
   const handleSendMessage = () => {
     if (!inputMessage.trim()) return;
 
-    // Add user message with slide-up animation
-    const userMsg = {
+    const newMessage = {
       id: Date.now(),
       text: inputMessage,
-      isAi: false,
-      timestamp: new Date().toLocaleTimeString(),
+      sender: 'user',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
-    setMessages(prev => [...prev, userMsg]);
+
+    setMessages((prev) => [...prev, newMessage]);
     setInputMessage('');
-    setCharCount(0);
-    setSuggestedQuestions([]);
 
-    // Show typing indicator
-    if (isAiMode) {
+    // Simulate AI response
+    if (mode === 'ai') {
+      setIsTyping(true);
       setTimeout(() => {
-        setIsTyping(true);
-
-        // Simulate API delay
-        setTimeout(() => {
-          const response = getAiResponse(inputMessage);
-          
-          // Stream the response
-          streamResponse(response.text, () => {
-            const aiMsg = {
-              id: Date.now() + 1,
-              text: response.text,
-              isAi: true,
-              timestamp: new Date().toLocaleTimeString(),
-              type: response.type,
-              tableData: response.tableData,
-              items: response.items,
-              summary: response.summary,
-              actionButton: response.actionButton,
-              citations: response.citations,
-              feedbacks: { thumbsUp: 0, thumbsDown: 0 },
-            };
-            setMessages(prev => [...prev, aiMsg]);
-            setStreamingText('');
-            
-            // Set follow-up suggestions
-            if (response.followUps) {
-              setSuggestedQuestions(response.followUps);
-            }
-          });
-        }, 1500);
-      }, 100);
-    }
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const handleVoiceInput = () => {
-    setIsRecording(!isRecording);
-    if (!isRecording) {
-      // Simulate voice recording
-      setTimeout(() => {
-        setInputMessage('What is my current CGPA?');
-        setIsRecording(false);
-      }, 3000);
-    }
-  };
-
-  const handleNewChat = () => {
-    const newConvId = Date.now();
-    setConversations(prev => [
-      { id: newConvId, title: 'New Conversation', lastMessage: '', timestamp: 'Just now', active: true },
-      ...prev.map(c => ({ ...c, active: false }))
-    ]);
-    setActiveConversation(newConvId);
-    setMessages([{
-      id: Date.now(),
-      text: `Hello ${currentUser?.name || 'Student'}! 👋 I'm Nexus AI, your intelligent campus assistant. I'm here to help you with anything related to your academics, fees, attendance, courses, and more. How can I assist you today?`,
-      isAi: true,
-      timestamp: new Date().toLocaleTimeString(),
-      isWelcome: true,
-    }]);
-    setSuggestedQuestions([]);
-    if (isMobile) setDrawerOpen(false);
-  };
-
-  const handleDeleteConversation = (convId) => {
-    setConversations(prev => prev.filter(c => c.id !== convId));
-    if (activeConversation === convId && conversations.length > 1) {
-      const nextConv = conversations.find(c => c.id !== convId);
-      setActiveConversation(nextConv.id);
-    }
-  };
-
-  const handleQuickAction = (query) => {
-    setInputMessage(query);
-    setTimeout(() => handleSendMessage(), 100);
-  };
-
-  const handleFeedback = (messageId, type) => {
-    setMessages(prev => prev.map(msg => {
-      if (msg.id === messageId) {
-        return {
-          ...msg,
-          feedbacks: {
-            thumbsUp: type === 'up' ? 1 : 0,
-            thumbsDown: type === 'down' ? 1 : 0,
-          }
+        const aiResponse = {
+          id: Date.now() + 1,
+          text: generateAIResponse(inputMessage),
+          sender: 'ai',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
-      }
-      return msg;
-    }));
+        setMessages((prev) => [...prev, aiResponse]);
+        setIsTyping(false);
+      }, 1500);
+    }
   };
 
-  const handleCitationClick = (citation) => {
-    setCitationModal({
-      open: true,
-      content: citation,
-      details: `This information was retrieved from: ${citation}\n\nRelevant excerpt:\n"The student's current CGPA is calculated based on all completed courses with their respective credit hours and grade points. The calculation follows the standard formula: Sum(Grade Points × Credit Hours) / Total Credit Hours."`
-    });
+  const generateAIResponse = (userMessage) => {
+    const lowerMessage = userMessage.toLowerCase();
+    if (lowerMessage.includes('cgpa') || lowerMessage.includes('gpa')) {
+      return 'Your current CGPA is 3.85. You\'re doing great! Would you like to see a detailed breakdown?';
+    } else if (lowerMessage.includes('fee') || lowerMessage.includes('payment')) {
+      return 'You have PKR 15,000 in pending fees. The deadline is January 15, 2026. Would you like to make a payment?';
+    } else if (lowerMessage.includes('attendance')) {
+      return 'Your overall attendance is 88%. You need to maintain 75% minimum. Keep it up!';
+    } else if (lowerMessage.includes('assignment')) {
+      return 'You have 3 pending assignments:\n1. Database Normalization - Due Jan 20\n2. AI Project Proposal - Due Jan 22\n3. Web Dev Lab Task - Due Jan 25';
+    }
+    return 'I can help you with academics, fees, attendance, courses, and more. What would you like to know?';
   };
 
-  const handleExportChat = () => {
-    const chatText = messages.map(m => 
-      `[${m.timestamp}] ${m.isAi ? 'Nexus AI' : currentUser?.name}: ${m.text}`
-    ).join('\n\n');
-    
-    const blob = new Blob([chatText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `nexus-chat-${Date.now()}.txt`;
-    a.click();
+  const handleContactClick = (contact) => {
+    setSelectedChat(contact);
+    setMessages([
+      {
+        id: 1,
+        text: `Hi! This is a conversation with ${contact.name}`,
+        sender: 'other',
+        timestamp: '10:00 AM',
+      },
+      {
+        id: 2,
+        text: 'Hello! How can I help you?',
+        sender: 'user',
+        timestamp: '10:05 AM',
+      },
+    ]);
   };
 
-  const handleCopyChat = () => {
-    const chatText = messages.map(m => 
-      `[${m.timestamp}] ${m.isAi ? 'Nexus AI' : currentUser?.name}: ${m.text}`
-    ).join('\n\n');
-    navigator.clipboard.writeText(chatText);
+  const handleGroupClick = (group) => {
+    setSelectedChat(group);
+    setMessages([
+      {
+        id: 1,
+        text: 'Welcome to the group!',
+        sender: 'other',
+        senderName: 'Admin',
+        timestamp: '9:00 AM',
+      },
+      {
+        id: 2,
+        text: 'Thanks for adding me!',
+        sender: 'user',
+        timestamp: '9:05 AM',
+      },
+    ]);
   };
 
-  const filteredConversations = conversations.filter(c =>
-    c.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const handleCreateGroup = () => {
+    if (!newGroupName.trim() || selectedMembers.length < 2) return;
+
+    const newGroup = {
+      id: G,
+      name: newGroupName,
+      description: newGroupDescription,
+      avatar: '',
+      members: selectedMembers.length + 1, // +1 for creator
+      lastMessage: 'Group created',
+      lastTime: 'Just now',
+    };
+
+    setGroups((prev) => [...prev, newGroup]);
+    setCreateGroupOpen(false);
+    setNewGroupName('');
+    setNewGroupDescription('');
+    setSelectedMembers([]);
+    setCurrentTab(1); // Switch to groups tab
+  };
+
+  const toggleMemberSelection = (contactId) => {
+    setSelectedMembers((prev) =>
+      prev.includes(contactId) ? prev.filter((id) => id !== contactId) : [...prev, contactId]
+    );
+  };
+
+  const filteredContacts = contacts.filter((c) =>
+    c.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Emojis for picker (simplified)
-  const emojis = ['😊', '😂', '❤️', '👍', '🎉', '🔥', '✨', '💯', '🚀', '📚', '✅', '⚡'];
+  const filteredGroups = groups.filter((g) =>
+    g.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  // Show loading skeleton
-  if (loading) {
-    return (
-      <Box sx={{ pb: 4 }}>
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
-            Chat Portal
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            AI-powered assistant for all your queries
-          </Typography>
-        </Box>
-        <ChatSkeleton />
-      </Box>
-    );
-  }
-
-  // Left Panel Component
-  const LeftPanel = () => (
+  // Chat List Component
+  const ChatList = () => (
     <Box
       sx={{
-        width: isMobile ? '280px' : '100%',
+        width: isMobile ? '100%' : 380,
         height: '100%',
-        backgroundColor: 'background.paper',
-        borderRight: isMobile ? 'none' : 1,
-        borderColor: 'divider',
+        borderRight: isMobile ? 'none' : `1px solid ${theme.palette.divider}`,
         display: 'flex',
         flexDirection: 'column',
+        backgroundColor: theme.palette.mode === 'dark' ? '#111B21' : '#FFFFFF',
       }}
     >
-      {/* Chat Header */}
-      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6" fontWeight="bold">
-            Nexus AI Assistant
-          </Typography>
-          <IconButton size="small">
-            <Settings fontSize="small" />
-          </IconButton>
-        </Box>
-        
-        {/* Toggle AI/Human */}
+      {/* Header */}
+      <Box
+        sx={{
+          background: `linear-gradient(135deg, ${whatsappGreen} 0%, ${whatsappDarkGreen} 100%)`,
+          color: 'white',
+          p: 2,
+        }}
+      >
+        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <IconButton onClick={() => navigate('/dashboard')} sx={{ color: 'white' }}>
+              <ArrowBack />
+            </IconButton>
+            <Typography variant="h6" fontWeight="bold">
+              Nexus Chat
+            </Typography>
+          </Stack>
+          <Stack direction="row" spacing={1}>
+            <Tooltip title={mode === 'ai' ? 'Switch to Human Chat' : 'Switch to AI Assistant'}>
+              <IconButton
+                onClick={() => {
+                  // Save AI chat history before switching
+                  if (mode === 'ai' && messages.length > 0) {
+                    setAiChatHistory(messages);
+                  }
+                  // Restore AI chat history when switching back
+                  if (mode === 'human' && aiChatHistory.length > 0) {
+                    setMessages(aiChatHistory);
+                  } else {
+                    setMessages([]);
+                  }
+                  setMode(mode === 'ai' ? 'human' : 'ai');
+                  setSelectedChat(null);
+                }}
+                sx={{
+                  color: 'white',
+                  backgroundColor: 'rgba(255,255,255,0.15)',
+                  '&:hover': { backgroundColor: 'rgba(255,255,255,0.25)' },
+                }}
+              >
+                {mode === 'ai' ? <Person /> : <SmartToy />}
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        </Stack>
+
+        {/* Mode Indicator */}
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
-            backgroundColor: 'action.hover',
-            borderRadius: '8px',
-            p: 0.5,
+            gap: 1,
+            backgroundColor: 'rgba(255,255,255,0.15)',
+            borderRadius: '20px',
+            px: 2,
+            py: 0.5,
           }}
         >
-          <Box
-            onClick={() => setIsAiMode(true)}
-            sx={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 0.5,
-              py: 0.75,
-              borderRadius: '6px',
-              backgroundColor: isAiMode ? 'primary.main' : 'transparent',
-              color: isAiMode ? 'white' : 'text.secondary',
-              cursor: 'pointer',
-              transition: 'all 0.3s',
-            }}
-          >
-            <SmartToy fontSize="small" />
-            <Typography variant="body2" fontWeight="600">
-              AI Mode
-            </Typography>
-          </Box>
-          <Box
-            onClick={() => setIsAiMode(false)}
-            sx={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 0.5,
-              py: 0.75,
-              borderRadius: '6px',
-              backgroundColor: !isAiMode ? 'secondary.main' : 'transparent',
-              color: !isAiMode ? 'white' : 'text.secondary',
-              cursor: 'pointer',
-              transition: 'all 0.3s',
-            }}
-          >
-            <Person fontSize="small" />
-            <Typography variant="body2" fontWeight="600">
-              Human
-            </Typography>
-          </Box>
+          {mode === 'ai' ? <SmartToy fontSize="small" /> : <Person fontSize="small" />}
+          <Typography variant="body2" fontWeight="600">
+            {mode === 'ai' ? 'AI Assistant Mode' : 'Human Chat Mode'}
+          </Typography>
         </Box>
       </Box>
 
-      {/* New Chat Button */}
-      <Box sx={{ p: 2 }}>
-        <Button
-          fullWidth
-          variant="contained"
-          startIcon={<Add />}
-          onClick={handleNewChat}
-          sx={{
-            py: 1.5,
-            borderRadius: '8px',
-            textTransform: 'none',
-            fontWeight: 600,
-          }}
-        >
-          New Chat
-        </Button>
-      </Box>
-
-      {/* Search Conversations */}
-      <Box sx={{ px: 2, pb: 2 }}>
-        <TextField
-          fullWidth
-          placeholder="Search conversations..."
-          size="small"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-        />
-      </Box>
-
-      {/* Conversation List */}
-      <Box sx={{ flex: 1, overflowY: 'auto' }}>
-        <List sx={{ py: 0 }}>
-          {filteredConversations.map((conv) => (
-            <ListItem
-              key={conv.id}
-              disablePadding
-              secondaryAction={
-                <IconButton
-                  edge="end"
-                  size="small"
-                  onClick={() => handleDeleteConversation(conv.id)}
-                  sx={{ opacity: 0, '.MuiListItem-root:hover &': { opacity: 1 } }}
-                >
-                  <Delete fontSize="small" />
-                </IconButton>
-              }
-            >
-              <ListItemButton
-                selected={activeConversation === conv.id}
-                onClick={() => {
-                  setActiveConversation(conv.id);
-                  if (isMobile) setDrawerOpen(false);
-                }}
-                sx={{
-                  borderRadius: '8px',
-                  mx: 1,
-                  '&.Mui-selected': {
-                    backgroundColor: 'primary.light',
-                    '&:hover': {
-                      backgroundColor: 'primary.light',
-                    },
-                  },
-                }}
-              >
-                <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
-                    <SmartToy fontSize="small" />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={
-                    <Typography variant="body2" fontWeight="600" noWrap>
-                      {conv.title}
-                    </Typography>
-                  }
-                  secondary={
-                    <Typography variant="caption" color="text.secondary" noWrap>
-                      {conv.lastMessage}
-                    </Typography>
-                  }
-                />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
-      </Box>
-
-      {/* Quick Actions */}
-      <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
-        <Button
-          fullWidth
-          variant="outlined"
-          startIcon={<Lightbulb />}
-          sx={{ mb: 1, textTransform: 'none', justifyContent: 'flex-start' }}
-          onClick={() => setAnchorEl(document.body)}
-        >
-          Common Questions
-        </Button>
-        <Button
-          fullWidth
-          variant="outlined"
-          startIcon={<HelpOutline />}
-          sx={{ textTransform: 'none', justifyContent: 'flex-start' }}
-        >
-          Help & Tutorial
-        </Button>
-      </Box>
-    </Box>
-  );
-
-  return (
-    <motion.div {...pageTransition} style={{ height: '100%' }}>
-    <Box sx={{ height: 'calc(100vh - 64px)', display: 'flex', overflow: 'hidden' }}>
-      {/* Left Panel - Desktop */}
-      {!isMobile && (
-        <Box sx={{ width: '350px', maxWidth: '30%', height: '100%' }}>
-          <LeftPanel />
+      {/* Search */}
+      {mode === 'human' && (
+        <Box sx={{ p: 2, backgroundColor: theme.palette.mode === 'dark' ? '#111B21' : '#F0F2F5' }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search conversations..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              backgroundColor: theme.palette.mode === 'dark' ? '#2A3942' : 'white',
+              borderRadius: '8px',
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': { border: 'none' },
+              },
+            }}
+          />
         </Box>
       )}
 
-      {/* Left Panel - Mobile Drawer */}
-      <Drawer
-        anchor="left"
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-      >
-        <LeftPanel />
-      </Drawer>
-
-      {/* Main Chat Area */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {/* Chat Header Bar */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            p: 2,
-            borderBottom: 1,
-            borderColor: 'divider',
-            backgroundColor: 'background.paper',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {isMobile && (
-              <IconButton onClick={() => setDrawerOpen(true)}>
-                <MenuIcon />
-              </IconButton>
-            )}
-            <Badge
-              overlap="circular"
-              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-              variant="dot"
-              sx={{
-                '& .MuiBadge-badge': {
-                  backgroundColor: '#44b700',
-                  color: '#44b700',
-                  boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
-                  '&::after': {
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: '50%',
-                    animation: 'ripple 1.2s infinite ease-in-out',
-                    border: '1px solid currentColor',
-                    content: '""',
-                  },
-                },
-                '@keyframes ripple': {
-                  '0%': {
-                    transform: 'scale(.8)',
-                    opacity: 1,
-                  },
-                  '100%': {
-                    transform: 'scale(2.4)',
-                    opacity: 0,
-                  },
-                },
-              }}
-            >
-              <Avatar sx={{ bgcolor: 'primary.main' }}>
-                <SmartToy />
-              </Avatar>
-            </Badge>
-            <Box>
-              <Typography variant="h6" fontWeight="bold">
-                {isAiMode ? 'Nexus AI' : 'Support Team'}
-              </Typography>
-              <Chip
-                label={isAiMode ? 'AI Powered' : 'Live Chat'}
-                size="small"
-                color={isAiMode ? 'primary' : 'success'}
-                sx={{ height: 20 }}
-              />
-            </Box>
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Tooltip title="Voice Input">
-              <IconButton onClick={handleVoiceInput} color={isRecording ? 'error' : 'default'}>
-                {isRecording ? <Stop /> : <Mic />}
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Attach File">
-              <IconButton>
-                <AttachFile />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="More Options">
-              <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-                <MoreVert />
-              </IconButton>
-            </Tooltip>
-          </Box>
+      {/* Tabs for Human Mode */}
+      {mode === 'human' && (
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: theme.palette.mode === 'dark' ? '#111B21' : 'white' }}>
+          <Tabs
+            value={currentTab}
+            onChange={(e, val) => setCurrentTab(val)}
+            variant="fullWidth"
+            sx={{
+              '& .MuiTab-root': {
+                color: whatsappGreen,
+                fontWeight: 600,
+              },
+              '& .Mui-selected': {
+                color: whatsappGreen,
+              },
+              '& .MuiTabs-indicator': {
+                backgroundColor: whatsappGreen,
+              },
+            }}
+          >
+            <Tab label={`Contacts (${contacts.length})`} />
+            <Tab label={`Groups (${groups.length})`} />
+          </Tabs>
         </Box>
+      )}
 
-        {/* Messages Container */}
-        <Box
-          ref={chatContainerRef}
-          sx={{
-            flex: 1,
-            overflowY: 'auto',
-            p: 3,
-            backgroundColor: 'background.default',
-          }}
-          component={motion.div}
-          variants={staggerContainer}
-          initial="initial"
-          animate="animate"
-        >
-          {messages.map((message, index) => (
-            <Fade in key={message.id} timeout={300}>
-              <Box
-                component={motion.div}
-                variants={fadeInUp}
-                onMouseEnter={() => setHoveredMessage(message.id)}
-                onMouseLeave={() => setHoveredMessage(null)}
-                sx={{
-                  display: 'flex',
-                  justifyContent: message.isAi ? 'flex-start' : 'flex-end',
-                  mb: 3,
-                  animation: 'slideUp 0.3s ease',
-                  '@keyframes slideUp': {
-                    from: { transform: 'translateY(20px)', opacity: 0 },
-                    to: { transform: 'translateY(0)', opacity: 1 },
+      {/* Chat List */}
+      <Box sx={{ flex: 1, overflowY: 'auto' }}>
+        {mode === 'ai' ? (
+          <ListItemButton
+            selected={selectedChat?.name === 'Nexus AI Assistant'}
+            onClick={() => {
+              if (messages.length === 0) {
+                setMessages([
+                  {
+                    id: Date.now(),
+                    text: `Hello! I'm Nexus AI. How can I assist you?`,
+                    sender: 'ai',
+                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                   },
-                }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    gap: 1.5,
-                    maxWidth: message.isWelcome ? '100%' : '75%',
-                    flexDirection: message.isAi ? 'row' : 'row-reverse',
-                    width: message.isWelcome ? '100%' : 'auto',
-                  }}
-                >
-                  <Avatar
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      bgcolor: message.isAi ? 'primary.main' : 'secondary.main',
-                    }}
-                  >
-                    {message.isAi ? <SmartToy /> : currentUser?.name[0]}
-                  </Avatar>
-
-                  <Box sx={{ flex: 1 }}>
-                    <Paper
-                      elevation={0}
-                      sx={{
-                        p: 2,
-                        backgroundColor: message.isAi ? 'grey.100' : 'primary.main',
-                        color: message.isAi ? 'text.primary' : 'white',
-                        borderRadius: message.isAi ? '12px 12px 12px 4px' : '12px 12px 4px 12px',
-                      }}
-                    >
-                      <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                        {message.text}
-                      </Typography>
-
-                      {/* Welcome Quick Actions */}
-                      {message.isWelcome && (
-                        <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                          {quickActions.map((action, idx) => (
-                            <Chip
-                              key={idx}
-                              icon={action.icon}
-                              label={action.label}
-                              onClick={() => handleQuickAction(action.label)}
-                              sx={{
-                                cursor: 'pointer',
-                                '&:hover': { backgroundColor: 'primary.light' },
-                              }}
-                            />
-                          ))}
-                        </Box>
-                      )}
-
-                      {/* Table Data */}
-                      {message.type === 'table' && message.tableData && (
-                        <Box sx={{ mt: 2, overflowX: 'auto' }}>
-                          <Table size="small">
-                            <TableBody>
-                              <TableRow>
-                                <TableCell sx={{ fontWeight: 'bold', color: message.isAi ? 'inherit' : 'white' }}>Course</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', color: message.isAi ? 'inherit' : 'white' }}>Grade</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', color: message.isAi ? 'inherit' : 'white' }}>GPA</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', color: message.isAi ? 'inherit' : 'white' }}>Credits</TableCell>
-                              </TableRow>
-                              {message.tableData.map((row, idx) => (
-                                <TableRow key={idx}>
-                                  <TableCell sx={{ color: message.isAi ? 'inherit' : 'white' }}>{row.course}</TableCell>
-                                  <TableCell sx={{ color: message.isAi ? 'inherit' : 'white' }}>{row.grade}</TableCell>
-                                  <TableCell sx={{ color: message.isAi ? 'inherit' : 'white' }}>{row.gpa}</TableCell>
-                                  <TableCell sx={{ color: message.isAi ? 'inherit' : 'white' }}>{row.credits}</TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </Box>
-                      )}
-
-                      {/* List Items */}
-                      {message.items && (
-                        <Box sx={{ mt: 2 }}>
-                          {message.items.map((item, idx) => (
-                            <Typography key={idx} variant="body2" sx={{ mb: 0.5, color: message.isAi ? 'inherit' : 'white' }}>
-                              {item}
-                            </Typography>
-                          ))}
-                        </Box>
-                      )}
-
-                      {/* Summary Text */}
-                      {message.summary && (
-                        <Typography variant="body2" sx={{ mt: 2, whiteSpace: 'pre-wrap', color: message.isAi ? 'inherit' : 'white' }}>
-                          {message.summary}
-                        </Typography>
-                      )}
-
-                      {/* Action Button */}
-                      {message.actionButton && (
-                        <Button
-                          variant={message.isAi ? 'contained' : 'outlined'}
-                          size="small"
-                          sx={{ mt: 2, color: message.isAi ? 'white' : 'inherit' }}
-                        >
-                          {message.actionButton.label}
-                        </Button>
-                      )}
-                    </Paper>
-
-                    {/* Citations */}
-                    {message.isAi && message.citations && (
-                      <Box sx={{ display: 'flex', gap: 0.5, mt: 1, flexWrap: 'wrap' }}>
-                        {message.citations.map((citation, idx) => (
-                          <Chip
-                            key={idx}
-                            label={citation}
-                            size="small"
-                            variant="outlined"
-                            onClick={() => handleCitationClick(citation)}
-                            sx={{
-                              fontSize: '0.7rem',
-                              height: 24,
-                              cursor: 'pointer',
-                              '&:hover': { backgroundColor: 'action.hover' },
-                            }}
-                          />
-                        ))}
-                      </Box>
-                    )}
-
-                    {/* Feedback & Timestamp */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        {message.timestamp}
-                      </Typography>
-                      
-                      {message.isAi && hoveredMessage === message.id && (
-                        <Box sx={{ display: 'flex', gap: 0.5 }}>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleFeedback(message.id, 'up')}
-                            color={message.feedbacks?.thumbsUp ? 'primary' : 'default'}
-                          >
-                            <ThumbUp sx={{ fontSize: 14 }} />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleFeedback(message.id, 'down')}
-                            color={message.feedbacks?.thumbsDown ? 'error' : 'default'}
-                          >
-                            <ThumbDown sx={{ fontSize: 14 }} />
-                          </IconButton>
-                        </Box>
-                      )}
-                    </Box>
-
-                    {/* Follow-up Questions */}
-                    {message.isAi && index === messages.length - 1 && suggestedQuestions.length > 0 && (
-                      <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                        {suggestedQuestions.map((question, idx) => (
-                          <Chip
-                            key={idx}
-                            label={question}
-                            size="small"
-                            onClick={() => handleQuickAction(question)}
-                            sx={{
-                              cursor: 'pointer',
-                              '&:hover': { backgroundColor: 'primary.light' },
-                            }}
-                          />
-                        ))}
-                      </Box>
-                    )}
-                  </Box>
-                </Box>
-              </Box>
-            </Fade>
-          ))}
-
-          {/* Typing Indicator */}
-          {isTyping && (
-            <Box sx={{ display: 'flex', gap: 1.5, mb: 3 }}>
-              <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main' }}>
+                ]);
+              }
+              setSelectedChat({ name: 'Nexus AI Assistant', avatar: '🤖', status: 'online' });
+            }}
+            sx={{
+              py: 1.5,
+              px: 2,
+              backgroundColor:
+                selectedChat?.name === 'Nexus AI Assistant'
+                  ? theme.palette.mode === 'dark'
+                    ? '#2A3942'
+                    : '#F0F2F5'
+                  : 'transparent',
+              '&:hover': {
+                backgroundColor: theme.palette.mode === 'dark' ? '#2A3942' : '#F5F6F6',
+              },
+            }}
+          >
+            <ListItemAvatar>
+              <Avatar sx={{ bgcolor: whatsappGreen, width: 50, height: 50 }}>
                 <SmartToy />
               </Avatar>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2,
-                  backgroundColor: 'grey.100',
-                  borderRadius: '12px 12px 12px 4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.5,
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    backgroundColor: 'primary.main',
-                    animation: 'bounce 1.4s infinite ease-in-out',
-                    animationDelay: '0s',
-                    '@keyframes bounce': {
-                      '0%, 80%, 100%': { transform: 'scale(0)' },
-                      '40%': { transform: 'scale(1)' },
-                    },
-                  }}
-                />
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    backgroundColor: 'primary.main',
-                    animation: 'bounce 1.4s infinite ease-in-out',
-                    animationDelay: '0.2s',
-                  }}
-                />
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    backgroundColor: 'primary.main',
-                    animation: 'bounce 1.4s infinite ease-in-out',
-                    animationDelay: '0.4s',
-                  }}
-                />
-                <Typography variant="caption" sx={{ ml: 1 }}>
-                  Nexus is typing...
+            </ListItemAvatar>
+            <ListItemText
+              primary={
+                <Typography variant="subtitle1" fontWeight="600">
+                  Nexus AI Assistant
                 </Typography>
-              </Paper>
-            </Box>
-          )}
-
-          {/* Streaming Text */}
-          {streamingText && (
-            <Box sx={{ display: 'flex', gap: 1.5, mb: 3 }}>
-              <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main' }}>
-                <SmartToy />
-              </Avatar>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2,
-                  backgroundColor: 'grey.100',
-                  borderRadius: '12px 12px 12px 4px',
-                  maxWidth: '75%',
-                }}
-              >
-                <Typography variant="body1">
-                  {streamingText}
-                  <Box
-                    component="span"
+              }
+              secondary={
+                <Typography variant="body2" color="text.secondary" noWrap>
+                  Your intelligent campus companion
+                </Typography>
+              }
+            />
+          </ListItemButton>
+        ) : (
+          <List disablePadding>
+            {currentTab === 0
+              ? filteredContacts.map((contact) => (
+                  <ListItemButton
+                    key={contact.id}
+                    onClick={() => handleContactClick(contact)}
+                    selected={selectedChat?.id === contact.id}
                     sx={{
-                      display: 'inline-block',
-                      width: 2,
-                      height: 16,
-                      backgroundColor: 'primary.main',
-                      ml: 0.5,
-                      animation: 'blink 1s infinite',
-                      '@keyframes blink': {
-                        '0%, 100%': { opacity: 1 },
-                        '50%': { opacity: 0 },
+                      py: 1.5,
+                      px: 2,
+                      backgroundColor:
+                        selectedChat?.id === contact.id
+                          ? theme.palette.mode === 'dark'
+                            ? '#2A3942'
+                            : '#F0F2F5'
+                          : 'transparent',
+                      '&:hover': {
+                        backgroundColor: theme.palette.mode === 'dark' ? '#2A3942' : '#F5F6F6',
                       },
                     }}
-                  />
-                </Typography>
-              </Paper>
-            </Box>
-          )}
-
-          <div ref={messagesEndRef} />
-        </Box>
-
-        {/* Input Area */}
-        <Box
-          sx={{
-            p: 2,
-            borderTop: 1,
-            borderColor: 'divider',
-            backgroundColor: 'background.paper',
-          }}
-        >
-          {/* Suggestions Row */}
-          {inputMessage === '' && suggestedQuestions.length === 0 && messages.length > 0 && (
-            <Box sx={{ mb: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {['What is my CGPA?', 'Show my timetable', 'Check dues'].map((suggestion, idx) => (
-                <Chip
-                  key={idx}
-                  label={suggestion}
-                  size="small"
-                  onClick={() => handleQuickAction(suggestion)}
-                  sx={{
-                    cursor: 'pointer',
-                    '&:hover': { backgroundColor: 'primary.light' },
-                  }}
-                />
-              ))}
-            </Box>
-          )}
-
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
-            {/* Emoji Picker */}
-            <Box sx={{ position: 'relative' }}>
-              <IconButton onClick={() => setShowEmojiPicker(!showEmojiPicker)} size="small">
-                <EmojiEmotions />
-              </IconButton>
-              <Collapse in={showEmojiPicker}>
-                <Paper
-                  sx={{
-                    position: 'absolute',
-                    bottom: '100%',
-                    left: 0,
-                    mb: 1,
-                    p: 1,
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(6, 1fr)',
-                    gap: 0.5,
-                    minWidth: 200,
-                    zIndex: 1000,
-                  }}
-                  elevation={4}
-                >
-                  {emojis.map((emoji, idx) => (
-                    <Box
-                      key={idx}
-                      onClick={() => {
-                        setInputMessage(prev => prev + emoji);
-                        setShowEmojiPicker(false);
-                      }}
-                      sx={{
-                        cursor: 'pointer',
-                        fontSize: 24,
-                        textAlign: 'center',
-                        '&:hover': { backgroundColor: 'action.hover', borderRadius: 1 },
-                      }}
-                    >
-                      {emoji}
-                    </Box>
-                  ))}
-                </Paper>
-              </Collapse>
-            </Box>
-
-            {/* Text Input */}
-            <TextField
-              fullWidth
-              placeholder="Ask me anything about your academics..."
-              value={inputMessage}
-              onChange={(e) => {
-                setInputMessage(e.target.value);
-                setCharCount(e.target.value.length);
-              }}
-              onKeyPress={handleKeyPress}
-              multiline
-              maxRows={5}
-              variant="outlined"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '12px',
-                },
-              }}
-            />
-
-            {/* Voice Recording Animation */}
-            {isRecording && (
-              <Box
-                sx={{
-                  position: 'absolute',
-                  bottom: 80,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  p: 2,
-                  backgroundColor: 'error.main',
-                  color: 'white',
-                  borderRadius: '12px',
-                  boxShadow: 3,
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: '50%',
-                    backgroundColor: 'white',
-                    animation: 'pulse 1s infinite',
-                    '@keyframes pulse': {
-                      '0%, 100%': { transform: 'scale(1)', opacity: 1 },
-                      '50%': { transform: 'scale(1.5)', opacity: 0.5 },
-                    },
-                  }}
-                />
-                <Typography variant="body2" fontWeight="600">
-                  Recording... Click to stop
-                </Typography>
-              </Box>
-            )}
-
-            {/* Send Button */}
-            <IconButton
-              color="primary"
-              onClick={handleSendMessage}
-              disabled={!inputMessage.trim()}
-              sx={{
-                width: 48,
-                height: 48,
-                backgroundColor: 'primary.main',
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: 'primary.dark',
-                },
-                '&.Mui-disabled': {
-                  backgroundColor: 'action.disabledBackground',
-                  color: 'action.disabled',
-                },
-              }}
-            >
-              <Send />
-            </IconButton>
-          </Box>
-
-          {/* Character Count */}
-          {charCount > 500 && (
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block', textAlign: 'right' }}>
-              {charCount} characters
-            </Typography>
-          )}
-        </Box>
+                  >
+                    <ListItemAvatar>
+                      <Badge
+                        overlap="circular"
+                        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                        badgeContent={
+                          <Box
+                            sx={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: '50%',
+                              border: '2px solid white',
+                              bgcolor:
+                                contact.status === 'online'
+                                  ? '#25D366'
+                                  : contact.status === 'away'
+                                  ? '#FFA500'
+                                  : '#999',
+                            }}
+                          />
+                        }
+                      >
+                        <Avatar sx={{ width: 50, height: 50 }}>{contact.name[0]}</Avatar>
+                      </Badge>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                          <Typography variant="subtitle1" fontWeight="600">
+                            {contact.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {contact.lastTime}
+                          </Typography>
+                        </Stack>
+                      }
+                      secondary={
+                        <Stack>
+                          <Typography variant="caption" color={whatsappGreen} fontWeight="500">
+                            {contact.role}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" noWrap>
+                            {contact.lastMessage}
+                          </Typography>
+                        </Stack>
+                      }
+                    />
+                  </ListItemButton>
+                ))
+              : filteredGroups.map((group) => (
+                  <ListItemButton
+                    key={group.id}
+                    onClick={() => handleGroupClick(group)}
+                    selected={selectedChat?.id === group.id}
+                    sx={{
+                      py: 1.5,
+                      px: 2,
+                      backgroundColor:
+                        selectedChat?.id === group.id
+                          ? theme.palette.mode === 'dark'
+                            ? '#2A3942'
+                            : '#F0F2F5'
+                          : 'transparent',
+                      '&:hover': {
+                        backgroundColor: theme.palette.mode === 'dark' ? '#2A3942' : '#F5F6F6',
+                      },
+                    }}
+                  >
+                    <ListItemAvatar>
+                      <Avatar sx={{ width: 50, height: 50, bgcolor: whatsappGreen, fontSize: 24 }}>
+                        {group.avatar}
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                          <Typography variant="subtitle1" fontWeight="600">
+                            {group.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {group.lastTime}
+                          </Typography>
+                        </Stack>
+                      }
+                      secondary={
+                        <Stack>
+                          <Typography variant="caption" color="text.secondary">
+                            {group.members} members
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" noWrap>
+                            {group.lastMessage}
+                          </Typography>
+                        </Stack>
+                      }
+                    />
+                  </ListItemButton>
+                ))}
+          </List>
+        )}
       </Box>
 
-      {/* Citation Modal */}
-      <Dialog
-        open={citationModal.open}
-        onClose={() => setCitationModal({ open: false, content: '' })}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          <Typography variant="h6" fontWeight="bold">
-            Source Information
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-            {citationModal.details}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCitationModal({ open: false, content: '' })}>
-            Close
+      {/* Create Group FAB */}
+      {mode === 'human' && currentTab === 1 && (
+        <Box sx={{ p: 2 }}>
+          <Button
+            fullWidth
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => setCreateGroupOpen(true)}
+            sx={{
+              bgcolor: whatsappGreen,
+              color: 'white',
+              fontWeight: 600,
+              borderRadius: '25px',
+              py: 1.5,
+              '&:hover': {
+                bgcolor: whatsappDarkGreen,
+              },
+            }}
+          >
+            Create New Group
           </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* More Options Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={() => setAnchorEl(null)}
-      >
-        <MenuItem onClick={() => { handleExportChat(); setAnchorEl(null); }}>
-          <Download sx={{ mr: 1 }} fontSize="small" />
-          Download Chat (PDF)
-        </MenuItem>
-        <MenuItem onClick={() => { handleCopyChat(); setAnchorEl(null); }}>
-          <ContentCopy sx={{ mr: 1 }} fontSize="small" />
-          Copy to Clipboard
-        </MenuItem>
-        <Divider />
-        {commonQuestions.map((q, idx) => (
-          <MenuItem key={idx} onClick={() => { handleQuickAction(q); setAnchorEl(null); }}>
-            <Typography variant="body2">{q}</Typography>
-          </MenuItem>
-        ))}
-      </Menu>
+        </Box>
+      )}
     </Box>
-    </motion.div>
+  );
+
+  // Chat Window Component
+  const ChatWindow = () => (
+    <Box
+      sx={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        backgroundColor: chatBgColor,
+      }}
+    >
+      {selectedChat ? (
+        <>
+          {/* Chat Header */}
+          <Box
+            sx={{
+              background: `linear-gradient(135deg, ${whatsappGreen} 0%, ${whatsappDarkGreen} 100%)`,
+              color: 'white',
+              p: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Stack direction="row" spacing={2} alignItems="center">
+              {isMobile && (
+                <IconButton onClick={() => setSelectedChat(null)} sx={{ color: 'white' }}>
+                  <ArrowBack />
+                </IconButton>
+              )}
+              <Avatar sx={{ width: 45, height: 45, bgcolor: 'rgba(255,255,255,0.2)' }}>
+                {selectedChat.avatar || selectedChat.name[0]}
+              </Avatar>
+              <Box>
+                <Typography variant="subtitle1" fontWeight="600">
+                  {selectedChat.name}
+                </Typography>
+                <Typography variant="caption">
+                  {mode === 'ai'
+                    ? 'Online • Always available'
+                    : selectedChat.members
+                    ? `${selectedChat.members} members`
+                    : selectedChat.status === 'online'
+                    ? 'Online'
+                    : 'Offline'}
+                </Typography>
+              </Box>
+            </Stack>
+            <Stack direction="row" spacing={1}>
+              {mode === 'human' && !selectedChat.members && (
+                <>
+                  <IconButton sx={{ color: 'white' }}>
+                    <VideoCall />
+                  </IconButton>
+                  <IconButton sx={{ color: 'white' }}>
+                    <Call />
+                  </IconButton>
+                </>
+              )}
+              <IconButton sx={{ color: 'white' }}>
+                <MoreVert />
+              </IconButton>
+            </Stack>
+          </Box>
+
+          {/* Messages Area */}
+          <Box
+            sx={{
+              flex: 1,
+              overflowY: 'auto',
+              p: 2,
+              backgroundImage:
+                theme.palette.mode === 'dark'
+                  ? 'none'
+                  : 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 0h100v100H0z\' fill=\'%23E5DDD5\' /%3E%3Cpath d=\'M25 25l10 10M75 25l-10 10M25 75l10-10M75 75l-10-10\' stroke=\'%23D1CBC1\' stroke-width=\'1\' /%3E%3C/svg%3E")',
+            }}
+          >
+            <Stack spacing={1}>
+              {messages.map((msg) => (
+                <motion.div
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  style={{
+                    display: 'flex',
+                    justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                  }}
+                >
+                  <Paper
+                    sx={{
+                      maxWidth: '70%',
+                      px: 2,
+                      py: 1,
+                      bgcolor: msg.sender === 'user' ? userBubbleColor : otherBubbleColor,
+                      color: msg.sender === 'user' ? '#000' : 'text.primary',
+                      borderRadius:
+                        msg.sender === 'user' ? '12px 12px 0 12px' : '12px 12px 12px 0',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                    }}
+                  >
+                    {msg.senderName && (
+                      <Typography variant="caption" fontWeight="600" color={whatsappGreen}>
+                        {msg.senderName}
+                      </Typography>
+                    )}
+                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      {msg.text}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        display: 'block',
+                        textAlign: 'right',
+                        mt: 0.5,
+                        opacity: 0.7,
+                        fontSize: '0.7rem',
+                      }}
+                    >
+                      {msg.timestamp}
+                    </Typography>
+                  </Paper>
+                </motion.div>
+              ))}
+
+              {/* Typing Indicator */}
+              {isTyping && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  style={{ display: 'flex', justifyContent: 'flex-start' }}
+                >
+                  <Paper
+                    sx={{
+                      px: 2,
+                      py: 1,
+                      bgcolor: otherBubbleColor,
+                      borderRadius: '12px 12px 12px 0',
+                      display: 'flex',
+                      gap: 0.5,
+                    }}
+                  >
+                    {[0, 0.2, 0.4].map((delay, i) => (
+                      <Box
+                        key={i}
+                        component={motion.div}
+                        animate={{ y: [0, -5, 0] }}
+                        transition={{ repeat: Infinity, duration: 0.6, delay }}
+                        sx={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          bgcolor: whatsappGreen,
+                        }}
+                      />
+                    ))}
+                  </Paper>
+                </motion.div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </Stack>
+          </Box>
+
+          {/* Input Area */}
+          <Box sx={{ p: 2, backgroundColor: theme.palette.mode === 'dark' ? '#1E2428' : '#F0F2F5' }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <IconButton sx={{ color: '#7D8B92' }}>
+                <EmojiEmotions />
+              </IconButton>
+              <IconButton sx={{ color: '#7D8B92' }}>
+                <AttachFile />
+              </IconButton>
+              <TextField
+                fullWidth
+                multiline
+                maxRows={3}
+                placeholder="Type a message"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '25px',
+                    backgroundColor: theme.palette.mode === 'dark' ? '#2A3942' : 'white',
+                    '& fieldset': { border: 'none' },
+                  },
+                }}
+              />
+              {inputMessage.trim() ? (
+                <IconButton
+                  onClick={handleSendMessage}
+                  sx={{
+                    bgcolor: whatsappGreen,
+                    color: 'white',
+                    '&:hover': { bgcolor: whatsappDarkGreen },
+                  }}
+                >
+                  <Send />
+                </IconButton>
+              ) : (
+                <IconButton sx={{ color: '#7D8B92' }}>
+                  <Mic />
+                </IconButton>
+              )}
+            </Stack>
+          </Box>
+        </>
+      ) : (
+        <Box
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 2,
+          }}
+        >
+          <Avatar sx={{ width: 100, height: 100, bgcolor: whatsappGreen }}>
+            <SmartToy sx={{ fontSize: 60 }} />
+          </Avatar>
+          <Typography variant="h5" fontWeight="600" color="text.secondary">
+            Nexus Chat Portal
+          </Typography>
+          <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ maxWidth: 400 }}>
+            {mode === 'ai'
+              ? 'Start a conversation with Nexus AI to get instant help with your academics'
+              : 'Select a contact or group to start chatting'}
+          </Typography>
+        </Box>
+      )}
+    </Box>
+  );
+
+  // Create Group Dialog
+  const CreateGroupDialog = () => (
+    <Dialog open={createGroupOpen} onClose={() => setCreateGroupOpen(false)} maxWidth="sm" fullWidth>
+      <DialogTitle>
+        <Typography variant="h6" fontWeight="bold">
+          Create New Group
+        </Typography>
+      </DialogTitle>
+      <DialogContent>
+        <Stack spacing={3} sx={{ mt: 1 }}>
+          <TextField
+            fullWidth
+            label="Group Name"
+            value={newGroupName}
+            onChange={(e) => setNewGroupName(e.target.value)}
+            placeholder="Enter group name"
+          />
+          <TextField
+            fullWidth
+            label="Group Description (Optional)"
+            value={newGroupDescription}
+            onChange={(e) => setNewGroupDescription(e.target.value)}
+            placeholder="What's this group about?"
+            multiline
+            rows={2}
+          />
+          <Box>
+            <Typography variant="subtitle2" gutterBottom>
+              Add Members (Select at least 2)
+            </Typography>
+            <List sx={{ maxHeight: 300, overflowY: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+              {contacts.map((contact) => (
+                <ListItem
+                  key={contact.id}
+                  button
+                  onClick={() => toggleMemberSelection(contact.id)}
+                  secondaryAction={
+                    selectedMembers.includes(contact.id) ? (
+                      <Check color="success" />
+                    ) : null
+                  }
+                  sx={{
+                    bgcolor: selectedMembers.includes(contact.id)
+                      ? theme.palette.mode === 'dark'
+                        ? 'rgba(37, 211, 102, 0.1)'
+                        : 'rgba(37, 211, 102, 0.05)'
+                      : 'transparent',
+                  }}
+                >
+                  <ListItemAvatar>
+                    <Avatar>{contact.name[0]}</Avatar>
+                  </ListItemAvatar>
+                  <ListItemText primary={contact.name} secondary={contact.role} />
+                </ListItem>
+              ))}
+            </List>
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+              {selectedMembers.length} member(s) selected
+            </Typography>
+          </Box>
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setCreateGroupOpen(false)}>Cancel</Button>
+        <Button
+          variant="contained"
+          onClick={handleCreateGroup}
+          disabled={!newGroupName.trim() || selectedMembers.length < 2}
+          sx={{
+            bgcolor: whatsappGreen,
+            '&:hover': { bgcolor: whatsappDarkGreen },
+          }}
+        >
+          Create Group
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
+  return (
+    <Box
+      sx={{
+        height: 'calc(100vh - 64px)',
+        display: 'flex',
+        overflow: 'hidden',
+      }}
+    >
+      {(!isMobile || !selectedChat) && <ChatList />}
+      {(!isMobile || selectedChat) && <ChatWindow />}
+      <CreateGroupDialog />
+    </Box>
   );
 };
 

@@ -143,6 +143,30 @@ export const DashboardSkeleton = () => {
   );
 };
 
+// Course Card Skeleton - for grid cards
+export const CourseCardSkeleton = ({ count = 3 }) => {
+  return (
+    <Grid container spacing={3}>
+      {[...Array(count)].map((_, index) => (
+        <Grid key={index} size={{ xs: 12, sm: 6, md: 4 }}>
+          <Card>
+            <Skeleton variant="rectangular" width="100%" height={180} animation="pulse" />
+            <CardContent>
+              <Skeleton variant="text" width="80%" height={28} sx={{ mb: 1 }} />
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 2 }}>
+                <Skeleton variant="circular" width={32} height={32} />
+                <Skeleton variant="text" width="50%" height={20} />
+              </Stack>
+              <Skeleton variant="rectangular" width="100%" height={8} sx={{ borderRadius: 1, mb: 1 }} />
+              <Skeleton variant="text" width="30%" height={20} />
+            </CardContent>
+          </Card>
+        </Grid>
+      ))}
+    </Grid>
+  );
+};
+
 // Profile Skeleton - for profile page loading
 export const ProfileSkeleton = () => {
   return (

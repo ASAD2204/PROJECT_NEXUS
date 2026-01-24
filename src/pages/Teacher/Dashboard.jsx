@@ -43,7 +43,7 @@ const TeacherDashboard = () => {
       change: '+1 new',
       trend: 'up',
       icon: School,
-      color: theme.palette.primary.main,
+      color: 'primary',
     },
     {
       title: 'Total Students',
@@ -51,7 +51,7 @@ const TeacherDashboard = () => {
       change: '+18 this sem',
       trend: 'up',
       icon: People,
-      color: theme.palette.success.main,
+      color: 'success',
     },
     {
       title: 'Pending Assignments',
@@ -59,7 +59,7 @@ const TeacherDashboard = () => {
       change: '5 overdue',
       trend: 'down',
       icon: Assignment,
-      color: theme.palette.warning.main,
+      color: 'warning',
     },
     {
       title: 'Attendance Rate',
@@ -67,7 +67,7 @@ const TeacherDashboard = () => {
       change: '+2.3%',
       trend: 'up',
       icon: CheckCircle,
-      color: theme.palette.info.main,
+      color: 'info',
     },
   ];
 
@@ -151,7 +151,7 @@ const TeacherDashboard = () => {
         {/* Stats Cards */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
           {stats.map((stat, index) => (
-            <Grid key={index} size={{ xs: 12, sm: 6, lg: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={index}>
               <StatCard
                 title={stat.title}
                 value={stat.value}
@@ -353,17 +353,37 @@ const TeacherDashboard = () => {
                   Quick Actions
                 </Typography>
                 <Stack spacing={1.5}>
-                  <Button variant="outlined" fullWidth startIcon={<Assignment />}>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    startIcon={<Assignment />}
+                    onClick={() => navigate('/teacher/create-assignment')}
+                  >
                     Create Assignment
                   </Button>
-                  <Button variant="outlined" fullWidth startIcon={<CheckCircle />}>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    startIcon={<CheckCircle />}
+                    onClick={() => navigate('/attendance/smart-attendance')}
+                  >
                     Mark Attendance
                   </Button>
-                  <Button variant="outlined" fullWidth startIcon={<People />}>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    startIcon={<People />}
+                    onClick={() => navigate('/teacher/students')}
+                  >
                     View Students
                   </Button>
-                  <Button variant="outlined" fullWidth startIcon={<Notifications />}>
-                    Send Announcement
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    startIcon={<Notifications />}
+                    onClick={() => navigate('/teacher/courses')}
+                  >
+                    Manage Courses
                   </Button>
                 </Stack>
               </CardContent>

@@ -46,10 +46,12 @@ import {
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import PageHeader from '../../components/Common/PageHeader';
+import { useSnackbar } from '../../contexts/SnackbarContext';
 import { pageTransition } from '../../utils/animations';
 
 const StudentManagement = () => {
   const theme = useTheme();
+  const { showSnackbar } = useSnackbar();
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -109,6 +111,40 @@ const StudentManagement = () => {
       cgpa: 3.45,
       status: 'warning',
       avatar: 'https://i.pravatar.cc/150?img=8',
+    },
+    {
+      id: 4,
+      name: 'Fatima Noor',
+      rollNo: 'CS-2023-089',
+      email: 'fatima@nexus.edu',
+      phone: '+92 303 4567890',
+      course: 'CS-301',
+      attendance: 72,
+      assignments: { submitted: 6, total: 12 },
+      quizzes: { completed: 2, total: 5 },
+      midterm: 55,
+      final: null,
+      grade: 'D',
+      cgpa: 1.85,
+      status: 'warning',
+      avatar: 'https://i.pravatar.cc/150?img=44',
+    },
+    {
+      id: 5,
+      name: 'Hassan Raza',
+      rollNo: 'CS-2023-156',
+      email: 'hassan@nexus.edu',
+      phone: '+92 304 7891234',
+      course: 'CS-301',
+      attendance: 58,
+      assignments: { submitted: 5, total: 12 },
+      quizzes: { completed: 2, total: 5 },
+      midterm: 62,
+      final: null,
+      grade: 'D+',
+      cgpa: 2.15,
+      status: 'warning',
+      avatar: 'https://i.pravatar.cc/150?img=51',
     },
   ];
 
@@ -271,8 +307,25 @@ const StudentManagement = () => {
                     const performanceIndicator = getPerformanceIndicator(student.grade);
                     const PerformanceIcon = performanceIndicator.icon;
                     
+                    // Check if student is at risk
+                    const isAtRisk = student.attendance < 75 || student.cgpa < 2.0;
+                    
                     return (
-                      <TableRow key={student.id} hover>
+                      <TableRow 
+                        key={student.id} 
+                        hover
+                        sx={{
+                          backgroundColor: isAtRisk 
+                            ? alpha(theme.palette.error.main, 0.08)
+                            : 'transparent',
+                          '&:hover': {
+                            backgroundColor: isAtRisk
+                              ? alpha(theme.palette.error.main, 0.12)
+                              : alpha(theme.palette.action.hover, 0.04),
+                          },
+                          borderLeft: isAtRisk ? `4px solid ${theme.palette.error.main}` : 'none',
+                        }}
+                      >
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                             <Avatar src={student.avatar} alt={student.name} />
@@ -350,14 +403,32 @@ const StudentManagement = () => {
           <MenuItem onClick={handleViewDetails}>
             <Visibility fontSize="small" sx={{ mr: 1 }} /> View Details
           </MenuItem>
-          <MenuItem onClick={handleMenuClose}>
-            <Assignment fontSize="small" sx={{ mr: 1 }} /> Grade Assignments
-          </MenuItem>
-          <MenuItem onClick={handleMenuClose}>
+          <MenuItem
+            onClick={() => {
+              if (selectedStudent) {
+                showSnackbar(`Email sent to ${selectedStudent.name}`, 'success');
+              }
+              handleMenuClose();
+            }}
+          >
             <Email fontSize="small" sx={{ mr: 1 }} /> Send Email
           </MenuItem>
+          <MenuItem
+            onClick={() => {
+              if (selectedStudent) {
+                const isAtRisk = selectedStudent.attendance < 75 || selectedStudent.cgpa < 2.0;
+                const message = isAtRisk
+                  ? `Warning notification sent to ${selectedStudent.name} for low ${selectedStudent.attendance < 75 ? 'attendance' : 'GPA'}`
+                  : `Notification sent to ${selectedStudent.name}`;
+                showSnackbar(message, isAtRisk ? 'warning' : 'info');
+              }
+              handleMenuClose();
+            }}
+          >
+            <CheckCircle fontSize="small" sx={{ mr: 1 }} /> Notify Student
+          </MenuItem>
           <MenuItem onClick={handleMenuClose}>
-            <CheckCircle fontSize="small" sx={{ mr: 1 }} /> Mark Attendance
+            <Assignment fontSize="small" sx={{ mr: 1 }} /> Grade Assignments
           </MenuItem>
         </Menu>
 

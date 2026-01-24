@@ -28,6 +28,17 @@ import {
   Share,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
+import { 
+  LineChart, 
+  Line, 
+  BarChart,
+  Bar,
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+} from 'recharts';
 import PageHeader from '../../components/Common/PageHeader';
 import { pageTransition } from '../../utils/animations';
 
@@ -52,30 +63,22 @@ const AdminReports = () => {
     { label: 'Course Completion', value: '94%', change: '+3.2%', color: theme.palette.warning.main },
   ];
 
-  const enrollmentData = {
-    labels: ['CS', 'Business', 'Engineering', 'Medical', 'Arts'],
-    datasets: [
-      {
-        label: 'Students',
-        data: [852, 743, 621, 431, 200],
-        backgroundColor: theme.palette.primary.main,
-      },
-    ],
-  };
+  const enrollmentData = [
+    { department: 'CS', students: 852 },
+    { department: 'Business', students: 743 },
+    { department: 'Engineering', students: 621 },
+    { department: 'Medical', students: 431 },
+    { department: 'Arts', students: 200 },
+  ];
 
-  const revenueData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    datasets: [
-      {
-        label: 'Revenue (Million PKR)',
-        data: [6.5, 7.2, 6.8, 7.5, 8.1, 8.5],
-        borderColor: theme.palette.success.main,
-        backgroundColor: alpha(theme.palette.success.main, 0.1),
-        fill: true,
-        tension: 0.4,
-      },
-    ],
-  };
+  const revenueData = [
+    { month: 'Jan', revenue: 6.5 },
+    { month: 'Feb', revenue: 7.2 },
+    { month: 'Mar', revenue: 6.8 },
+    { month: 'Apr', revenue: 7.5 },
+    { month: 'May', revenue: 8.1 },
+    { month: 'Jun', revenue: 8.5 },
+  ];
 
   return (
     <motion.div {...pageTransition}>
@@ -188,14 +191,45 @@ const AdminReports = () => {
                   </Stack>
                 </Box>
                 <Box sx={{ height: 300 }}>
-                  <Line
-                    data={revenueData}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: { legend: { display: false } },
-                    }}
-                  />
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={revenueData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                      <defs>
+                        <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={theme.palette.success.main} stopOpacity={0.3}/>
+                          <stop offset="100%" stopColor={theme.palette.success.main} stopOpacity={0.05}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} stroke="#e0e0e0" />
+                      <XAxis 
+                        dataKey="month" 
+                        stroke="#666" 
+                        style={{ fontSize: '0.85rem' }}
+                        tickLine={false}
+                      />
+                      <YAxis 
+                        stroke="#666" 
+                        style={{ fontSize: '0.85rem' }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          borderRadius: 8, 
+                          border: 'none',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                        }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="revenue" 
+                        stroke={theme.palette.success.main}
+                        strokeWidth={3}
+                        fill="url(#revenueGradient)"
+                        dot={{ fill: theme.palette.success.main, r: 5, strokeWidth: 2, stroke: 'white' }}
+                        activeDot={{ r: 7, strokeWidth: 2, stroke: 'white' }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </Box>
               </CardContent>
             </Card>
@@ -207,14 +241,43 @@ const AdminReports = () => {
                   Department Enrollment
                 </Typography>
                 <Box sx={{ height: 300 }}>
-                  <Bar
-                    data={enrollmentData}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: { legend: { display: false } },
-                    }}
-                  />
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={enrollmentData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                      <defs>
+                        <linearGradient id="enrollmentGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={theme.palette.primary.main} stopOpacity={1}/>
+                          <stop offset="100%" stopColor={theme.palette.primary.main} stopOpacity={0.6}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} stroke="#e0e0e0" />
+                      <XAxis 
+                        dataKey="department" 
+                        stroke="#666" 
+                        style={{ fontSize: '0.85rem' }}
+                        tickLine={false}
+                      />
+                      <YAxis 
+                        stroke="#666" 
+                        style={{ fontSize: '0.85rem' }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          borderRadius: 8, 
+                          border: 'none',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                        }}
+                        cursor={{ fill: 'rgba(25,118,210,0.1)' }}
+                      />
+                      <Bar 
+                        dataKey="students" 
+                        fill="url(#enrollmentGradient)"
+                        radius={[8, 8, 0, 0]}
+                        maxBarSize={60}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </Box>
               </CardContent>
             </Card>

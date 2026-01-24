@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box, TextField, Button, Typography, Alert } from '@mui/material';
 import { Email, ArrowBack } from '@mui/icons-material';
 import { Link, useNavigate } from 'react-router-dom';
+import PageTransition from '../../components/Common/PageTransition';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -20,26 +21,27 @@ const ForgotPassword = () => {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'background.default',
-        p: 3,
-      }}
-    >
+    <PageTransition>
       <Box
         sx={{
-          width: '100%',
-          maxWidth: 500,
-          backgroundColor: 'background.paper',
-          borderRadius: '12px',
-          p: 4,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'background.default',
+          p: 3,
         }}
       >
+        <Box
+          sx={{
+            width: '100%',
+            maxWidth: 500,
+            backgroundColor: 'background.paper',
+            borderRadius: '12px',
+            p: 4,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+          }}
+        >
         <Button
           component={Link}
           to="/login"
@@ -86,8 +88,9 @@ const ForgotPassword = () => {
             Send Verification Code
           </Button>
         </form>
+        </Box>
       </Box>
-    </Box>
+    </PageTransition>
   );
 };
 

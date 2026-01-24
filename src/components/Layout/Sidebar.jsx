@@ -41,6 +41,11 @@ import {
   Assessment as AssessmentIcon,
   Group as GroupIcon,
   People as PeopleIcon,
+  Event as EventIcon,
+  LocalLibrary as LocalLibraryIcon,
+  Quiz as QuizIcon,
+  AccountBalance as AccountBalanceIcon,
+  CardMembership as CardMembershipIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -70,7 +75,7 @@ const studentMenuItems = [
   { 
     text: 'Attendance', 
     icon: HowToRegIcon, 
-    path: '/attendance',
+    path: '/attendance/smart-attendance',
     badge: !isAttendanceMarkedToday() ? 'Mark Now' : null,
     badgeColor: 'warning'
   },
@@ -92,13 +97,15 @@ const studentMenuItems = [
     text: 'Nexus Chat', 
     icon: ChatIcon, 
     path: '/chat',
-    badge: null,
     badgeColor: 'primary'
   },
   { text: 'Profile', icon: PersonIcon, path: '/profile', divider: true },
   { text: 'Transcript', icon: DescriptionIcon, path: '/transcript' },
   { text: 'Library', icon: MenuBookIcon, path: '/library' },
+  { text: 'Alumni Directory', icon: PeopleIcon, path: '/student/alumni-directory' },
   { text: 'Grievances', icon: SupportAgentIcon, path: '/grievances' },
+  { text: 'My Tickets', icon: SupportAgentIcon, path: '/support' },
+  { text: 'Notifications', icon: AssessmentIcon, path: '/notifications' },
 ];
 
 // Admin menu items
@@ -106,11 +113,14 @@ const adminMenuItems = [
   { text: 'Dashboard', icon: DashboardIcon, path: '/admin/dashboard' },
   { text: 'User Management', icon: PeopleIcon, path: '/admin/users' },
   { text: 'Course Management', icon: SchoolIcon, path: '/admin/courses' },
-  { text: 'Fee Management', icon: PaymentIcon, path: '/finance' },
-  { text: 'Reports', icon: AssessmentIcon, path: '/admin/reports', divider: true },
+  { text: 'Departments', icon: AccountBalanceIcon, path: '/admin/departments' },
+  { text: 'Alumni Management', icon: CardMembershipIcon, path: '/admin/alumni' },
+  { text: 'Finance Management', icon: PaymentIcon, path: '/admin/finance' },
+  { text: 'Grievances', icon: SupportAgentIcon, path: '/admin/grievances' },
+  { text: 'Reports', icon: AssessmentIcon, path: '/admin/reports' },
+  { text: 'Settings', icon: SettingsIcon, path: '/admin/settings', divider: true },
   { text: 'Library', icon: MenuBookIcon, path: '/library' },
-  { text: 'Grievances', icon: SupportAgentIcon, path: '/grievances' },
-  { text: 'Settings', icon: SettingsIcon, path: '/admin/settings' },
+  { text: 'Nexus Chat', icon: ChatIcon, path: '/chat' },
 ];
 
 // Teacher menu items
@@ -118,26 +128,48 @@ const teacherMenuItems = [
   { text: 'Dashboard', icon: DashboardIcon, path: '/teacher/dashboard' },
   { text: 'My Courses', icon: SchoolIcon, path: '/teacher/courses' },
   { text: 'Students', icon: GroupIcon, path: '/teacher/students' },
+  { text: 'Assignments', icon: AssignmentIcon, path: '/teacher/assignments' },
+  { text: 'Quizzes', icon: QuizIcon, path: '/teacher/quizzes' },
   { 
     text: 'Attendance', 
     icon: HowToRegIcon, 
-    path: '/attendance',
+    path: '/teacher/attendance',
   },
-  { 
-    text: 'Assignments', 
-    icon: AssignmentIcon, 
-    path: '/assignments',
-    badge: '23',
-    badgeColor: 'warning'
-  },
+  { text: 'Reports', icon: AssessmentIcon, path: '/teacher/reports', divider: true },
+  { text: 'Profile', icon: PersonIcon, path: '/profile' },
+  { text: 'Library', icon: MenuBookIcon, path: '/library' },
   { 
     text: 'Nexus Chat', 
     icon: ChatIcon, 
     path: '/chat',
   },
-  { text: 'Profile', icon: PersonIcon, path: '/profile', divider: true },
+  { text: 'Grievances', icon: SupportAgentIcon, path: '/teacher/grievances' },
+];
+
+// Librarian menu items
+const librarianMenuItems = [
+  { text: 'Dashboard', icon: DashboardIcon, path: '/librarian/dashboard' },
+  { text: 'Library Catalog', icon: LocalLibraryIcon, path: '/library' },
+  { text: 'Book Management', icon: MenuBookIcon, path: '/librarian/books' },
+  { text: 'Issued Books', icon: AssignmentIcon, path: '/librarian/issued' },
+  { text: 'Reservations', icon: EventIcon, path: '/librarian/reservations' },
+  { text: 'Reports', icon: AssessmentIcon, path: '/librarian/reports', divider: true },
+  { text: 'Nexus Chat', icon: ChatIcon, path: '/chat' },
+  { text: 'Grievances', icon: SupportAgentIcon, path: '/librarian/grievances' },
+  { text: 'Settings', icon: SettingsIcon, path: '/admin/settings' },
+];
+
+// Alumni menu items
+const alumniMenuItems = [
+  { text: 'Alumni Network', icon: PeopleIcon, path: '/alumni/network' },
+  { text: 'Events', icon: EventIcon, path: '/alumni/events' },
+  { text: 'Job Board', icon: AssignmentIcon, path: '/alumni/jobs' },
+  { text: 'Mentorship', icon: GroupIcon, path: '/alumni/mentorship' },
+  { text: 'Success Stories', icon: SchoolIcon, path: '/alumni/stories', divider: true },
+  { text: 'Profile', icon: PersonIcon, path: '/profile' },
   { text: 'Library', icon: MenuBookIcon, path: '/library' },
-  { text: 'Reports', icon: AssessmentIcon, path: '/teacher/reports' },
+  { text: 'Nexus Chat', icon: ChatIcon, path: '/chat' },
+  { text: 'Grievances', icon: SupportAgentIcon, path: '/alumni/grievances' },
 ];
 
 const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
@@ -156,6 +188,10 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
         return adminMenuItems;
       case 'teacher':
         return teacherMenuItems;
+      case 'librarian':
+        return librarianMenuItems;
+      case 'alumni':
+        return alumniMenuItems;
       default:
         return studentMenuItems;
     }
@@ -190,19 +226,24 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
         display: 'flex', 
         flexDirection: 'column',
         minHeight: 0,
-        background: `linear-gradient(180deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
+        background: theme.palette.mode === 'dark'
+          ? 'linear-gradient(180deg, #1A1A1A 0%, #0A0A0A 100%)'
+          : 'linear-gradient(180deg, #1976D2 0%, #00796B 100%)',
       }}
     >
       {/* Logo Area */}
       <Box
         sx={{
           p: collapsed ? 1 : 2.5,
+          pt: collapsed ? 1.5 : 3,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           minHeight: 80,
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.15)',
           backdropFilter: 'blur(10px)',
+          borderBottom: '1px solid',
+          borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)',
         }}
       >
         {!collapsed ? (
@@ -211,16 +252,21 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
               sx={{
                 width: 150,
                 height: 50,
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                background: theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, rgba(76,175,80,0.2) 0%, rgba(33,150,243,0.2) 100%)'
+                  : 'linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.15) 100%)',
                 borderRadius: 2,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 mx: 'auto',
                 mb: 1,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                border: '1px solid',
+                borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.3)',
               }}
             >
-              <Typography variant="h5" fontWeight="bold" color="white">
+              <Typography variant="h5" fontWeight="800" color="white" sx={{ letterSpacing: 2 }}>
                 NEXUS
               </Typography>
             </Box>
@@ -259,20 +305,34 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
               <ListItemButton
                 onClick={() => navigate(item.path)}
                 sx={{
-                  borderRadius: collapsed ? '8px' : '12px',
-                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.16)' : 'transparent',
+                  borderRadius: collapsed ? '12px' : '16px',
+                  background: isActive
+                    ? theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(76,175,80,0.25) 0%, rgba(33,150,243,0.25) 100%)'
+                      : 'linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.15) 100%)'
+                    : 'transparent',
                   color: 'white',
                   '&:hover': {
-                    backgroundColor: isActive
-                      ? 'rgba(255, 255, 255, 0.2)'
-                      : 'rgba(255, 255, 255, 0.1)',
+                    background: isActive
+                      ? theme.palette.mode === 'dark'
+                        ? 'linear-gradient(135deg, rgba(76,175,80,0.3) 0%, rgba(33,150,243,0.3) 100%)'
+                        : 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.2) 100%)'
+                      : theme.palette.mode === 'dark'
+                        ? 'rgba(255,255,255,0.08)'
+                        : 'rgba(255,255,255,0.12)',
                   },
                   border: '1px solid',
-                  borderColor: isActive ? 'rgba(255, 255, 255, 0.18)' : 'transparent',
+                  borderColor: isActive
+                    ? theme.palette.mode === 'dark'
+                      ? 'rgba(76,175,80,0.3)'
+                      : 'rgba(255,255,255,0.25)'
+                    : 'transparent',
                   py: collapsed ? 1.5 : 1.2,
                   px: collapsed ? 1.5 : 2,
+                  mx: collapsed ? 0 : 0.5,
                   justifyContent: collapsed ? 'center' : 'flex-start',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: isActive ? '0 4px 12px rgba(0,0,0,0.15)' : 'none',
                 }}
               >
                 <ListItemIcon
@@ -306,30 +366,38 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
                     <ListItemText
                       primary={item.text}
                       primaryTypographyProps={{
-                        fontWeight: isActive ? 600 : 400,
+                        fontWeight: isActive ? 700 : 600,
                         fontSize: '0.95rem',
+                        letterSpacing: 0.3,
+                        noWrap: true,
+                      }}
+                      sx={{
+                        pr: item.badge ? 0.5 : 0,
                       }}
                     />
                     {item.badge && (
                       <Chip
-                        label={item.badge}
+                        label={item.badge === 'Mark Attendance' ? 'Mark' : item.badge}
                         size="small"
                         variant="filled"
                         sx={{
-                          height: 20,
-                          fontSize: '0.7rem',
+                          height: 22,
+                          fontSize: '0.65rem',
                           fontWeight: 700,
-                          px: 0.75,
+                          px: 0.5,
+                          minWidth: 'auto',
                           color: 'white',
+                          flexShrink: 0,
                           backgroundColor: alpha(
-                            theme.palette[item.badgeColor || 'error']?.light || theme.palette.error.light,
-                            0.28
+                            theme.palette[item.badgeColor || 'error'].main,
+                            theme.palette.mode === 'dark' ? 0.3 : 0.9
                           ),
                           border: '1px solid',
                           borderColor: alpha(
-                            theme.palette[item.badgeColor || 'error']?.light || theme.palette.error.light,
-                            0.4
+                            theme.palette[item.badgeColor || 'error'].main,
+                            theme.palette.mode === 'dark' ? 0.5 : 1
                           ),
+                          boxShadow: `0 2px 8px ${alpha(theme.palette[item.badgeColor || 'error'].main, 0.3)}`,
                         }}
                       />
                     )}
@@ -350,7 +418,7 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
                   )}
                 </ListItem>
                 {item.divider && (
-                  <Divider sx={{ my: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+                  <Divider sx={{ my: 1, borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)' }} />
                 )}
               </React.Fragment>
             );
@@ -360,14 +428,18 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
 
       {/* Footer (always sits at the bottom; never overlaps nav) */}
       <Box sx={{ mt: 'auto', flexShrink: 0 }}>
-        <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+        <Divider sx={{ borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)' }} />
 
         {/* User Info Card */}
         <Box
           sx={{
             p: collapsed ? 1 : 1.5,
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            background: theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(76,175,80,0.15) 0%, rgba(33,150,243,0.15) 100%)'
+              : 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 100%)',
             backdropFilter: 'blur(10px)',
+            borderTop: '1px solid',
+            borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)',
           }}
         >
           {!collapsed ? (
@@ -392,9 +464,14 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
                   sx={{
                     height: 18,
                     fontSize: '0.65rem',
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    fontWeight: 600,
+                    background: theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(76,175,80,0.3) 0%, rgba(33,150,243,0.3) 100%)'
+                      : 'linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.15) 100%)',
                     color: 'white',
                     mt: 0.5,
+                    border: '1px solid',
+                    borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.3)',
                   }}
                 />
               </Box>
@@ -423,10 +500,16 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
             onClick={handleLogoutClick}
             sx={{
               color: 'white',
-              borderColor: 'rgba(255, 255, 255, 0.3)',
+              fontWeight: 700,
+              borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.35)',
+              background: theme.palette.mode === 'dark'
+                ? 'rgba(244,67,54,0.15)'
+                : 'rgba(211,47,47,0.08)',
               '&:hover': {
-                borderColor: 'rgba(255, 255, 255, 0.5)',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.6)',
+                background: theme.palette.mode === 'dark'
+                  ? 'rgba(244,67,54,0.25)'
+                  : 'rgba(211,47,47,0.15)',
               },
               py: collapsed ? 1.5 : 0.75,
               justifyContent: 'center',
@@ -443,7 +526,9 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
               display: 'flex',
               justifyContent: 'center',
               p: 0.5,
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              background: theme.palette.mode === 'dark'
+                ? 'rgba(255,255,255,0.03)'
+                : 'rgba(255,255,255,0.08)',
             }}
           >
             <IconButton
@@ -451,7 +536,9 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
               sx={{
                 color: 'white',
                 '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  background: theme.palette.mode === 'dark'
+                    ? 'rgba(255,255,255,0.08)'
+                    : 'rgba(255,255,255,0.15)',
                 },
               }}
             >

@@ -70,10 +70,10 @@ const globalStyles = (theme) => ({
     background: theme.palette.background.default,
   },
   '::-webkit-scrollbar-thumb': {
-    background: theme.palette.grey[400],
+    background: theme.palette.mode === 'dark' ? '#333333' : theme.palette.grey[400],
     borderRadius: '4px',
     '&:hover': {
-      background: theme.palette.grey[500],
+      background: theme.palette.mode === 'dark' ? '#444444' : theme.palette.grey[500],
     },
   },
   // Page container
@@ -112,12 +112,8 @@ const globalStyles = (theme) => ({
   },
   // Hover lift effect
   '.hover-lift': {
-    transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-    cursor: 'pointer',
-    '&:hover': {
-      transform: 'scale(1.02) translateY(-2px)',
-      boxShadow: theme.shadows[8],
-    },
+    transition: 'none',
+    cursor: 'default',
   },
   // Status dots
   '.status-dot': {
@@ -153,19 +149,32 @@ const globalStyles = (theme) => ({
     animation: 'scaleIn 0.2s ease-out',
   },
   '.shimmer': {
-    background: `linear-gradient(to right, ${theme.palette.grey[200]} 0%, ${theme.palette.grey[300]} 20%, ${theme.palette.grey[200]} 40%, ${theme.palette.grey[200]} 100%)`,
+    background: theme.palette.mode === 'dark'
+      ? 'linear-gradient(to right, #333333 0%, #444444 20%, #333333 40%, #333333 100%)'
+      : `linear-gradient(to right, ${theme.palette.grey[200]} 0%, ${theme.palette.grey[300]} 20%, ${theme.palette.grey[200]} 40%, ${theme.palette.grey[200]} 100%)`,
     backgroundSize: '1000px 100%',
     animation: 'shimmer 2s infinite linear',
   },
   // Loading skeleton
   '.skeleton': {
-    backgroundColor: theme.palette.grey[200],
+    backgroundColor: theme.palette.mode === 'dark' ? '#333333' : theme.palette.grey[200],
     borderRadius: theme.shape.borderRadius,
     '&.shimmer': {
-      background: `linear-gradient(to right, ${theme.palette.grey[200]} 0%, ${theme.palette.grey[300]} 20%, ${theme.palette.grey[200]} 40%, ${theme.palette.grey[200]} 100%)`,
+      background: theme.palette.mode === 'dark'
+        ? 'linear-gradient(to right, #333333 0%, #444444 20%, #333333 40%, #333333 100%)'
+        : `linear-gradient(to right, ${theme.palette.grey[200]} 0%, ${theme.palette.grey[300]} 20%, ${theme.palette.grey[200]} 40%, ${theme.palette.grey[200]} 100%)`,
       backgroundSize: '1000px 100%',
       animation: 'shimmer 2s infinite linear',
     },
+  },
+  // Recharts styling
+  '.recharts-cartesian-grid line': {
+    stroke: theme.palette.mode === 'dark' ? '#444444' : '#E0E0E0',
+  },
+  '.recharts-default-tooltip': {
+    backgroundColor: theme.palette.mode === 'dark' ? '#333333' : '#FFFFFF',
+    border: `1px solid ${theme.palette.mode === 'dark' ? '#444444' : '#E0E0E0'}`,
+    color: theme.palette.mode === 'dark' ? '#FFFFFF' : '#212121',
   },
   // Utility classes
   '.smooth-transition': {
@@ -178,11 +187,7 @@ const globalStyles = (theme) => ({
     backgroundClip: 'text',
   },
   '.card-hover': {
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    '&:hover': {
-      transform: 'translateY(-4px)',
-      boxShadow: theme.shadows[12],
-    },
+    transition: 'none',
   },
   // Focus visible styles
   '.focus-visible': {
