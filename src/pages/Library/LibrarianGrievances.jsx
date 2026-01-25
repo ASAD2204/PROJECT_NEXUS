@@ -138,36 +138,36 @@ const LibrarianGrievances = () => {
 
   const stats = [
     {
-      label: 'Total Library Complaints',
+      title: 'Total Library Complaints',
       value: grievances.length.toString(),
-      change: 'This month',
-      trend: 'up',
+      subtitle: 'This month',
       color: 'primary',
       icon: LibraryIcon,
+      tooltip: 'All library-related grievances submitted this month including book issues, facility problems, and system errors',
     },
     {
-      label: 'Pending',
+      title: 'Pending',
       value: grievances.filter(g => g.status === 'Pending').length.toString(),
-      change: 'Need attention',
-      trend: 'up',
+      subtitle: 'Need attention',
       color: 'warning',
       icon: PendingIcon,
+      tooltip: 'Grievances awaiting initial review and assignment. These require immediate attention from library staff',
     },
     {
-      label: 'In Progress',
+      title: 'In Progress',
       value: grievances.filter(g => g.status === 'In Progress').length.toString(),
-      change: 'Being handled',
-      trend: 'up',
+      subtitle: 'Being handled',
       color: 'info',
       icon: SupportIcon,
+      tooltip: 'Grievances currently being addressed by the library team. Students will receive updates as progress is made',
     },
     {
-      label: 'Resolved',
+      title: 'Resolved',
       value: grievances.filter(g => g.status === 'Resolved').length.toString(),
-      change: 'This month',
-      trend: 'up',
+      subtitle: 'This month',
       color: 'success',
       icon: CheckCircleIcon,
+      tooltip: 'Successfully resolved grievances this month. Resolution details and actions taken are documented for each case',
     },
   ];
 

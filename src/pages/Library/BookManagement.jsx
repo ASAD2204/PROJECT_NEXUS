@@ -72,9 +72,30 @@ const BookManagement = () => {
   ]);
 
   const stats = [
-    { label: 'Total Books', value: books.reduce((sum, b) => sum + b.totalCopies, 0).toString(), change: '+45 new this month', trend: 'up', color: 'primary', icon: BookIcon },
-    { label: 'Available', value: books.reduce((sum, b) => sum + b.availableCopies, 0).toString(), change: 'Ready to issue', trend: 'up', color: 'success', icon: InventoryIcon },
-    { label: 'Categories', value: new Set(books.map(b => b.category)).size.toString(), change: 'Across library', trend: 'up', color: 'info', icon: CategoryIcon },
+    { 
+      title: 'Total Books', 
+      value: books.reduce((sum, b) => sum + b.totalCopies, 0).toString(), 
+      subtitle: '+45 new this month', 
+      color: 'primary', 
+      icon: BookIcon,
+      tooltip: 'Total number of physical book copies across all titles and categories in the library catalog'
+    },
+    { 
+      title: 'Available', 
+      value: books.reduce((sum, b) => sum + b.availableCopies, 0).toString(), 
+      subtitle: 'Ready to issue', 
+      color: 'success', 
+      icon: InventoryIcon,
+      tooltip: 'Books currently available on shelves and ready to be issued to students immediately'
+    },
+    { 
+      title: 'Categories', 
+      value: new Set(books.map(b => b.category)).size.toString(), 
+      subtitle: 'Across library', 
+      color: 'info', 
+      icon: CategoryIcon,
+      tooltip: 'Number of different book categories including Computer Science, Business, Engineering, and more'
+    },
   ];
 
   const handleOpenDialog = (book = null) => {

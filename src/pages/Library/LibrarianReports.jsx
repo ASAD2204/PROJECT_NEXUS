@@ -37,10 +37,38 @@ const LibrarianReports = () => {
 
   // Mock data
   const stats = [
-    { label: 'Total Books', value: '2,847', change: '+145 this year', trend: 'up', color: 'primary', icon: BookIcon },
-    { label: 'Active Members', value: '1,234', change: '+56 this month', trend: 'up', color: 'success', icon: PeopleIcon },
-    { label: 'Books Issued', value: '342', change: 'This month', trend: 'up', color: 'info', icon: InventoryIcon },
-    { label: 'Categories', value: '18', change: 'Across library', trend: 'up', color: 'warning', icon: CategoryIcon },
+    { 
+      title: 'Total Books', 
+      value: '2,847', 
+      subtitle: '+145 this year', 
+      color: 'primary', 
+      icon: BookIcon,
+      tooltip: 'Complete library catalog size including all book copies across all categories and subjects'
+    },
+    { 
+      title: 'Active Members', 
+      value: '1,234', 
+      subtitle: '+56 this month', 
+      color: 'success', 
+      icon: PeopleIcon,
+      tooltip: 'Total registered library members including students, faculty, and staff with active borrowing privileges'
+    },
+    { 
+      title: 'Books Issued', 
+      value: '342', 
+      subtitle: 'This month', 
+      color: 'info', 
+      icon: InventoryIcon,
+      tooltip: 'Number of books currently issued this month. Helps analyze circulation trends and popular titles'
+    },
+    { 
+      title: 'Categories', 
+      value: '18', 
+      subtitle: 'Across library', 
+      color: 'warning', 
+      icon: CategoryIcon,
+      tooltip: 'Book categories available including Computer Science, Business, Engineering, Mathematics, and more'
+    },
   ];
 
   // Category distribution data

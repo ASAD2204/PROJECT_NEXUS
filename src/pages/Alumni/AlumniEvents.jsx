@@ -36,9 +36,11 @@ import {
   VideoCall,
   BusinessCenter,
   School,
+  History,
 } from '@mui/icons-material';
 import { alumniEvents, registerForEvent } from '../../data/dummyData';
 import PageHeader from '../../components/Common/PageHeader';
+import StatCard from '../../components/Common/StatCard';
 import PageTransition from '../../components/Common/PageTransition';
 import EmptyState from '../../components/Common/EmptyState';
 import { CardSkeleton } from '../../components/Common/LoadingSkeleton';
@@ -140,40 +142,31 @@ const AlumniEvents = () => {
         {/* Stats */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid size={{ xs: 12, sm: 4 }}>
-            <Card>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" fontWeight="bold" color="primary">
-                  {upcomingEvents.length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Upcoming Events
-                </Typography>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Upcoming Events"
+              value={upcomingEvents.length}
+              icon={Event}
+              color="primary"
+              tooltip="Events scheduled for the future. Includes reunions, career fairs, workshops, webinars, and networking sessions"
+            />
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
-            <Card>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" fontWeight="bold" color="success.main">
-                  {alumniEvents.reduce((sum, e) => sum + e.registered, 0)}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Total Registrations
-                </Typography>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Total Registrations"
+              value={alumniEvents.reduce((sum, e) => sum + e.registered, 0)}
+              icon={People}
+              color="success"
+              tooltip="Total participants registered across all events. Shows engagement level of alumni and students in university activities"
+            />
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
-            <Card>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" fontWeight="bold" color="secondary">
-                  {pastEvents.length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Past Events
-                </Typography>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Past Events"
+              value={pastEvents.length}
+              icon={History}
+              color="info"
+              tooltip="Successfully completed events. Browse past events to see highlights and recordings from previous sessions"
+            />
           </Grid>
         </Grid>
 

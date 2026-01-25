@@ -40,6 +40,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import PageHeader from '../../components/Common/PageHeader';
+import StatCard from '../../components/Common/StatCard';
 import { pageTransition } from '../../utils/animations';
 
 const AdminReports = () => {
@@ -57,10 +58,38 @@ const AdminReports = () => {
   ];
 
   const summaryStats = [
-    { label: 'Total Students', value: '2,847', change: '+12.5%', color: theme.palette.primary.main },
-    { label: 'Total Revenue', value: '₨ 48.5M', change: '+15.3%', color: theme.palette.success.main },
-    { label: 'Avg Attendance', value: '87%', change: '+2.1%', color: theme.palette.info.main },
-    { label: 'Course Completion', value: '94%', change: '+3.2%', color: theme.palette.warning.main },
+    { 
+      title: 'Total Students', 
+      value: '2,847', 
+      subtitle: '+12.5% from last year', 
+      color: 'primary',
+      icon: People,
+      tooltip: 'Total number of students enrolled across all departments and programs'
+    },
+    { 
+      title: 'Total Revenue', 
+      value: '₨ 48.5M', 
+      subtitle: '+15.3% increase', 
+      color: 'success',
+      icon: Payment,
+      tooltip: 'Total revenue generated from tuition fees, lab fees, and other charges'
+    },
+    { 
+      title: 'Avg Attendance', 
+      value: '87%', 
+      subtitle: '+2.1% improvement', 
+      color: 'info',
+      icon: School,
+      tooltip: 'Average attendance rate across all classes and programs'
+    },
+    { 
+      title: 'Course Completion', 
+      value: '94%', 
+      subtitle: '+3.2% this year', 
+      color: 'warning',
+      icon: Assessment,
+      tooltip: 'Percentage of students successfully completing their enrolled courses'
+    },
   ];
 
   const enrollmentData = [
@@ -152,22 +181,14 @@ const AdminReports = () => {
         <Grid container spacing={3} sx={{ mb: 3 }}>
           {summaryStats.map((stat, index) => (
             <Grid key={index} size={{ xs: 12, sm: 6, lg: 3 }}>
-              <Card>
-                <CardContent>
-                  <Typography variant="caption" color="text.secondary">
-                    {stat.label}
-                  </Typography>
-                  <Typography variant="h4" fontWeight="bold" sx={{ my: 1 }}>
-                    {stat.value}
-                  </Typography>
-                  <Chip
-                    label={stat.change}
-                    size="small"
-                    color="success"
-                    sx={{ height: 20, fontSize: '0.7rem' }}
-                  />
-                </CardContent>
-              </Card>
+              <StatCard
+                title={stat.title}
+                value={stat.value}
+                subtitle={stat.subtitle}
+                icon={stat.icon}
+                color={stat.color}
+                tooltip={stat.tooltip}
+              />
             </Grid>
           ))}
         </Grid>

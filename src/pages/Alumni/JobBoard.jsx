@@ -126,9 +126,30 @@ const JobBoard = () => {
   ];
 
   const stats = [
-    { label: 'Total Jobs', value: '142', change: '+12 this week', trend: 'up', color: 'primary', icon: WorkIcon },
-    { label: 'Companies', value: '56', change: '+5 new', trend: 'up', color: 'success', icon: BusinessIcon },
-    { label: 'Applications', value: '83', change: 'This month', trend: 'up', color: 'info', icon: TrendingUpIcon },
+    { 
+      title: 'Total Jobs', 
+      value: '142', 
+      subtitle: '+12 this week', 
+      color: 'primary', 
+      icon: WorkIcon,
+      tooltip: 'Total job opportunities posted by alumni and partner companies. Updated regularly with new positions'
+    },
+    { 
+      title: 'Companies', 
+      value: '56', 
+      subtitle: '+5 new', 
+      color: 'success', 
+      icon: BusinessIcon,
+      tooltip: 'Number of companies hiring through our alumni network. Includes startups, MNCs, and local organizations'
+    },
+    { 
+      title: 'Applications', 
+      value: '83', 
+      subtitle: 'This month', 
+      color: 'info', 
+      icon: TrendingUpIcon,
+      tooltip: 'Total job applications submitted by students and alumni this month. Track your application status in real-time'
+    },
   ];
 
   const filteredJobs = jobs.filter(job => {

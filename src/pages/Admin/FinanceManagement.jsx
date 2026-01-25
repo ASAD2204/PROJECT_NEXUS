@@ -143,6 +143,7 @@ const FinanceManagement = () => {
               color="success"
               trend={{ direction: 'up', value: '+15.3%' }}
               subtitle="This Month"
+              tooltip="Total revenue collected from student fee payments this month"
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -152,6 +153,7 @@ const FinanceManagement = () => {
               icon={AttachMoney}
               color="warning"
               subtitle={`${stats.unpaidCount + stats.overdueCount} Students`}
+              tooltip="Total outstanding fees from unpaid and overdue students"
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -161,6 +163,7 @@ const FinanceManagement = () => {
               icon={Warning}
               color="error"
               subtitle="Requires Action"
+              tooltip="Number of students with overdue payment status requiring immediate attention"
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -170,6 +173,7 @@ const FinanceManagement = () => {
               icon={Receipt}
               color="info"
               subtitle="This Semester"
+              tooltip="Total number of financial transactions recorded this semester"
             />
           </Grid>
         </Grid>

@@ -721,6 +721,7 @@ const Profile = () => {
                 icon={TrendingUp}
                 color="primary"
                 subtitle="Out of 4.0"
+                tooltip="Your Cumulative Grade Point Average across all completed semesters. This reflects your overall academic performance throughout your degree program."
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -730,6 +731,7 @@ const Profile = () => {
                 icon={School}
                 color="success"
                 subtitle="Credits earned"
+                tooltip="Total credit hours earned out of required credits for your degree. Each course has credit hours based on its workload and duration."
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -739,6 +741,7 @@ const Profile = () => {
                 icon={CalendarMonth}
                 color="warning"
                 subtitle="Completed"
+                tooltip="Number of semesters completed out of total required semesters for your degree program. Most undergraduate programs require 8 semesters (4 years)."
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -748,6 +751,7 @@ const Profile = () => {
                 icon={School}
                 color="info"
                 subtitle="Enrolled"
+                tooltip="Number of courses you are currently enrolled in this semester. Each course contributes to your semester GPA and overall CGPA."
               />
             </Grid>
           </Grid>

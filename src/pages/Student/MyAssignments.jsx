@@ -23,6 +23,7 @@ import {
   ArrowForward,
 } from '@mui/icons-material';
 import PageHeader from '../../components/Common/PageHeader';
+import StatCard from '../../components/Common/StatCard';
 import { fadeInUp, staggerContainer } from '../../utils/animations';
 
 const MyAssignments = () => {
@@ -137,127 +138,43 @@ const MyAssignments = () => {
         animate="animate"
       >
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-          <Card sx={{ height: '100%', borderRadius: 3 }}>
-            <CardContent sx={{ p: 3 }}>
-              <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                    {stats.total}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Total
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '50%',
-                    backgroundColor: 'primary.main',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Assignment sx={{ fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="Total"
+            value={stats.total}
+            icon={Assignment}
+            color="primary"
+            tooltip="Total number of assignments across all your courses this semester."
+          />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-          <Card sx={{ height: '100%', borderRadius: 3 }}>
-            <CardContent sx={{ p: 3 }}>
-              <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                    {stats.pending}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Pending
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '50%',
-                    backgroundColor: 'warning.main',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <PendingActions sx={{ fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="Pending"
+            value={stats.pending}
+            icon={PendingActions}
+            color="warning"
+            tooltip="Assignments that are not yet submitted. Submit before the deadline to avoid penalties."
+          />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-          <Card sx={{ height: '100%', borderRadius: 3 }}>
-            <CardContent sx={{ p: 3 }}>
-              <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                    {stats.submitted}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Submitted
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '50%',
-                    backgroundColor: 'info.main',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <CheckCircle sx={{ fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="Submitted"
+            value={stats.submitted}
+            icon={CheckCircle}
+            color="info"
+            tooltip="Assignments you have submitted and are awaiting grading by your instructors."
+          />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-          <Card sx={{ height: '100%', borderRadius: 3 }}>
-            <CardContent sx={{ p: 3 }}>
-              <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                    {stats.graded}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Graded
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '50%',
-                    backgroundColor: 'success.main',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Grade sx={{ fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="Graded"
+            value={stats.graded}
+            icon={Grade}
+            color="success"
+            tooltip="Assignments that have been graded. Check your marks and feedback below."
+          />
         </Grid>
       </Grid>
 

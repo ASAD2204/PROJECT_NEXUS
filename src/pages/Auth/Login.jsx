@@ -11,6 +11,12 @@ import {
   Paper,
   Chip,
   Stack,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import { 
   School, 
@@ -20,6 +26,7 @@ import {
   AdminPanelSettings,
   LocalLibrary,
   People,
+  KeyboardArrowDown,
 } from '@mui/icons-material';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -129,10 +136,10 @@ const Login = () => {
               </Typography>
             </Box>
 
-            <Typography variant="h4" fontWeight="bold">
+            <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
               Welcome Back!
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
               Sign in to continue to your account
             </Typography>
 
@@ -143,76 +150,157 @@ const Login = () => {
             )}
 
             <form onSubmit={handleSubmit}>
-              {/* User Type Selection with Cards */}
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom textAlign="center" fontWeight={600}>
-                  I am a...
-                </Typography>
-                <Box
+              {/* User Type Selection with Beautiful Dropdown */}
+              <FormControl fullWidth sx={{ mb: 2.5 }}>
+                <InputLabel id="user-type-label" sx={{ fontWeight: 600, fontSize: '0.95rem' }}>Select User Type</InputLabel>
+                <Select
+                  labelId="user-type-label"
+                  value={userType}
+                  label="Select User Type"
+                  onChange={(e) => setUserType(e.target.value)}
+                  IconComponent={KeyboardArrowDown}
                   sx={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(5, 1fr)',
-                    gap: 1,
+                    '& .MuiSelect-select': {
+                      py: 1.75,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      fontSize: '1rem',
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderWidth: '2px',
+                    },
+                    '&:hover': {
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'primary.main',
+                      },
+                    },
+                  }}
+                  renderValue={(selected) => {
+                    const selectedType = userTypes.find(type => type.value === selected);
+                    const Icon = selectedType.icon;
+                    return (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Icon sx={{ fontSize: 20, color: selectedType.color }} />
+                        <Typography fontWeight={600} color={selectedType.color}>
+                          {selectedType.label}
+                        </Typography>
+                      </Box>
+                    );
                   }}
                 >
                   {userTypes.map(({ value, icon: Icon, label, color }) => (
-                    <Button
-                      key={value}
-                      onClick={() => setUserType(value)}
-                      variant={userType === value ? 'contained' : 'outlined'}
+                    <MenuItem 
+                      key={value} 
+                      value={value}
                       sx={{
                         py: 1.5,
-                        px: 1,
-                        flexDirection: 'column',
-                        gap: 0.5,
-                        minHeight: 85,
-                        borderRadius: 2,
-                        border: '2px solid',
-                        borderColor: userType === value ? color : 'divider',
-                        backgroundColor: userType === value ? `${color}15` : 'background.paper',
-                        color: userType === value ? color : 'text.primary',
                         '&:hover': {
-                          borderColor: color,
-                          backgroundColor: `${color}10`,
-                          transform: 'translateY(-2px)',
+                          backgroundColor: `${color}15`,
                         },
-                        transition: 'all 0.2s ease',
+                        '&.Mui-selected': {
+                          backgroundColor: `${color}20`,
+                          '&:hover': {
+                            backgroundColor: `${color}30`,
+                          },
+                        },
                       }}
                     >
-                      <Icon sx={{ fontSize: 28, color: color }} />
-                      <Typography variant="caption" fontWeight={700} sx={{ color: color }}>
-                        {label}
-                      </Typography>
-                      {userType === value && (
-                        <Box
-                          sx={{
-                            width: 6,
-                            height: 6,
-                            borderRadius: '50%',
-                            bgcolor: color,
-                            mt: 0.5,
-                          }}
-                        />
-                      )}
-                    </Button>
+                      <ListItemIcon>
+                        <Icon sx={{ color: color }} />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={label}
+                        primaryTypographyProps={{
+                          fontWeight: userType === value ? 700 : 500,
+                          color: color,
+                        }}
+                      />
+                    </MenuItem>
                   ))}
-                </Box>
-              </Box>
+                </Select>
+              </FormControl>
 
-              <TextField fullWidth label="Email Address" type="email" value={email} onChange={(e) => setEmail(e.target.value)} size="small" sx={{ mb: 2 }} placeholder="user@university.edu" />
-              <TextField fullWidth label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} size="small" sx={{ mb: 1.5 }} placeholder="Enter your password" />
+              <TextField 
+                fullWidth 
+                label="Email Address" 
+                type="email" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                sx={{ 
+                  mb: 2.5,
+                  '& .MuiInputLabel-root': {
+                    fontWeight: 600,
+                    fontSize: '0.95rem',
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderWidth: '2px',
+                    },
+                  },
+                  '& .MuiInputBase-input': {
+                    py: 1.75,
+                    fontSize: '1rem',
+                  },
+                }} 
+                placeholder="user@university.edu" 
+              />
+              <TextField 
+                fullWidth 
+                label="Password" 
+                type="password" 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                sx={{ 
+                  mb: 2,
+                  '& .MuiInputLabel-root': {
+                    fontWeight: 600,
+                    fontSize: '0.95rem',
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderWidth: '2px',
+                    },
+                  },
+                  '& .MuiInputBase-input': {
+                    py: 1.75,
+                    fontSize: '1rem',
+                  },
+                }} 
+                placeholder="Enter your password" 
+              />
 
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <FormControlLabel
-                  control={<Checkbox checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} size="small" color="primary" />}
-                  label={<Typography variant="caption">Remember Me</Typography>}
+                  control={<Checkbox checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} color="primary" />}
+                  label={<Typography variant="body2" fontWeight={500}>Remember Me</Typography>}
                 />
-                <MuiLink component={Link} to="/forgot-password" variant="caption" underline="hover" color="primary">
+                <MuiLink component={Link} to="/forgot-password" variant="body2" underline="hover" color="primary" fontWeight={600}>
                   Forgot Password?
                 </MuiLink>
               </Box>
 
-              <Button type="submit" fullWidth variant="contained" size="large" startIcon={<LoginIcon />} sx={{ mb: 2, py: 1.2 }}>
+              <Button 
+                type="submit" 
+                fullWidth 
+                variant="contained" 
+                size="large" 
+                startIcon={<LoginIcon />} 
+                sx={{ 
+                  mb: 2.5, 
+                  py: 1.75,
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  textTransform: 'none',
+                  borderRadius: 2,
+                  boxShadow: '0 4px 14px 0 rgba(25, 118, 210, 0.39)',
+                  '&:hover': {
+                    boxShadow: '0 6px 20px rgba(25, 118, 210, 0.5)',
+                    transform: 'translateY(-2px)',
+                  },
+                  transition: 'all 0.3s',
+                }}
+              >
                 Sign In as {userType.charAt(0).toUpperCase() + userType.slice(1)}
               </Button>
             </form>

@@ -34,6 +34,7 @@ import {
 } from '@mui/icons-material';
 import PageTransition from '../../components/Common/PageTransition';
 import EmptyState from '../../components/Common/EmptyState';
+import StatCard from '../../components/Common/StatCard';
 import { CardSkeleton } from '../../components/Common/LoadingSkeleton';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 import {
@@ -172,127 +173,44 @@ const Library = () => {
           animate="animate"
         >
           <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-            <Card sx={{ height: '100%', borderRadius: 3 }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                      {libraryBooks.length}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      Total Books
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: '50%',
-                      backgroundColor: 'primary.main',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <LibraryBooks sx={{ fontSize: 24 }} />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Total Books"
+              value={libraryBooks.length}
+              icon={LibraryBooks}
+              color="primary"
+              tooltip="Total number of books available in the library collection."
+            />
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-            <Card sx={{ height: '100%', borderRadius: 3 }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                      {libraryBooks.filter(b => b.availableCopies > 0).length}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      Available Now
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: '50%',
-                      backgroundColor: 'success.main',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <CheckCircleIcon sx={{ fontSize: 24 }} />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Available Now"
+              value={libraryBooks.filter(b => b.availableCopies > 0).length}
+              icon={CheckCircleIcon}
+              color="success"
+              tooltip="Books that are currently available for issue or reservation."
+            />
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-            <Card sx={{ height: '100%', borderRadius: 3 }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                      {myIssuedBooks.length}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      Issued to You
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: '50%',
-                      backgroundColor: 'info.main',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <MenuBook sx={{ fontSize: 24 }} />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Issued to You"
+              value={myIssuedBooks.length}
+              icon={MenuBook}
+              color="info"
+              subtitle={`Max: 3 books`}
+              tooltip="Number of books currently issued to you. You can have maximum 3 books at a time."
+            />
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-            <Card sx={{ height: '100%', borderRadius: 3 }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                      {myReservedBooks.length}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      Reserved
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: '50%',
-                      backgroundColor: 'warning.main',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Bookmark sx={{ fontSize: 24 }} />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Reserved"
+              value={myReservedBooks.length}
+              icon={Bookmark}
+              color="warning"
+              tooltip="Books you have reserved. You'll be notified when they become available."
+            />
           </Grid>
         </Grid>
 

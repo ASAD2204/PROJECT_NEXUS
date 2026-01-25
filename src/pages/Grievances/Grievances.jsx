@@ -43,6 +43,7 @@ import {
 } from '@mui/icons-material';
 import PageTransition from '../../components/Common/PageTransition';
 import EmptyState from '../../components/Common/EmptyState';
+import StatCard from '../../components/Common/StatCard';
 import FileDropzone from '../../components/Forms/FileDropzone';
 import { grievances, submitGrievance } from '../../data/dummyData';
 import { useSnackbar } from '../../contexts/SnackbarContext';
@@ -165,127 +166,43 @@ const Grievances = () => {
           animate="animate"
         >
           <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-            <Card sx={{ height: '100%', borderRadius: 3 }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                      {stats.total}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Total Submitted
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: '50%',
-                      backgroundColor: 'primary.main',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Report sx={{ fontSize: 24 }} />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Total Submitted"
+              value={stats.total}
+              icon={Report}
+              color="primary"
+              tooltip="Total number of grievances you have submitted to date."
+            />
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-            <Card sx={{ height: '100%', borderRadius: 3 }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                      {stats.pending}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Pending
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: '50%',
-                      backgroundColor: 'warning.main',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <PendingActions sx={{ fontSize: 24 }} />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Pending"
+              value={stats.pending}
+              icon={PendingActions}
+              color="warning"
+              tooltip="Grievances that are currently being reviewed or in progress."
+            />
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-            <Card sx={{ height: '100%', borderRadius: 3 }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                      {stats.resolved}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Resolved
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: '50%',
-                      backgroundColor: 'success.main',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <CheckCircle sx={{ fontSize: 24 }} />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Resolved"
+              value={stats.resolved}
+              icon={CheckCircle}
+              color="success"
+              tooltip="Grievances that have been successfully resolved or closed."
+            />
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-            <Card sx={{ height: '100%', borderRadius: 3 }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                      {stats.avgResolutionTime}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Avg Resolution
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: '50%',
-                      backgroundColor: 'info.main',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <AccessTime sx={{ fontSize: 24 }} />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Avg Response Time"
+              value="2-3 days"
+              icon={AccessTime}
+              color="info"
+              tooltip="Average time taken to respond to grievances."
+            />
           </Grid>
         </Grid>
 

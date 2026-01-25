@@ -32,6 +32,7 @@ import {
   Send,
 } from '@mui/icons-material';
 import PageHeader from '../../components/Common/PageHeader';
+import StatCard from '../../components/Common/StatCard';
 import { fadeInUp, staggerContainer } from '../../utils/animations';
 
 const MyTickets = () => {
@@ -174,129 +175,47 @@ const MyTickets = () => {
         animate="animate"
       >
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-          <Card sx={{ height: '100%', borderRadius: 3 }}>
-            <CardContent sx={{ p: 3 }}>
-              <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                    {stats.total}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Total Tickets
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '50%',
-                    backgroundColor: 'primary.main',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Report sx={{ fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="Total Tickets"
+            value={stats.total}
+            icon={Report}
+            color="primary"
+            tooltip="Total number of support tickets you have submitted."
+          />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-          <Card sx={{ height: '100%', borderRadius: 3 }}>
-            <CardContent sx={{ p: 3 }}>
-              <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                    {stats.inProgress}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    In Progress
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '50%',
-                    backgroundColor: 'info.main',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <HourglassEmpty sx={{ fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="In Progress"
+            value={stats.inProgress}
+            icon={HourglassEmpty}
+            color="info"
+            tooltip="Tickets currently being reviewed or worked on by support team."
+          />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-          <Card sx={{ height: '100%', borderRadius: 3 }}>
-            <CardContent sx={{ p: 3 }}>
-              <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                    {stats.resolved}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Resolved
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '50%',
-                    backgroundColor: 'success.main',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <CheckCircle sx={{ fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="Resolved"
+            value={stats.resolved}
+            icon={CheckCircle}
+            color="success"
+            tooltip="Tickets that have been successfully resolved."
+          />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-          <Card sx={{ height: '100%', borderRadius: 3 }}>
-            <CardContent sx={{ p: 3 }}>
-              <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                    {stats.rejected}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Rejected
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '50%',
-                    backgroundColor: 'error.main',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Cancel sx={{ fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="Rejected"
+            value={stats.rejected}
+            icon={Cancel}
+            color="error"
+            tooltip="Tickets that were rejected or closed without resolution."
+          />
         </Grid>
       </Grid>
+
+      {/* TICKETS LIST */}
 
       {/* TICKETS LIST */}
       <Box

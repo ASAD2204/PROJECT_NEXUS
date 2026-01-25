@@ -1,6 +1,9 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
+
+// Components
+import SplashScreen from './components/Common/SplashScreen';
 
 // Layouts
 import MainLayout from './components/Layout/MainLayout';
@@ -85,7 +88,31 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function App() {
-  const { userType } = useAuth();
+  const navigate = useNavigate();
+  const { userType, isAuthenticated } = useAuth();
+  const [showSplash, setShowSplash] = useState(true);
+  const [splashComplete, setSplashComplete] = useState(false);
+
+  useEffect(() => {
+    // Check if splash has been shown in this session
+    const splashShown = sessionStorage.getItem('splashShown');
+    if (splashShown) {
+      setShowSplash(false);
+      setSplashComplete(true);
+    }
+  }, []);
+
+  const handleSplashComplete = () => {
+    sessionStorage.setItem('splashShown', 'true');
+    setShowSplash(false);
+    setTimeout(() => {
+      setSplashComplete(true);
+      // Navigate to login if not authenticated
+      if (!isAuthenticated) {
+        navigate('/login');
+      }
+    }, 500);
+  };
 
   // Default dashboard based on user type
   const getDefaultDashboard = () => {
@@ -102,6 +129,16 @@ function App() {
         return '/dashboard';
     }
   };
+
+  // Show splash screen on first load
+  if (showSplash) {
+    return <SplashScreen onComplete={handleSplashComplete} />;
+  }
+
+  // Don't render routes until splash is complete
+  if (!splashComplete) {
+    return null;
+  }
 
   return (
     <Routes>

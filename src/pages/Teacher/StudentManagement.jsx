@@ -46,6 +46,7 @@ import {
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import PageHeader from '../../components/Common/PageHeader';
+import StatCard from '../../components/Common/StatCard';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 import { pageTransition } from '../../utils/animations';
 
@@ -194,52 +195,40 @@ const StudentManagement = () => {
         {/* Stats */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="caption" color="text.secondary">
-                  Total Students
-                </Typography>
-                <Typography variant="h4" fontWeight="bold">
-                  {students.length}
-                </Typography>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Total Students"
+              value={students.length}
+              icon={Assignment}
+              color="primary"
+              tooltip="Total students enrolled in your courses. Track and manage individual student performance"
+            />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="caption" color="text.secondary">
-                  Avg Attendance
-                </Typography>
-                <Typography variant="h4" fontWeight="bold">
-                  {Math.round(students.reduce((sum, s) => sum + s.attendance, 0) / students.length)}%
-                </Typography>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Avg Attendance"
+              value={`${Math.round(students.reduce((sum, s) => sum + s.attendance, 0) / students.length)}%`}
+              icon={CheckCircle}
+              color="success"
+              tooltip="Average attendance rate across all students. Monitor attendance patterns and identify issues"
+            />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="caption" color="text.secondary">
-                  Assignments Pending
-                </Typography>
-                <Typography variant="h4" fontWeight="bold">
-                  {students.reduce((sum, s) => sum + (s.assignments.total - s.assignments.submitted), 0)}
-                </Typography>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Assignments Pending"
+              value={students.reduce((sum, s) => sum + (s.assignments.total - s.assignments.submitted), 0)}
+              icon={Assignment}
+              color="warning"
+              tooltip="Total pending assignments across all students. Follow up with students for timely submissions"
+            />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="caption" color="text.secondary">
-                  At Risk Students
-                </Typography>
-                <Typography variant="h4" fontWeight="bold" color="error">
-                  {students.filter((s) => s.status === 'warning').length}
-                </Typography>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="At Risk Students"
+              value={students.filter((s) => s.status === 'warning').length}
+              icon={TrendingDown}
+              color="error"
+              tooltip="Students with low attendance or poor performance. These students need immediate attention and support"
+            />
           </Grid>
         </Grid>
 

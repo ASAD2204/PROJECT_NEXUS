@@ -114,28 +114,28 @@ const Reservations = () => {
 
   const stats = [
     {
-      label: 'Pending Reservations',
+      title: 'Pending Reservations',
       value: reservations.filter((r) => r.status === 'pending').length.toString(),
-      change: 'Need approval',
-      trend: 'up',
+      subtitle: 'Need approval',
       color: 'warning',
       icon: PendingIcon,
+      tooltip: 'Book reservations awaiting librarian approval. Students will be notified once approved',
     },
     {
-      label: 'Approved',
+      title: 'Approved',
       value: reservations.filter((r) => r.status === 'approved').length.toString(),
-      change: 'Ready to issue',
-      trend: 'up',
+      subtitle: 'Ready to issue',
       color: 'success',
       icon: EventIcon,
+      tooltip: 'Approved reservations ready to be issued when books become available',
     },
     {
-      label: 'Total Reservations',
+      title: 'Total Reservations',
       value: reservations.length.toString(),
-      change: 'This month',
-      trend: 'up',
+      subtitle: 'This month',
       color: 'primary',
       icon: BookIcon,
+      tooltip: 'Total book reservations this month including pending, approved, and cancelled',
     },
   ];
 

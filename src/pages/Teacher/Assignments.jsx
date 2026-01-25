@@ -33,6 +33,7 @@ import {
   Grade,
 } from '@mui/icons-material';
 import PageHeader from '../../components/Common/PageHeader';
+import StatCard from '../../components/Common/StatCard';
 import { fadeInUp, staggerContainer } from '../../utils/animations';
 
 const Assignments = () => {
@@ -48,24 +49,28 @@ const Assignments = () => {
       value: '24',
       icon: AssignmentIcon,
       color: 'primary.main',
+      tooltip: 'Total assignments created across all your courses. Manage and track assignment submissions',
     },
     {
       title: 'Active',
       value: '8',
       icon: Schedule,
       color: 'success.main',
+      tooltip: 'Assignments currently open for student submissions. Students can submit before due date',
     },
     {
       title: 'Pending Review',
       value: '45',
       icon: PendingActions,
       color: 'warning.main',
+      tooltip: 'Total submissions across all assignments awaiting your grading and feedback',
     },
     {
       title: 'Graded',
       value: '186',
       icon: Grade,
       color: 'info.main',
+      tooltip: 'Submissions that have been graded. Students can view their marks and feedback',
     },
   ];
 
@@ -404,34 +409,13 @@ const Assignments = () => {
       >
         {stats.map((stat, index) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index} component={motion.div} variants={fadeInUp}>
-            <Card sx={{ height: '100%', borderRadius: 3 }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                      {stat.value}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {stat.title}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: '50%',
-                      backgroundColor: stat.color,
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <stat.icon sx={{ fontSize: 24 }} />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
+            <StatCard
+              title={stat.title}
+              value={stat.value}
+              icon={stat.icon}
+              color={stat.color}
+              tooltip={stat.tooltip}
+            />
           </Grid>
         ))}
       </Grid>

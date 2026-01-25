@@ -42,6 +42,7 @@ import {
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import PageHeader from '../../components/Common/PageHeader';
+import StatCard from '../../components/Common/StatCard';
 import { pageTransition } from '../../utils/animations';
 
 const CourseManagement = () => {
@@ -141,31 +142,14 @@ const CourseManagement = () => {
         <Grid container spacing={3} sx={{ mb: 3 }}>
           {departments.map((dept, index) => (
             <Grid key={index} size={{ xs: 12, sm: 6, lg: 3 }}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom>
-                    {dept.name}
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid size={6}>
-                      <Typography variant="caption" color="text.secondary">
-                        Courses
-                      </Typography>
-                      <Typography variant="h5" fontWeight="bold">
-                        {dept.courses}
-                      </Typography>
-                    </Grid>
-                    <Grid size={6}>
-                      <Typography variant="caption" color="text.secondary">
-                        Students
-                      </Typography>
-                      <Typography variant="h5" fontWeight="bold">
-                        {dept.activeStudents}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
+              <StatCard
+                title={dept.name}
+                value={`${dept.courses} Courses`}
+                subtitle={`${dept.activeStudents} Students`}
+                icon={School}
+                color={index === 0 ? 'primary' : index === 1 ? 'success' : index === 2 ? 'info' : 'warning'}
+                tooltip={`${dept.name} department with ${dept.courses} active courses and ${dept.activeStudents} enrolled students`}
+              />
             </Grid>
           ))}
         </Grid>

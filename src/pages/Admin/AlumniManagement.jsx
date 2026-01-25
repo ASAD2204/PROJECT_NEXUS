@@ -230,7 +230,13 @@ const AlumniManagement = () => {
         {/* Stats */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard title="Total Alumni" value={stats.total} icon={School} color="primary" />
+            <StatCard 
+              title="Total Alumni" 
+              value={stats.total} 
+              icon={School} 
+              color="primary"
+              tooltip="Total number of alumni registered in the system"
+            />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard
@@ -239,6 +245,7 @@ const AlumniManagement = () => {
               icon={CheckCircle}
               color="success"
               subtitle={`${((stats.verified / stats.total) * 100).toFixed(0)}% verified`}
+              tooltip="Number of alumni with verified profiles and credentials"
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -248,6 +255,7 @@ const AlumniManagement = () => {
               icon={School}
               color="info"
               subtitle={`Class of ${new Date().getFullYear()}`}
+              tooltip="Number of alumni who graduated this year"
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -257,6 +265,7 @@ const AlumniManagement = () => {
               icon={Business}
               color="warning"
               subtitle={`${((stats.employed / stats.total) * 100).toFixed(0)}% employment rate`}
+              tooltip="Number of alumni currently employed with registered companies"
             />
           </Grid>
         </Grid>

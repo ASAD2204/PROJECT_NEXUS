@@ -243,52 +243,20 @@ const Dashboard = () => {
             color="primary"
             trend={{ direction: 'up', value: '+0.05' }}
             subtitle="Last Semester: 3.92"
+            tooltip="Cumulative Grade Point Average across all completed semesters. Higher CGPA indicates better overall academic performance."
             loading={loading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-          <Card sx={{ height: '100%', borderRadius: 3 }} className="hover-lift">
-            <CardContent sx={{ p: 3 }}>
-              <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                <Box sx={{ flexGrow: 1, mr: 2 }}>
-                  <Typography variant="h4" component="div" fontWeight="bold" sx={{ fontSize: '2rem', mb: 0.5 }}>
-                    {attendanceStats.percentage}%
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem', mb: 2 }}>
-                    Attendance
-                  </Typography>
-                  <Box display="flex" alignItems="center">
-                    <CircularProgress
-                      variant="determinate"
-                      value={attendanceStats.percentage}
-                      size={48}
-                      thickness={5}
-                      sx={{ color: 'success.main' }}
-                    />
-                    <Typography variant="body2" color="text.secondary" sx={{ ml: 1.5 }}>
-                      {attendanceStats.attended}/{attendanceStats.totalClasses} classes
-                    </Typography>
-                  </Box>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '50%',
-                    backgroundColor: 'success.main',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    boxShadow: '0 4px 12px rgba(56, 142, 60, 0.3)',
-                  }}
-                >
-                  <CheckCircleIcon sx={{ fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="Attendance"
+            value={`${attendanceStats.percentage}%`}
+            icon={HowToReg}
+            color="success"
+            subtitle={`${attendanceStats.attended}/${attendanceStats.totalClasses} classes`}
+            tooltip="Overall attendance percentage. Maintain above 75% to avoid attendance shortage issues."
+            loading={loading}
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
           <StatCard
@@ -297,6 +265,7 @@ const Dashboard = () => {
             icon={AssignmentIcon}
             color="warning"
             subtitle={`${assignments.length} total assignments`}
+            tooltip="Number of assignments pending submission. Complete them before the deadline to avoid penalties."
             loading={loading}
           />
         </Grid>
@@ -307,7 +276,9 @@ const Dashboard = () => {
             icon={PaymentIcon}
             color={unpaidFees.length > 0 ? 'error' : 'success'}
             subtitle={unpaidFees.length > 0 ? `${unpaidFees.length} invoice(s) due` : 'No pending fees'}
+            tooltip={unpaidFees.length > 0 ? 'Outstanding fee amount that needs to be paid. Click to view fee vouchers.' : 'All your fees are paid up to date!'}
             loading={loading}
+            onClick={() => navigate('/finance/fee-vouchers')}
           />
         </Grid>
       </Grid>

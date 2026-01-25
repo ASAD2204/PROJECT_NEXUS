@@ -40,34 +40,34 @@ const TeacherDashboard = () => {
     {
       title: 'My Courses',
       value: '5',
-      change: '+1 new',
-      trend: 'up',
+      subtitle: '+1 new',
       icon: School,
       color: 'primary',
+      tooltip: 'Total courses you are teaching this semester. Manage course content, assignments, and student performance',
     },
     {
       title: 'Total Students',
       value: '312',
-      change: '+18 this sem',
-      trend: 'up',
+      subtitle: '+18 this sem',
       icon: People,
       color: 'success',
+      tooltip: 'Total students enrolled across all your courses. View individual student profiles and track their progress',
     },
     {
       title: 'Pending Assignments',
       value: '23',
-      change: '5 overdue',
-      trend: 'down',
+      subtitle: '5 overdue',
       icon: Assignment,
       color: 'warning',
+      tooltip: 'Assignments awaiting grading. 5 submissions are past the grading deadline and need immediate attention',
     },
     {
       title: 'Attendance Rate',
       value: '87%',
-      change: '+2.3%',
-      trend: 'up',
+      subtitle: '+2.3%',
       icon: CheckCircle,
       color: 'info',
+      tooltip: 'Average attendance rate across all your courses. Improved by 2.3% compared to last month',
     },
   ];
 
@@ -155,10 +155,10 @@ const TeacherDashboard = () => {
               <StatCard
                 title={stat.title}
                 value={stat.value}
-                change={stat.change}
-                trend={stat.trend}
+                subtitle={stat.subtitle}
                 icon={stat.icon}
                 color={stat.color}
+                tooltip={stat.tooltip}
               />
             </Grid>
           ))}

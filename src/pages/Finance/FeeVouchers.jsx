@@ -273,6 +273,7 @@ const FeeVouchers = () => {
             value={`PKR ${totalFees.toLocaleString()}`}
             icon={AttachMoney}
             color="primary"
+            tooltip="Total fee amount for the current academic year including tuition, lab fees, and other charges."
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -282,6 +283,7 @@ const FeeVouchers = () => {
             icon={CheckCircle}
             color="success"
             subtitle={`${feeInvoices.filter(i => i.status === 'Paid').length} invoices`}
+            tooltip="Total amount you have successfully paid. Keep all payment receipts for your records."
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -291,6 +293,7 @@ const FeeVouchers = () => {
             icon={Warning}
             color="error"
             subtitle={`${feeInvoices.filter(i => i.status !== 'Paid').length} unpaid`}
+            tooltip="Pending fee amount that must be paid by the due date. Late payment may result in penalties."
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -299,6 +302,7 @@ const FeeVouchers = () => {
             value={`PKR ${upcomingFees.toLocaleString()}`}
             icon={AccessTime}
             color="warning"
+            tooltip="Fee invoices that will be due within the next 30 days. Plan your payments in advance."
           />
         </Grid>
       </Grid>

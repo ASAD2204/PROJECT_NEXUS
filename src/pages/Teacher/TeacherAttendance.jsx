@@ -38,6 +38,7 @@ import {
   People,
 } from '@mui/icons-material';
 import PageHeader from '../../components/Common/PageHeader';
+import StatCard from '../../components/Common/StatCard';
 import { fadeInUp, staggerContainer } from '../../utils/animations';
 
 const TeacherAttendance = () => {
@@ -59,30 +60,31 @@ const TeacherAttendance = () => {
       value: '85',
       icon: People,
       color: 'primary.main',
+      tooltip: 'Total students enrolled in the selected course. View individual attendance records and trends',
     },
     {
       title: 'Present Today',
       value: '78',
-      change: '+5',
-      trend: 'up',
+      subtitle: '+5',
       icon: CheckCircle,
       color: 'success.main',
+      tooltip: 'Number of students marked present today. 5 more students attended compared to last class',
     },
     {
       title: 'Absent Today',
       value: '7',
-      change: '-2',
-      trend: 'down',
+      subtitle: '-2',
       icon: Cancel,
       color: 'error.main',
+      tooltip: 'Number of students marked absent today. 2 fewer absences compared to last class',
     },
     {
       title: 'Attendance Rate',
       value: '91.8%',
-      change: '+2.3%',
-      trend: 'up',
+      subtitle: '+2.3%',
       icon: TrendingUp,
       color: 'info.main',
+      tooltip: 'Overall attendance rate for this course. Improved by 2.3% compared to previous tracking period',
     },
   ];
 
@@ -191,43 +193,14 @@ const TeacherAttendance = () => {
       >
         {stats.map((stat, index) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index} component={motion.div} variants={fadeInUp}>
-            <Card sx={{ height: '100%', borderRadius: 3 }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                      {stat.value}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                      {stat.title}
-                    </Typography>
-                    {stat.change && (
-                      <Chip
-                        icon={stat.trend === 'up' ? <TrendingUp /> : <TrendingDown />}
-                        label={stat.change}
-                        size="small"
-                        color={stat.trend === 'up' ? 'success' : 'error'}
-                        sx={{ mt: 0.5 }}
-                      />
-                    )}
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: '50%',
-                      backgroundColor: stat.color,
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <stat.icon sx={{ fontSize: 24 }} />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
+            <StatCard
+              title={stat.title}
+              value={stat.value}
+              subtitle={stat.subtitle}
+              icon={stat.icon}
+              color={stat.color}
+              tooltip={stat.tooltip}
+            />
           </Grid>
         ))}
       </Grid>

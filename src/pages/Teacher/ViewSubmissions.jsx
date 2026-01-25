@@ -39,6 +39,7 @@ import {
   Send,
 } from '@mui/icons-material';
 import PageHeader from '../../components/Common/PageHeader';
+import StatCard from '../../components/Common/StatCard';
 import { fadeInUp, staggerContainer } from '../../utils/animations';
 
 const ViewSubmissions = () => {
@@ -174,119 +175,43 @@ const ViewSubmissions = () => {
         animate="animate"
       >
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-          <Card sx={{ 
-            p: 3, 
-            borderRadius: 3,
-            background: 'linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%)',
-            border: '1px solid rgba(102,126,234,0.2)',
-          }}>
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Box
-                sx={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: 2,
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Assignment sx={{ fontSize: 28, color: 'white' }} />
-              </Box>
-              <Box>
-                <Typography variant="h4" fontWeight="bold">{stats.total}</Typography>
-                <Typography variant="body2" color="text.secondary">Submissions</Typography>
-              </Box>
-            </Stack>
-          </Card>
+          <StatCard
+            title="Submissions"
+            value={stats.total}
+            icon={Assignment}
+            color="primary"
+            tooltip="Total submissions received. Students who submitted their assignment before or on the due date"
+          />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-          <Card sx={{ 
-            p: 3, 
-            borderRadius: 3,
-            background: 'linear-gradient(135deg, rgba(255,152,0,0.1) 0%, rgba(255,193,7,0.1) 100%)',
-            border: '1px solid rgba(255,152,0,0.2)',
-          }}>
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Box
-                sx={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: 2,
-                  background: 'linear-gradient(135deg, #FF9800 0%, #FFC107 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <PendingActions sx={{ fontSize: 28, color: 'white' }} />
-              </Box>
-              <Box>
-                <Typography variant="h4" fontWeight="bold">{stats.pending}</Typography>
-                <Typography variant="body2" color="text.secondary">Pending</Typography>
-              </Box>
-            </Stack>
-          </Card>
+          <StatCard
+            title="Pending Grading"
+            value={stats.pending}
+            icon={Schedule}
+            color="warning"
+            tooltip="Submissions awaiting your review and grading. These need to be graded and given feedback"
+          />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-          <Card sx={{ 
-            p: 3, 
-            borderRadius: 3,
-            background: 'linear-gradient(135deg, rgba(76,175,80,0.1) 0%, rgba(129,199,132,0.1) 100%)',
-            border: '1px solid rgba(76,175,80,0.2)',
-          }}>
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Box
-                sx={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: 2,
-                  background: 'linear-gradient(135deg, #4CAF50 0%, #81C784 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <CheckCircle sx={{ fontSize: 28, color: 'white' }} />
-              </Box>
-              <Box>
-                <Typography variant="h4" fontWeight="bold">{stats.graded}</Typography>
-                <Typography variant="body2" color="text.secondary">Graded</Typography>
-              </Box>
-            </Stack>
-          </Card>
+          <StatCard
+            title="Graded"
+            value={stats.graded}
+            icon={CheckCircle}
+            color="success"
+            tooltip="Submissions that have been graded with marks and feedback. Students can view their results"
+          />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-          <Card sx={{ 
-            p: 3, 
-            borderRadius: 3,
-            background: 'linear-gradient(135deg, rgba(244,67,54,0.1) 0%, rgba(239,83,80,0.1) 100%)',
-            border: '1px solid rgba(244,67,54,0.2)',
-          }}>
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Box
-                sx={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: 2,
-                  background: 'linear-gradient(135deg, #F44336 0%, #EF5350 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <PendingActions sx={{ fontSize: 28, color: 'white' }} />
-              </Box>
-              <Box>
-                <Typography variant="h4" fontWeight="bold">{stats.notSubmitted}</Typography>
-                <Typography variant="body2" color="text.secondary">Not Submitted</Typography>
-              </Box>
-            </Stack>
-          </Card>
+          <StatCard
+            title="Not Submitted"
+            value={stats.notSubmitted}
+            icon={Cancel}
+            color="error"
+            tooltip="Students who did not submit the assignment. May need follow-up or extension consideration"
+          />
         </Grid>
       </Grid>
 

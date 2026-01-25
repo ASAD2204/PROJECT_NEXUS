@@ -133,9 +133,30 @@ const Mentorship = () => {
   ];
 
   const stats = [
-    { label: 'Active Mentors', value: '48', change: '+6 this month', trend: 'up', color: 'primary', icon: SchoolIcon },
-    { label: 'Mentees', value: '156', change: '+23 new', trend: 'up', color: 'success', icon: GroupsIcon },
-    { label: 'Sessions', value: '324', change: 'This year', trend: 'up', color: 'info', icon: TrophyIcon },
+    { 
+      title: 'Active Mentors', 
+      value: '48', 
+      subtitle: '+6 this month', 
+      color: 'primary', 
+      icon: SchoolIcon,
+      tooltip: 'Experienced alumni available for mentorship. Industry experts from Google, Meta, Microsoft, and leading companies'
+    },
+    { 
+      title: 'Mentees', 
+      value: '156', 
+      subtitle: '+23 new', 
+      color: 'success', 
+      icon: GroupsIcon,
+      tooltip: 'Students currently enrolled in mentorship programs. Get guidance on career planning, skills, and industry insights'
+    },
+    { 
+      title: 'Sessions', 
+      value: '324', 
+      subtitle: 'This year', 
+      color: 'info', 
+      icon: TrophyIcon,
+      tooltip: 'Total mentorship sessions completed this year. One-on-one guidance covering career, skills, and personal growth'
+    },
   ];
 
   const filteredMentors = mentors.filter(mentor => {

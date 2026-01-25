@@ -145,9 +145,30 @@ const SuccessStories = () => {
   ];
 
   const stats = [
-    { label: 'Success Stories', value: '78', change: '+12 new', trend: 'up', color: 'primary', icon: TrophyIcon },
-    { label: 'Total Views', value: '12.5K', change: '+2.3K this month', trend: 'up', color: 'success', icon: TrendingUpIcon },
-    { label: 'Inspirations', value: '1.2K', change: 'Total likes', trend: 'up', color: 'info', icon: StarIcon },
+    { 
+      title: 'Success Stories', 
+      value: '78', 
+      subtitle: '+12 new', 
+      color: 'primary', 
+      icon: TrophyIcon,
+      tooltip: 'Inspiring achievements by our alumni. Stories include entrepreneurship, research breakthroughs, and leadership roles'
+    },
+    { 
+      title: 'Total Views', 
+      value: '12.5K', 
+      subtitle: '+2.3K this month', 
+      color: 'success', 
+      icon: TrendingUpIcon,
+      tooltip: 'Combined views across all success stories. These stories inspire and guide current students in their career paths'
+    },
+    { 
+      title: 'Inspirations', 
+      value: '1.2K', 
+      subtitle: 'Total likes', 
+      color: 'info', 
+      icon: StarIcon,
+      tooltip: 'Total appreciation from community. React to stories that resonate with you and share with fellow students'
+    },
   ];
 
   const filteredStories = stories.filter(story => {

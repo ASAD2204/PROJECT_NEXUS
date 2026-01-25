@@ -52,34 +52,34 @@ const AdminDashboard = () => {
     {
       title: 'Total Students',
       value: '2,847',
-      change: '+12.5%',
-      trend: 'up',
+      subtitle: '+12.5% from last month',
       icon: People,
       color: 'primary',
+      tooltip: 'Total number of enrolled students across all programs and departments',
     },
     {
       title: 'Faculty Members',
       value: '186',
-      change: '+3.2%',
-      trend: 'up',
+      subtitle: '+3.2% new hires',
       icon: School,
       color: 'success',
+      tooltip: 'Total number of teaching and research faculty members',
     },
     {
       title: 'Active Courses',
       value: '342',
-      change: '+8.1%',
-      trend: 'up',
+      subtitle: '+8.1% this semester',
       icon: Assignment,
       color: 'info',
+      tooltip: 'Number of courses currently being offered this semester',
     },
     {
       title: 'Revenue (This Month)',
       value: '₨ 8.5M',
-      change: '+15.3%',
-      trend: 'up',
+      subtitle: '+15.3% increase',
       icon: AccountBalance,
       color: 'warning',
+      tooltip: 'Total revenue collected from fees and other sources this month',
     },
   ];
 
@@ -148,10 +148,10 @@ const AdminDashboard = () => {
               <StatCard
                 title={stat.title}
                 value={stat.value}
-                change={stat.change}
-                trend={stat.trend}
+                subtitle={stat.subtitle}
                 icon={stat.icon}
                 color={stat.color}
+                tooltip={stat.tooltip}
               />
             </Grid>
           ))}

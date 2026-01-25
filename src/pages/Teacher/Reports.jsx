@@ -42,6 +42,7 @@ import {
   Print,
 } from '@mui/icons-material';
 import PageHeader from '../../components/Common/PageHeader';
+import StatCard from '../../components/Common/StatCard';
 import PageTransition from '../../components/Common/PageTransition';
 import { fadeInUp, staggerContainer } from '../../utils/animations';
 
@@ -77,34 +78,34 @@ const Reports = () => {
     {
       title: 'Total Students',
       value: '85',
-      change: '+5 this month',
-      trend: 'up',
+      subtitle: '+5 this month',
       icon: People,
       color: theme.palette.primary.main,
+      tooltip: 'Total students enrolled in this course. Track individual performance and generate detailed reports',
     },
     {
       title: 'Avg Attendance',
       value: '88.5%',
-      change: '+2.3%',
-      trend: 'up',
+      subtitle: '+2.3%',
       icon: CheckCircle,
       color: theme.palette.success.main,
+      tooltip: 'Average attendance rate for this course. Shows improvement of 2.3% compared to previous period',
     },
     {
       title: 'Assignment Completion',
       value: '72%',
-      change: '-5.2%',
-      trend: 'down',
+      subtitle: '-5.2%',
       icon: Assignment,
       color: theme.palette.warning.main,
+      tooltip: 'Percentage of students who submitted assignments on time. Decreased by 5.2%, may need follow-up',
     },
     {
       title: 'Class Average',
       value: 'B+',
-      change: '+0.2 GPA',
-      trend: 'up',
+      subtitle: '+0.2 GPA',
       icon: School,
       color: theme.palette.info.main,
+      tooltip: 'Average grade for the class. Shows improvement of 0.2 GPA points compared to previous assessment',
     },
   ];
 
@@ -130,41 +131,14 @@ const Reports = () => {
         >
           {stats.map((stat, index) => (
             <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index} component={motion.div} variants={fadeInUp}>
-              <Card sx={{ height: '100%', borderRadius: 3 }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                    <Box sx={{ flexGrow: 1 }}>
-                      <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                        {stat.value}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        {stat.title}
-                      </Typography>
-                      <Chip
-                        icon={stat.trend === 'up' ? <TrendingUp /> : <TrendingDown />}
-                        label={stat.change}
-                        size="small"
-                        color={stat.trend === 'up' ? 'success' : 'error'}
-                        sx={{ mt: 1 }}
-                      />
-                    </Box>
-                    <Box
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: '50%',
-                        backgroundColor: stat.color,
-                        color: 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <stat.icon sx={{ fontSize: 24 }} />
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
+              <StatCard
+                title={stat.title}
+                value={stat.value}
+                subtitle={stat.subtitle}
+                icon={stat.icon}
+                color={stat.color}
+                tooltip={stat.tooltip}
+              />
             </Grid>
           ))}
         </Grid>

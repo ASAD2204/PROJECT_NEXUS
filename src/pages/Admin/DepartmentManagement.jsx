@@ -285,6 +285,7 @@ const DepartmentManagement = () => {
               icon={School}
               color="primary"
               subtitle={`${stats.activePrograms} active`}
+              tooltip="Total number of degree programs offered across all departments"
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -294,6 +295,7 @@ const DepartmentManagement = () => {
               icon={People}
               color="success"
               subtitle="Across all programs"
+              tooltip="Total number of students enrolled in all programs combined"
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -303,6 +305,7 @@ const DepartmentManagement = () => {
               icon={People}
               color="info"
               subtitle="Teaching staff"
+              tooltip="Total number of faculty members teaching across all programs"
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -312,6 +315,7 @@ const DepartmentManagement = () => {
               icon={MenuBook}
               color="warning"
               subtitle="Academic departments"
+              tooltip="Number of academic departments offering various programs"
             />
           </Grid>
         </Grid>

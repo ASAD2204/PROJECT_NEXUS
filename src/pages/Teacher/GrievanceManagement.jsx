@@ -146,36 +146,36 @@ const TeacherGrievanceManagement = () => {
 
   const stats = [
     {
-      label: 'Total Referred',
+      title: 'Total Referred',
       value: grievances.length.toString(),
-      change: 'By admin',
-      trend: 'up',
+      subtitle: 'By admin',
       color: 'primary',
       icon: SupportIcon,
+      tooltip: 'Academic grievances referred to you by administration. These require your review and response',
     },
     {
-      label: 'Pending Review',
+      title: 'Pending Review',
       value: grievances.filter(g => g.status === 'Pending Review').length.toString(),
-      change: 'Need attention',
-      trend: 'up',
+      subtitle: 'Need attention',
       color: 'warning',
       icon: PendingIcon,
+      tooltip: 'Grievances awaiting your initial review. Please review and provide your response or action plan',
     },
     {
-      label: 'Under Review',
+      title: 'Under Review',
       value: grievances.filter(g => g.status === 'Under Review').length.toString(),
-      change: 'In progress',
-      trend: 'up',
+      subtitle: 'In progress',
       color: 'info',
       icon: AcademicIcon,
+      tooltip: 'Grievances you are currently addressing. Students will receive updates as you work on resolution',
     },
     {
-      label: 'Resolved',
+      title: 'Resolved',
       value: grievances.filter(g => g.status === 'Resolved').length.toString(),
-      change: 'This month',
-      trend: 'up',
+      subtitle: 'This month',
       color: 'success',
       icon: CheckCircleIcon,
+      tooltip: 'Successfully resolved grievances this month. Resolution details documented for future reference',
     },
   ];
 

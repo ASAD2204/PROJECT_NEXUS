@@ -115,28 +115,28 @@ const IssuedBooks = () => {
 
   const stats = [
     {
-      label: 'Currently Issued',
+      title: 'Currently Issued',
       value: issuedBooks.filter(b => b.status === 'issued').length.toString(),
-      change: 'Active borrows',
-      trend: 'up',
+      subtitle: 'Active borrows',
       color: 'primary',
       icon: IssuedIcon,
+      tooltip: 'Books currently issued to students with active due dates. Students can keep books for 14 days maximum',
     },
     {
-      label: 'Overdue Books',
+      title: 'Overdue Books',
       value: issuedBooks.filter(b => b.status === 'overdue').length.toString(),
-      change: 'Need attention',
-      trend: 'up',
+      subtitle: 'Need attention',
       color: 'error',
       icon: WarningIcon,
+      tooltip: 'Books past their due date that need immediate return. Automated reminders are sent to students daily',
     },
     {
-      label: 'Total Issued',
+      title: 'Total Issued',
       value: issuedBooks.length.toString(),
-      change: 'This month',
-      trend: 'up',
+      subtitle: 'This month',
       color: 'success',
       icon: BookIcon,
+      tooltip: 'Total number of books issued this month. Includes both active and overdue books for circulation tracking',
     },
   ];
 

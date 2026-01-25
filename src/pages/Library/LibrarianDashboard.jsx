@@ -49,6 +49,7 @@ import {
 } from '@mui/icons-material';
 import PageTransition from '../../components/Common/PageTransition';
 import { TableSkeleton } from '../../components/Common/LoadingSkeleton';
+import StatCard from '../../components/Common/StatCard';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 import {
   libraryBooks,
@@ -218,7 +219,7 @@ const LibrarianDashboard = () => {
           </Stack>
         </Box>
 
-        {/* STAT CARDS - 4 LARGE CARDS */}
+        {/* STAT CARDS */}
         <Grid 
           container 
           spacing={3} 
@@ -229,203 +230,43 @@ const LibrarianDashboard = () => {
           animate="animate"
         >
           <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-            <Card
-              sx={{
-                minHeight: { xs: 160, sm: 200 },
-                p: { xs: 1.5, sm: 2 },
-                borderRadius: { xs: 2, sm: 3 },
-                background: 'linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.15) 100%)',
-                border: '1px solid',
-                borderColor: theme.palette.mode === 'dark' ? 'rgba(102,126,234,0.3)' : 'rgba(102,126,234,0.2)',
-                boxShadow: theme.palette.mode === 'dark'
-                  ? '0 8px 24px rgba(0,0,0,0.3)'
-                  : '0 8px 24px rgba(102,126,234,0.15)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: theme.palette.mode === 'dark'
-                    ? '0 12px 32px rgba(0,0,0,0.4)'
-                    : '0 12px 32px rgba(102,126,234,0.2)',
-                },
-              }}
-            >
-              <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
-                <Stack spacing={2} alignItems="center" justifyContent="center" sx={{ height: '100%' }}>
-                  <Box
-                    sx={{
-                      width: { xs: 56, sm: 64 },
-                      height: { xs: 56, sm: 64 },
-                      borderRadius: 2,
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 4px 12px rgba(102,126,234,0.3)',
-                    }}
-                  >
-                    <LibraryBooks sx={{ fontSize: { xs: 28, sm: 32 }, color: 'white' }} />
-                  </Box>
-                  <Box textAlign="center">
-                    <Typography variant="h3" fontWeight="bold" color="primary" sx={{ fontSize: { xs: '2rem', sm: '3rem' } }}>
-                      {books.length}
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary" fontWeight={600} sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                      Total Books
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Total Books"
+              value={books.length}
+              icon={LibraryBooks}
+              color="primary"
+              tooltip="Total number of unique book titles in the library catalog including all categories and subjects"
+            />
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-            <Card
-              sx={{
-                minHeight: { xs: 160, sm: 200 },
-                p: { xs: 1.5, sm: 2 },
-                borderRadius: { xs: 2, sm: 3 },
-                background: 'linear-gradient(135deg, rgba(79,172,254,0.1) 0%, rgba(0,242,254,0.15) 100%)',
-                border: '1px solid',
-                borderColor: theme.palette.mode === 'dark' ? 'rgba(79,172,254,0.3)' : 'rgba(79,172,254,0.2)',
-                boxShadow: theme.palette.mode === 'dark'
-                  ? '0 8px 24px rgba(0,0,0,0.3)'
-                  : '0 8px 24px rgba(79,172,254,0.15)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: theme.palette.mode === 'dark'
-                    ? '0 12px 32px rgba(0,0,0,0.4)'
-                    : '0 12px 32px rgba(79,172,254,0.2)',
-                },
-              }}
-            >
-              <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
-                <Stack spacing={2} alignItems="center" justifyContent="center" sx={{ height: '100%' }}>
-                  <Box
-                    sx={{
-                      width: { xs: 56, sm: 64 },
-                      height: { xs: 56, sm: 64 },
-                      borderRadius: 2,
-                      background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 4px 12px rgba(79,172,254,0.3)',
-                    }}
-                  >
-                    <TrendingUp sx={{ fontSize: { xs: 28, sm: 32 }, color: 'white' }} />
-                  </Box>
-                  <Box textAlign="center">
-                    <Typography variant="h3" fontWeight="bold" sx={{ color: '#4facfe', fontSize: { xs: '2rem', sm: '3rem' } }}>
-                      {stats.issuedToday}
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary" fontWeight={600} sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                      Issued Today
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Issued Today"
+              value={stats.issuedToday}
+              icon={TrendingUp}
+              color="info"
+              tooltip="Number of books issued to students today. Helps track daily circulation activity"
+            />
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-            <Card
-              sx={{
-                minHeight: { xs: 160, sm: 200 },
-                p: { xs: 1.5, sm: 2 },
-                borderRadius: { xs: 2, sm: 3 },
-                background: 'linear-gradient(135deg, rgba(240,147,251,0.1) 0%, rgba(245,87,108,0.15) 100%)',
-                border: '1px solid',
-                borderColor: theme.palette.mode === 'dark' ? 'rgba(240,147,251,0.3)' : 'rgba(240,147,251,0.2)',
-                boxShadow: theme.palette.mode === 'dark'
-                  ? '0 8px 24px rgba(0,0,0,0.3)'
-                  : '0 8px 24px rgba(240,147,251,0.15)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: theme.palette.mode === 'dark'
-                    ? '0 12px 32px rgba(0,0,0,0.4)'
-                    : '0 12px 32px rgba(240,147,251,0.2)',
-                },
-              }}
-            >
-              <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
-                <Stack spacing={2} alignItems="center" justifyContent="center" sx={{ height: '100%' }}>
-                  <Box
-                    sx={{
-                      width: { xs: 56, sm: 64 },
-                      height: { xs: 56, sm: 64 },
-                      borderRadius: 2,
-                      background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 4px 12px rgba(240,147,251,0.3)',
-                    }}
-                  >
-                    <Warning sx={{ fontSize: { xs: 28, sm: 32 }, color: 'white' }} />
-                  </Box>
-                  <Box textAlign="center">
-                    <Typography variant="h3" fontWeight="bold" sx={{ color: '#f093fb', fontSize: { xs: '2rem', sm: '3rem' } }}>
-                      {stats.overdue}
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary" fontWeight={600} sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                      Overdue
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Overdue"
+              value={stats.overdue}
+              icon={Warning}
+              color="error"
+              tooltip="Books that are past their due date and need to be returned immediately. Automated reminders sent"
+            />
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-            <Card
-              sx={{
-                minHeight: { xs: 160, sm: 200 },
-                p: { xs: 1.5, sm: 2 },
-                borderRadius: { xs: 2, sm: 3 },
-                background: 'linear-gradient(135deg, rgba(250,112,154,0.1) 0%, rgba(254,225,64,0.15) 100%)',
-                border: '1px solid',
-                borderColor: theme.palette.mode === 'dark' ? 'rgba(250,112,154,0.3)' : 'rgba(250,112,154,0.2)',
-                boxShadow: theme.palette.mode === 'dark'
-                  ? '0 8px 24px rgba(0,0,0,0.3)'
-                  : '0 8px 24px rgba(250,112,154,0.15)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: theme.palette.mode === 'dark'
-                    ? '0 12px 32px rgba(0,0,0,0.4)'
-                    : '0 12px 32px rgba(250,112,154,0.2)',
-                },
-              }}
-            >
-              <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
-                <Stack spacing={2} alignItems="center" justifyContent="center" sx={{ height: '100%' }}>
-                  <Box
-                    sx={{
-                      width: { xs: 56, sm: 64 },
-                      height: { xs: 56, sm: 64 },
-                      borderRadius: 2,
-                      background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 4px 12px rgba(250,112,154,0.3)',
-                    }}
-                  >
-                    <AttachMoney sx={{ fontSize: { xs: 28, sm: 32 }, color: 'white' }} />
-                  </Box>
-                  <Box textAlign="center">
-                    <Typography variant="h3" fontWeight="bold" sx={{ color: '#fa709a', fontSize: { xs: '2rem', sm: '3rem' } }}>
-                      ₨{stats.fines}
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary" fontWeight={600} sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                      Total Fines
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Total Fines"
+              value={`₨${stats.fines}`}
+              icon={AttachMoney}
+              color="warning"
+              tooltip="Total fine amount collected from late returns and damaged/lost books. Helps monitor compliance"
+            />
           </Grid>
         </Grid>
 

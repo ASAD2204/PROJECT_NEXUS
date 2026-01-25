@@ -31,9 +31,11 @@ import {
   PersonAdd,
   Language,
   Email,
+  People,
 } from '@mui/icons-material';
 import { alumni, connectWithAlumni } from '../../data/dummyData';
 import PageHeader from '../../components/Common/PageHeader';
+import StatCard from '../../components/Common/StatCard';
 import PageTransition from '../../components/Common/PageTransition';
 import EmptyState from '../../components/Common/EmptyState';
 import { CourseCardSkeleton } from '../../components/Common/LoadingSkeleton';
@@ -172,52 +174,40 @@ const AlumniNetwork = () => {
         {/* Stats */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid size={{ xs: 6, sm: 3 }}>
-            <Card>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" fontWeight="bold" color="primary">
-                  {alumni.length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Total Alumni
-                </Typography>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Total Alumni"
+              value={alumni.length}
+              icon={People}
+              color="primary"
+              tooltip="Total registered alumni from all graduating batches. Connect with successful professionals across industries"
+            />
           </Grid>
           <Grid size={{ xs: 6, sm: 3 }}>
-            <Card>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" fontWeight="bold" color="secondary">
-                  {new Set(alumni.map((a) => a.currentCompany)).size}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Companies
-                </Typography>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Companies"
+              value={new Set(alumni.map((a) => a.currentCompany)).size}
+              icon={Business}
+              color="success"
+              tooltip="Number of companies where our alumni work. Includes top tech giants, startups, and Fortune 500 companies"
+            />
           </Grid>
           <Grid size={{ xs: 6, sm: 3 }}>
-            <Card>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" fontWeight="bold" color="success.main">
-                  {new Set(alumni.map((a) => a.location)).size}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Locations
-                </Typography>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Locations"
+              value={new Set(alumni.map((a) => a.location)).size}
+              icon={LocationOn}
+              color="info"
+              tooltip="Cities and countries where alumni are located. Global network spanning across Pakistan and international locations"
+            />
           </Grid>
           <Grid size={{ xs: 6, sm: 3 }}>
-            <Card>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" fontWeight="bold" color="info.main">
-                  {filteredAlumni.length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Showing
-                </Typography>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Showing"
+              value={filteredAlumni.length}
+              icon={FilterList}
+              color="warning"
+              tooltip="Number of alumni matching your current search and filter criteria"
+            />
           </Grid>
         </Grid>
 

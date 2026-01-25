@@ -15,10 +15,11 @@ import {
   Divider,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { Download, School } from '@mui/icons-material';
+import { Download, School, TrendingUp, Stars, AssignmentTurnedIn, EmojiEvents } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { transcript } from '../../data/dummyData';
 import PageHeader from '../../components/Common/PageHeader';
+import StatCard from '../../components/Common/StatCard';
 import { Button } from '@mui/material';
 import { TableSkeleton } from '../../components/Common/LoadingSkeleton';
 import { pageTransition } from '../../utils/animations';
@@ -63,6 +64,50 @@ const Transcript = () => {
           </Button>
         }
       />
+
+      {/* Academic Stats */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            title="CGPA"
+            value={user?.cgpa || "3.85"}
+            icon={TrendingUp}
+            color="primary"
+            subtitle="Out of 4.0"
+            tooltip="Your Cumulative Grade Point Average across all completed semesters. This reflects your overall academic performance."
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            title="Total Credits"
+            value={calculateTotalCredits()}
+            icon={School}
+            color="success"
+            subtitle="Credits earned"
+            tooltip="Total credit hours you have successfully completed towards your degree requirement."
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            title="Semesters"
+            value={transcript.length}
+            icon={AssignmentTurnedIn}
+            color="info"
+            subtitle="Completed"
+            tooltip="Number of academic semesters you have completed so far in your degree program."
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            title="Highest GPA"
+            value={Math.max(...transcript.map(s => parseFloat(s.semesterGPA))).toFixed(2)}
+            icon={EmojiEvents}
+            color="warning"
+            subtitle="Best semester"
+            tooltip="Your highest semester GPA achieved during your academic journey."
+          />
+        </Grid>
+      </Grid>
 
       {/* Student Info Card */}
       <Card sx={{ mb: 3 }}>

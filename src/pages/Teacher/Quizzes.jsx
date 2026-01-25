@@ -38,6 +38,7 @@ import {
   TrendingUp,
 } from '@mui/icons-material';
 import PageHeader from '../../components/Common/PageHeader';
+import StatCard from '../../components/Common/StatCard';
 import { fadeInUp, staggerContainer } from '../../utils/animations';
 
 const Quizzes = () => {
@@ -54,24 +55,28 @@ const Quizzes = () => {
       value: '18',
       icon: QuizIcon,
       color: 'primary.main',
+      tooltip: 'Total quizzes created for all your courses. Includes active, draft, and completed quizzes',
     },
     {
       title: 'Active Quizzes',
       value: '5',
       icon: Schedule,
       color: 'success.main',
+      tooltip: 'Quizzes currently open for student attempts. Students can access and submit these quizzes',
     },
     {
       title: 'Total Attempts',
       value: '432',
       icon: People,
       color: 'info.main',
+      tooltip: 'Total quiz attempts by students across all quizzes. View individual student performance and analytics',
     },
     {
       title: 'Avg Score',
       value: '78%',
       icon: TrendingUp,
       color: 'warning.main',
+      tooltip: 'Average score across all quiz attempts. Helps measure overall class understanding and quiz difficulty',
     },
   ];
 
@@ -340,34 +345,13 @@ const Quizzes = () => {
       >
         {stats.map((stat, index) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index} component={motion.div} variants={fadeInUp}>
-            <Card sx={{ height: '100%', borderRadius: 3 }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h4" component="div" fontWeight="bold" sx={{ mb: 0.5 }}>
-                      {stat.value}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {stat.title}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: '50%',
-                      backgroundColor: stat.color,
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <stat.icon sx={{ fontSize: 24 }} />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
+            <StatCard
+              title={stat.title}
+              value={stat.value}
+              icon={stat.icon}
+              color={stat.color}
+              tooltip={stat.tooltip}
+            />
           </Grid>
         ))}
       </Grid>
