@@ -31,10 +31,10 @@ const AttendanceSuccess = () => {
         >
           <Card
             sx={{
-              background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+              background: 'linear-gradient(135deg, #059669 0%, #0891B2 100%)',
               color: 'white',
               textAlign: 'center',
-              boxShadow: '0 20px 60px rgba(67, 233, 123, 0.3)',
+              boxShadow: '0 20px 60px rgba(5, 150, 105, 0.2)',
             }}
           >
             <CardContent sx={{ py: 8, px: 4 }}>
@@ -57,7 +57,7 @@ const AttendanceSuccess = () => {
                     boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
                   }}
                 >
-                  <CheckCircle sx={{ fontSize: 100, color: '#43e97b' }} />
+                  <CheckCircle sx={{ fontSize: 100, color: '#059669' }} />
                 </Box>
               </motion.div>
 
@@ -129,7 +129,7 @@ const AttendanceSuccess = () => {
                   startIcon={<Home />}
                   sx={{
                     bgcolor: 'white',
-                    color: '#43e97b',
+                    color: '#059669',
                     fontWeight: 'bold',
                     px: 5,
                     py: 1.5,

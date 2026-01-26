@@ -8,46 +8,46 @@ export const getTheme = (mode) => {
     palette: {
       mode,
       primary: {
-        main: isLight ? '#1976D2' : '#90CAF9',
-        light: isLight ? '#42A5F5' : '#BBDEFB',
-        dark: isLight ? '#1565C0' : '#64B5F6',
+        main: isLight ? '#2563EB' : '#60A5FA',
+        light: isLight ? '#3B82F6' : '#93C5FD',
+        dark: isLight ? '#1E40AF' : '#3B82F6',
         contrastText: '#FFFFFF',
       },
       secondary: {
-        main: isLight ? '#00796B' : '#26A69A',
-        light: isLight ? '#26A69A' : '#4DB6AC',
-        dark: isLight ? '#004D40' : '#00796B',
+        main: isLight ? '#475569' : '#94A3B8',
+        light: isLight ? '#64748B' : '#CBD5E1',
+        dark: isLight ? '#334155' : '#64748B',
         contrastText: '#FFFFFF',
       },
       error: {
-        main: isLight ? '#D32F2F' : '#EF5350',
-        light: isLight ? '#EF5350' : '#EF5350',
-        dark: isLight ? '#C62828' : '#E53935',
+        main: isLight ? '#DC2626' : '#F87171',
+        light: isLight ? '#EF4444' : '#FCA5A5',
+        dark: isLight ? '#B91C1C' : '#EF4444',
       },
       warning: {
-        main: isLight ? '#F57C00' : '#FFA726',
-        light: isLight ? '#FF9800' : '#FFB74D',
-        dark: isLight ? '#E65100' : '#FB8C00',
+        main: isLight ? '#D97706' : '#FBBF24',
+        light: isLight ? '#F59E0B' : '#FCD34D',
+        dark: isLight ? '#B45309' : '#F59E0B',
       },
       success: {
-        main: isLight ? '#388E3C' : '#66BB6A',
-        light: isLight ? '#4CAF50' : '#81C784',
-        dark: isLight ? '#2E7D32' : '#4CAF50',
+        main: isLight ? '#059669' : '#34D399',
+        light: isLight ? '#10B981' : '#6EE7B7',
+        dark: isLight ? '#047857' : '#10B981',
       },
       info: {
-        main: isLight ? '#0288D1' : '#29B6F6',
-        light: isLight ? '#03A9F4' : '#4FC3F7',
-        dark: isLight ? '#01579B' : '#0288D1',
+        main: isLight ? '#0891B2' : '#22D3EE',
+        light: isLight ? '#06B6D4' : '#67E8F9',
+        dark: isLight ? '#0E7490' : '#06B6D4',
       },
       background: {
-        default: isLight ? '#F4F6F8' : '#121212',
-        paper: isLight ? '#FFFFFF' : '#1E1E1E',
+        default: isLight ? '#F8FAFC' : '#0F172A',
+        paper: isLight ? '#FFFFFF' : '#1E293B',
       },
       text: {
-        primary: isLight ? '#212121' : '#FFFFFF',
-        secondary: isLight ? '#757575' : '#B0B0B0',
+        primary: isLight ? '#0F172A' : '#F1F5F9',
+        secondary: isLight ? '#64748B' : '#94A3B8',
       },
-      divider: isLight ? '#E0E0E0' : '#333333',
+      divider: isLight ? '#E2E8F0' : '#334155',
     },
     typography: {
     fontFamily: "'Inter', 'Roboto', sans-serif",
@@ -94,56 +94,59 @@ export const getTheme = (mode) => {
   },
   shadows: [
     'none',
-    isLight ? '0px 2px 4px rgba(0, 0, 0, 0.05)' : '0px 2px 4px rgba(0, 0, 0, 0.3)',
-    isLight ? '0px 4px 8px rgba(0, 0, 0, 0.08)' : '0px 4px 8px rgba(0, 0, 0, 0.4)',
-    isLight ? '0px 8px 16px rgba(0, 0, 0, 0.1)' : '0px 8px 16px rgba(0, 0, 0, 0.5)',
-    isLight ? '0px 12px 24px rgba(0, 0, 0, 0.12)' : '0px 12px 24px rgba(0, 0, 0, 0.6)',
-    isLight ? '0px 16px 32px rgba(0, 0, 0, 0.14)' : '0px 16px 32px rgba(0, 0, 0, 0.7)',
-    isLight ? '0px 20px 40px rgba(0, 0, 0, 0.16)' : '0px 20px 40px rgba(0, 0, 0, 0.8)',
-    isLight ? '0px 24px 48px rgba(0, 0, 0, 0.18)' : '0px 24px 48px rgba(0, 0, 0, 0.9)',
-    isLight ? '0px 2px 4px rgba(0, 0, 0, 0.05)' : '0px 2px 4px rgba(0, 0, 0, 0.3)',
-    isLight ? '0px 4px 8px rgba(0, 0, 0, 0.08)' : '0px 4px 8px rgba(0, 0, 0, 0.4)',
-    isLight ? '0px 8px 16px rgba(0, 0, 0, 0.1)' : '0px 8px 16px rgba(0, 0, 0, 0.5)',
-    isLight ? '0px 12px 24px rgba(0, 0, 0, 0.12)' : '0px 12px 24px rgba(0, 0, 0, 0.6)',
-    isLight ? '0px 16px 32px rgba(0, 0, 0, 0.14)' : '0px 16px 32px rgba(0, 0, 0, 0.7)',
-    isLight ? '0px 20px 40px rgba(0, 0, 0, 0.16)' : '0px 20px 40px rgba(0, 0, 0, 0.8)',
-    isLight ? '0px 24px 48px rgba(0, 0, 0, 0.18)' : '0px 24px 48px rgba(0, 0, 0, 0.9)',
-    isLight ? '0px 28px 56px rgba(0, 0, 0, 0.2)' : '0px 28px 56px rgba(0, 0, 0, 1)',
-    isLight ? '0px 32px 64px rgba(0, 0, 0, 0.22)' : '0px 32px 64px rgba(0, 0, 0, 1)',
-    isLight ? '0px 36px 72px rgba(0, 0, 0, 0.24)' : '0px 36px 72px rgba(0, 0, 0, 1)',
-    isLight ? '0px 40px 80px rgba(0, 0, 0, 0.26)' : '0px 40px 80px rgba(0, 0, 0, 1)',
-    isLight ? '0px 44px 88px rgba(0, 0, 0, 0.28)' : '0px 44px 88px rgba(0, 0, 0, 1)',
-    isLight ? '0px 48px 96px rgba(0, 0, 0, 0.3)' : '0px 48px 96px rgba(0, 0, 0, 1)',
-    isLight ? '0px 52px 104px rgba(0, 0, 0, 0.32)' : '0px 52px 104px rgba(0, 0, 0, 1)',
-    isLight ? '0px 56px 112px rgba(0, 0, 0, 0.34)' : '0px 56px 112px rgba(0, 0, 0, 1)',
-    isLight ? '0px 60px 120px rgba(0, 0, 0, 0.36)' : '0px 60px 120px rgba(0, 0, 0, 1)',
-    isLight ? '0px 64px 128px rgba(0, 0, 0, 0.38)' : '0px 64px 128px rgba(0, 0, 0, 1)',
+    isLight ? '0px 1px 2px rgba(0, 0, 0, 0.05)' : '0px 1px 3px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 1px 3px rgba(0, 0, 0, 0.1)' : '0px 2px 4px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 2px 4px rgba(0, 0, 0, 0.1)' : '0px 4px 6px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 4px 6px rgba(0, 0, 0, 0.1)' : '0px 5px 8px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 6px 8px rgba(0, 0, 0, 0.1)' : '0px 6px 10px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 8px 12px rgba(0, 0, 0, 0.1)' : '0px 8px 12px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 10px 16px rgba(0, 0, 0, 0.1)' : '0px 10px 16px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 1px 2px rgba(0, 0, 0, 0.05)' : '0px 1px 3px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 1px 3px rgba(0, 0, 0, 0.1)' : '0px 2px 4px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 2px 4px rgba(0, 0, 0, 0.1)' : '0px 4px 6px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 4px 6px rgba(0, 0, 0, 0.1)' : '0px 5px 8px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 6px 8px rgba(0, 0, 0, 0.1)' : '0px 6px 10px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 8px 12px rgba(0, 0, 0, 0.1)' : '0px 8px 12px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 10px 16px rgba(0, 0, 0, 0.1)' : '0px 10px 16px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 12px 20px rgba(0, 0, 0, 0.1)' : '0px 12px 20px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 14px 24px rgba(0, 0, 0, 0.1)' : '0px 14px 24px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 16px 28px rgba(0, 0, 0, 0.1)' : '0px 16px 28px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 18px 32px rgba(0, 0, 0, 0.1)' : '0px 18px 32px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 20px 36px rgba(0, 0, 0, 0.1)' : '0px 20px 36px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 22px 40px rgba(0, 0, 0, 0.1)' : '0px 22px 40px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 24px 44px rgba(0, 0, 0, 0.1)' : '0px 24px 44px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 26px 48px rgba(0, 0, 0, 0.1)' : '0px 26px 48px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 28px 52px rgba(0, 0, 0, 0.1)' : '0px 28px 52px rgba(0, 0, 0, 0.5)',
+    isLight ? '0px 30px 56px rgba(0, 0, 0, 0.1)' : '0px 30px 56px rgba(0, 0, 0, 0.5)',
   ],
   components: {
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: '16px',
-          boxShadow: isLight ? '0px 4px 20px rgba(0, 0, 0, 0.05)' : '0px 2px 8px rgba(0, 0, 0, 0.4)',
-          backgroundColor: isLight ? '#FFFFFF' : '#1E1E1E',
-          backgroundImage: isLight ? 'none' : 'linear-gradient(rgba(255,255,255,0.05), rgba(255,255,255,0.05))',
-          border: isLight ? '1px solid transparent' : '1px solid #333333',
-          transition: 'box-shadow 0.2s ease',
+          borderRadius: '12px',
+          boxShadow: isLight ? '0px 1px 3px rgba(0, 0, 0, 0.08)' : '0px 1px 3px rgba(0, 0, 0, 0.5)',
+          backgroundColor: isLight ? '#FFFFFF' : '#1E293B',
+          backgroundImage: 'none',
+          border: isLight ? '1px solid #E2E8F0' : '1px solid #334155',
+          transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
+          '&:hover': {
+            borderColor: isLight ? '#CBD5E1' : '#475569',
+          },
         },
       },
     },
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: '12px',
+          borderRadius: '8px',
           textTransform: 'none',
           fontWeight: 500,
-          padding: '10px 20px',
+          padding: '8px 16px',
         },
         contained: {
-          boxShadow: isLight ? '0px 2px 4px rgba(0, 0, 0, 0.1)' : '0px 2px 8px rgba(33, 150, 243, 0.3)',
+          boxShadow: 'none',
           '&:hover': {
-            boxShadow: isLight ? '0px 4px 8px rgba(0, 0, 0, 0.15)' : '0px 4px 12px rgba(33, 150, 243, 0.4)',
+            boxShadow: 'none',
           },
         },
       },
@@ -159,8 +162,8 @@ export const getTheme = (mode) => {
     MuiPaper: {
       styleOverrides: {
         root: {
-          borderRadius: '12px',
-          backgroundColor: isLight ? '#FFFFFF' : '#1E1E1E',
+          borderRadius: '8px',
+          backgroundColor: isLight ? '#FFFFFF' : '#1E293B',
           backgroundImage: 'none',
         },
       },
@@ -169,13 +172,13 @@ export const getTheme = (mode) => {
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
-            borderRadius: '10px',
-            backgroundColor: isLight ? '#FFFFFF' : '#1E1E1E',
+            borderRadius: '8px',
+            backgroundColor: isLight ? '#FFFFFF' : '#1E293B',
             '& fieldset': {
-              borderColor: isLight ? 'rgba(0, 0, 0, 0.23)' : '#333333',
+              borderColor: isLight ? '#E2E8F0' : '#334155',
             },
             '&:hover fieldset': {
-              borderColor: isLight ? 'rgba(0, 0, 0, 0.4)' : '#444444',
+              borderColor: isLight ? '#CBD5E1' : '#475569',
             },
           },
         },
@@ -184,17 +187,18 @@ export const getTheme = (mode) => {
     MuiDrawer: {
       styleOverrides: {
         paper: {
-          backgroundColor: isLight ? '#FFFFFF' : '#1E1E1E',
-          borderRight: isLight ? '1px solid rgba(0, 0, 0, 0.12)' : '1px solid #333333',
+          backgroundColor: isLight ? '#FFFFFF' : '#1E293B',
+          borderRight: isLight ? '1px solid #E2E8F0' : '1px solid #334155',
         },
       },
     },
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: isLight ? '#FFFFFF' : '#1E1E1E',
-          color: isLight ? '#212121' : '#FFFFFF',
-          boxShadow: isLight ? '0px 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
+          backgroundColor: isLight ? '#FFFFFF' : '#1E293B',
+          color: isLight ? '#0F172A' : '#F1F5F9',
+          boxShadow: isLight ? '0px 1px 2px rgba(0, 0, 0, 0.05)' : 'none',
+          borderBottom: isLight ? '1px solid #E2E8F0' : '1px solid #334155',
         },
       },
     },
@@ -204,13 +208,13 @@ export const getTheme = (mode) => {
           borderRadius: '8px',
           margin: '4px 8px',
           '&.Mui-selected': {
-            backgroundColor: isLight ? 'rgba(25, 118, 210, 0.08)' : 'rgba(33, 150, 243, 0.16)',
+            backgroundColor: isLight ? 'rgba(37, 99, 235, 0.08)' : 'rgba(96, 165, 250, 0.12)',
             '&:hover': {
-              backgroundColor: isLight ? 'rgba(25, 118, 210, 0.12)' : 'rgba(33, 150, 243, 0.24)',
+              backgroundColor: isLight ? 'rgba(37, 99, 235, 0.12)' : 'rgba(96, 165, 250, 0.16)',
             },
           },
           '&:hover': {
-            backgroundColor: isLight ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.05)',
+            backgroundColor: isLight ? 'rgba(15, 23, 42, 0.04)' : 'rgba(241, 245, 249, 0.05)',
           },
         },
       },
@@ -218,18 +222,18 @@ export const getTheme = (mode) => {
     MuiSkeleton: {
       styleOverrides: {
         root: {
-          backgroundColor: isLight ? undefined : '#333333',
+          backgroundColor: isLight ? undefined : '#334155',
           '&::after': {
             background: isLight
               ? undefined
-              : 'linear-gradient(90deg, rgba(51,51,51,0) 0%, rgba(68,68,68,0.6) 50%, rgba(51,51,51,0) 100%)',
+              : 'linear-gradient(90deg, rgba(51,65,85,0) 0%, rgba(71,85,105,0.6) 50%, rgba(51,65,85,0) 100%)',
           },
         },
       },
     },
   },
   shape: {
-    borderRadius: 12,
+    borderRadius: 8,
   },
 });
 };

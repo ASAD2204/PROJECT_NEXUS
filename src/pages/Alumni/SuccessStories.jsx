@@ -18,6 +18,10 @@ import {
   Select,
   FormControl,
   InputLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -28,6 +32,8 @@ import {
   Favorite as FavoriteIcon,
   Comment as CommentIcon,
   LinkedIn as LinkedInIcon,
+  Add as AddIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import PageHeader from '../../components/Common/PageHeader';
 import StatCard from '../../components/Common/StatCard';
@@ -37,6 +43,15 @@ import { pageTransition } from '../../utils/animations';
 const SuccessStories = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [openDialog, setOpenDialog] = useState(false);
+  const [storyFormData, setStoryFormData] = useState({
+    achievement: '',
+    company: '',
+    designation: '',
+    category: 'Entrepreneurship',
+    story: '',
+    tags: '',
+  });
 
   // Mock success stories
   const stories = [
@@ -171,6 +186,37 @@ const SuccessStories = () => {
     },
   ];
 
+  const handleOpenDialog = () => {
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setStoryFormData({
+      achievement: '',
+      company: '',
+      designation: '',
+      category: 'Entrepreneurship',
+      story: '',
+      tags: '',
+    });
+  };
+
+  const handleFormChange = (field, value) => {
+    setStoryFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmitStory = () => {
+    if (!storyFormData.achievement || !storyFormData.story) {
+      alert('Please fill all required fields');
+      return;
+    }
+    // Here you would typically send the data to your backend
+    console.log('Submitting story:', storyFormData);
+    alert('Success story submitted! It will be reviewed before publishing.');
+    handleCloseDialog();
+  };
+
   const filteredStories = stories.filter(story => {
     const matchesSearch = story.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          story.achievement.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -182,10 +228,20 @@ const SuccessStories = () => {
   return (
     <motion.div {...pageTransition}>
       <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
-        <PageHeader
-          title="Success Stories"
-          subtitle="Get inspired by the remarkable achievements of our alumni"
-        />
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+          <PageHeader
+            title="Success Stories"
+            subtitle="Get inspired by the remarkable achievements of our alumni"
+          />
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleOpenDialog}
+            sx={{ mt: 1 }}
+          >
+            Share Story
+          </Button>
+        </Box>
 
         {/* Stats Cards */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -379,6 +435,104 @@ const SuccessStories = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Share Success Story Dialog */}
+        <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+          <DialogTitle>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h6" fontWeight="bold">Share Your Success Story</Typography>
+              <IconButton onClick={handleCloseDialog}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent dividers>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  label="Achievement Title"
+                  required
+                  value={storyFormData.achievement}
+                  onChange={(e) => handleFormChange('achievement', e.target.value)}
+                  placeholder="e.g., Founded Tech Startup Valued at $10M"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Current Company/Organization"
+                  value={storyFormData.company}
+                  onChange={(e) => handleFormChange('company', e.target.value)}
+                  placeholder="e.g., InnovateTech"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Current Designation"
+                  value={storyFormData.designation}
+                  onChange={(e) => handleFormChange('designation', e.target.value)}
+                  placeholder="e.g., CEO & Founder"
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <FormControl fullWidth required>
+                  <InputLabel>Category</InputLabel>
+                  <Select
+                    value={storyFormData.category}
+                    onChange={(e) => handleFormChange('category', e.target.value)}
+                    label="Category"
+                  >
+                    <MenuItem value="Entrepreneurship">Entrepreneurship</MenuItem>
+                    <MenuItem value="Technology">Technology</MenuItem>
+                    <MenuItem value="Business">Business</MenuItem>
+                    <MenuItem value="Research">Research</MenuItem>
+                    <MenuItem value="Engineering">Engineering</MenuItem>
+                    <MenuItem value="Social Impact">Social Impact</MenuItem>
+                    <MenuItem value="Healthcare">Healthcare</MenuItem>
+                    <MenuItem value="Education">Education</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  label="Your Success Story"
+                  required
+                  multiline
+                  rows={6}
+                  value={storyFormData.story}
+                  onChange={(e) => handleFormChange('story', e.target.value)}
+                  placeholder="Share your journey, challenges you overcame, and what you achieved. Inspire fellow students and alumni..."
+                  helperText="Be detailed and authentic. Your story will inspire current students and fellow alumni."
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  label="Tags"
+                  value={storyFormData.tags}
+                  onChange={(e) => handleFormChange('tags', e.target.value)}
+                  placeholder="e.g., Startup, Leadership, Innovation"
+                  helperText="Add relevant tags separated by commas"
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={handleCloseDialog} variant="outlined">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSubmitStory} 
+              variant="contained"
+              disabled={!storyFormData.achievement || !storyFormData.story}
+            >
+              Share Story
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </motion.div>
   );

@@ -179,16 +179,49 @@ const TeacherProfile = () => {
         </Grid>
 
         {/* Tabs */}
-        <Card sx={{ mb: 3 }}>
+        <Card sx={{ mb: 3, p: { xs: 0, md: 0 } }}>
           <Tabs
             value={activeTab}
             onChange={(e, newValue) => setActiveTab(newValue)}
-            sx={{ borderBottom: 1, borderColor: 'divider' }}
+            variant="fullWidth"
+            sx={{ 
+              borderBottom: 1, 
+              borderColor: 'divider',
+              '& .MuiTab-root': {
+                minHeight: { xs: 64, md: 64 },
+                minWidth: { xs: 0, md: 120 },
+                fontSize: { xs: '0.7rem', md: '0.875rem' },
+                px: { xs: 0.5, md: 2 },
+                flexDirection: { xs: 'column', md: 'row' },
+              },
+              '& .MuiTab-iconWrapper': {
+                fontSize: { xs: '1.5rem', md: '1.25rem' },
+                marginBottom: { xs: '4px', md: 0 },
+                marginRight: { xs: 0, md: '8px' },
+              },
+            }}
           >
-            <Tab icon={<Person />} label="Personal Information" iconPosition="start" />
-            <Tab icon={<MenuBook />} label="Teaching Assignments" iconPosition="start" />
-            <Tab icon={<Psychology />} label="Research & Publications" iconPosition="start" />
-            <Tab icon={<Settings />} label="Account Settings" iconPosition="start" />
+            <Tab 
+              icon={<Person />} 
+              label="Personal"
+              iconPosition="start" 
+            />
+            <Tab 
+              icon={<MenuBook />} 
+              label="Teaching"
+              iconPosition="start" 
+            />
+            <Tab 
+              icon={<Psychology />} 
+              label="Research"
+              iconPosition="start" 
+            />
+            <Tab 
+              icon={<Settings />} 
+              label="Settings" 
+              iconPosition="start" 
+              sx={{ '& .MuiTab-wrapper': { display: 'flex', flexDirection: 'row', gap: 0.5 } }}
+            />
           </Tabs>
         </Card>
 
@@ -196,13 +229,15 @@ const TeacherProfile = () => {
         {activeTab === 0 && (
           <Box>
             {/* Profile Header Card */}
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
+            <Card sx={{ mb: 3, p: { xs: 1, md: 0 } }}>
+              <CardContent sx={{ p: { xs: 2, md: 3 } }}>
                 <Grid container spacing={3} alignItems="center">
                   <Grid size={{ xs: 12, sm: 2 }}>
                     <Box
                       sx={{
                         position: 'relative',
+                        display: 'flex',
+                        justifyContent: { xs: 'center', sm: 'flex-start' },
                         '&:hover .avatar-overlay': {
                           opacity: 1,
                         },
@@ -296,8 +331,8 @@ const TeacherProfile = () => {
             </Card>
 
             {/* Professional Information */}
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
+            <Card sx={{ mb: 3, p: { xs: 1, md: 0 } }}>
+              <CardContent sx={{ p: { xs: 2, md: 3 } }}>
                 <Typography variant="h6" fontWeight="bold" gutterBottom>
                   Professional Information
                 </Typography>

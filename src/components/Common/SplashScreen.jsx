@@ -180,7 +180,7 @@ const SplashScreen = ({ onComplete }) => {
                 fontWeight: 500,
               }}
             >
-              Campus Management System
+               The Unified Campus Management System
             </Typography>
           </motion.div>
 

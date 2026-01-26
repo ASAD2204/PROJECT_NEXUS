@@ -323,16 +323,49 @@ const Profile = () => {
       </Box>
 
       {/* Tabs */}
-      <Card sx={{ mb: 3 }}>
+      <Card sx={{ mb: 3, p: { xs: 0, md: 0 } }}>
         <Tabs
           value={activeTab}
           onChange={(e, newValue) => setActiveTab(newValue)}
-          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          variant="fullWidth"
+          sx={{ 
+            borderBottom: 1, 
+            borderColor: 'divider',
+            '& .MuiTab-root': {
+              minHeight: { xs: 64, md: 64 },
+              minWidth: { xs: 0, md: 120 },
+              fontSize: { xs: '0.7rem', md: '0.875rem' },
+              px: { xs: 0.5, md: 2 },
+              flexDirection: { xs: 'column', md: 'row' },
+            },
+            '& .MuiTab-iconWrapper': {
+              fontSize: { xs: '1.5rem', md: '1.25rem' },
+              marginBottom: { xs: '4px', md: 0 },
+              marginRight: { xs: 0, md: '8px' },
+            },
+          }}
         >
-          <Tab icon={<Person />} label="Personal Information" iconPosition="start" />
-          <Tab icon={<School />} label="Academic Information" iconPosition="start" />
-          <Tab icon={<Description />} label="Documents" iconPosition="start" />
-          <Tab icon={<Settings />} label="Settings" iconPosition="start" />
+          <Tab 
+            icon={<Person />} 
+            label="Personal"
+            iconPosition="start" 
+          />
+          <Tab 
+            icon={<School />} 
+            label="Academic"
+            iconPosition="start" 
+          />
+          <Tab 
+            icon={<Description />} 
+            label="Documents" 
+            iconPosition="start" 
+          />
+          <Tab 
+            icon={<Settings />} 
+            label="Settings" 
+            iconPosition="start" 
+            sx={{ '& .MuiTab-wrapper': { display: 'flex', flexDirection: 'row', gap: 0.5 } }}
+          />
         </Tabs>
       </Card>
 
@@ -340,13 +373,15 @@ const Profile = () => {
       {activeTab === 0 && (
         <Box>
           {/* Profile Header Card */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
+          <Card sx={{ mb: 3, p: { xs: 1, md: 0 } }}>
+            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
               <Grid container spacing={3} alignItems="center">
                 <Grid size={{ xs: 12, sm: 2 }}>
                   <Box
                     sx={{
                       position: 'relative',
+                      display: 'flex',
+                      justifyContent: { xs: 'center', sm: 'flex-start' },
                       '&:hover .avatar-overlay': {
                         opacity: 1,
                       },
@@ -414,17 +449,18 @@ const Profile = () => {
                       variant="contained"
                       startIcon={<Edit />}
                       onClick={() => setIsEditing(true)}
-                      size="large"
+                      fullWidth
                     >
                       Edit Profile
                     </Button>
                   ) : (
-                    <Stack direction="row" spacing={1}>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                       <Button
                         variant="contained"
                         startIcon={<Save />}
                         onClick={handleSave}
                         disabled={!hasChanges || Object.values(errors).some(e => e)}
+                        fullWidth
                       >
                         Save Changes
                       </Button>
@@ -432,6 +468,7 @@ const Profile = () => {
                         variant="outlined"
                         startIcon={<Cancel />}
                         onClick={handleCancel}
+                        fullWidth
                       >
                         Cancel
                       </Button>
@@ -443,8 +480,8 @@ const Profile = () => {
           </Card>
 
           {/* Personal Details */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
+          <Card sx={{ mb: 3, p: { xs: 1, md: 0 } }}>
+            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>
                 Personal Details
               </Typography>
@@ -685,8 +722,8 @@ const Profile = () => {
       {activeTab === 1 && (
         <Box>
           {/* Current Program Card */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
+          <Card sx={{ mb: 3, p: { xs: 1, md: 0 } }}>
+            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>
                 Current Program
               </Typography>
@@ -1141,8 +1178,8 @@ const Profile = () => {
           </Card>
 
           {/* Danger Zone */}
-          <Card sx={{ borderColor: 'error.main', borderWidth: 2, borderStyle: 'solid' }}>
-            <CardContent>
+          <Card sx={{ borderColor: 'error.main', borderWidth: 2, borderStyle: 'solid', p: { xs: 1, md: 0 } }}>
+            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
               <Typography variant="h6" fontWeight="bold" color="error" gutterBottom>
                 <Warning sx={{ verticalAlign: 'middle', mr: 1 }} />
                 Danger Zone
@@ -1151,7 +1188,7 @@ const Profile = () => {
               <Alert severity="error" sx={{ mb: 2 }}>
                 Deactivating your account will temporarily suspend your access to all university services. You can reactivate your account by contacting the administration.
               </Alert>
-              <Button variant="outlined" color="error">
+              <Button variant="outlined" color="error" fullWidth={{ xs: true, sm: false }}>
                 Deactivate Account
               </Button>
             </CardContent>

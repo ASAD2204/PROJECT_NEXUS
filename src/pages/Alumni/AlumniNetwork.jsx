@@ -248,11 +248,21 @@ const AlumniNetwork = () => {
                         sx={{ width: 80, height: 80, border: 3, borderColor: 'primary.main' }}
                       />
                       <Box sx={{ textAlign: 'right' }}>
-                        <img
+                        <Avatar
                           src={alumnus.companyLogo}
                           alt={alumnus.currentCompany}
-                          style={{ width: 48, height: 48, objectFit: 'contain' }}
-                        />
+                          variant="rounded"
+                          sx={{ 
+                            width: 48, 
+                            height: 48, 
+                            bgcolor: 'background.paper',
+                            border: 1,
+                            borderColor: 'divider',
+                            mb: 0.5
+                          }}
+                        >
+                          <Business color="action" />
+                        </Avatar>
                         <Typography variant="caption" color="text.secondary" display="block">
                           {alumnus.currentCompany}
                         </Typography>

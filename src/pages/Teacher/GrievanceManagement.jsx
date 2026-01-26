@@ -264,17 +264,19 @@ const TeacherGrievanceManagement = () => {
 
         {/* Tabs and Filters */}
         <Card sx={{ mb: 3 }}>
-          <Tabs
-            value={tabValue}
-            onChange={(e, newValue) => setTabValue(newValue)}
-            sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
-          >
-            <Tab label={`All (${grievances.length})`} />
-            <Tab label={`Pending (${grievances.filter(g => g.status === 'Pending Review').length})`} />
-            <Tab label={`Under Review (${grievances.filter(g => g.status === 'Under Review').length})`} />
-            <Tab label={`Resolved (${grievances.filter(g => g.status === 'Resolved').length})`} />
-          </Tabs>
-          <CardContent>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs
+              value={tabValue}
+              onChange={(e, newValue) => setTabValue(newValue)}
+              sx={{ px: 2 }}
+            >
+              <Tab label={`All (${grievances.length})`} />
+              <Tab label={`Pending (${grievances.filter(g => g.status === 'Pending Review').length})`} />
+              <Tab label={`Under Review (${grievances.filter(g => g.status === 'Under Review').length})`} />
+              <Tab label={`Resolved (${grievances.filter(g => g.status === 'Resolved').length})`} />
+            </Tabs>
+          </Box>
+          <CardContent sx={{ pt: 3 }}>
             <Grid container spacing={2} alignItems="center">
               <Grid size={{ xs: 12, md: 8 }}>
                 <TextField

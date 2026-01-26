@@ -213,11 +213,11 @@ const Reports = () => {
                       <MenuItem value="semester">This Semester</MenuItem>
                     </TextField>
                   </Stack>
-                  <Stack direction="row" spacing={1}>
-                    <Button variant="outlined" startIcon={<Download />} size="small">
+                  <Stack direction="row" spacing={1} sx={{ flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: { xs: 1, sm: 0 } }}>
+                    <Button variant="outlined" startIcon={<Download />} size="small" sx={{ flex: { xs: '1 1 100%', sm: '0 0 auto' } }}>
                       Export
                     </Button>
-                    <Button variant="outlined" startIcon={<Print />} size="small">
+                    <Button variant="outlined" startIcon={<Print />} size="small" sx={{ flex: { xs: '1 1 100%', sm: '0 0 auto' } }}>
                       Print
                     </Button>
                   </Stack>

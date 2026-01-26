@@ -193,7 +193,7 @@ const AdminReports = () => {
               </Grid>
               <Grid size={{ xs: 12, md: 2 }}>
                 <Stack direction="row" spacing={1}>
-                  <Button fullWidth variant="contained" startIcon={<Assessment />}>
+                  <Button fullWidth variant="contained" startIcon={<Assessment />} sx={{ minWidth: { xs: '100%', md: 'auto' } }}>
                     Generate
                   </Button>
                 </Stack>

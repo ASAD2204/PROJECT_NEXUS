@@ -311,12 +311,32 @@ const CourseManagement = () => {
                       <Chip label={course.status} size="small" color={getStatusColor(course.status)} />
                       <Stack direction="row" spacing={0.5}>
                         <Tooltip title="View Details">
-                          <IconButton size="small" color="primary">
+                          <IconButton 
+                            size="small" 
+                            color="primary"
+                            onClick={() => window.open(`/admin/courses/${course.id}`, '_self')}
+                          >
                             <Visibility fontSize="small" />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Edit">
-                          <IconButton size="small" color="primary">
+                          <IconButton 
+                            size="small" 
+                            color="primary"
+                            onClick={() => {
+                              setFormData({
+                                courseCode: course.code,
+                                courseTitle: course.name,
+                                creditHours: course.creditHours,
+                                department: course.department,
+                                instructor: course.instructor.name,
+                                semester: course.semester,
+                                capacity: course.capacity,
+                                description: course.description || '',
+                              });
+                              setOpenDialog(true);
+                            }}
+                          >
                             <Edit fontSize="small" />
                           </IconButton>
                         </Tooltip>

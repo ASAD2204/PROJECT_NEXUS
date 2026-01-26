@@ -300,15 +300,15 @@ const ChatPortal = () => {
         sx={{
           background: `linear-gradient(135deg, ${whatsappGreen} 0%, ${whatsappDarkGreen} 100%)`,
           color: 'white',
-          p: 2,
+          p: { xs: 1.5, md: 2 },
         }}
       >
-        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <IconButton onClick={() => navigate('/dashboard')} sx={{ color: 'white' }}>
-              <ArrowBack />
+        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={{ xs: 1, md: 2 }}>
+          <Stack direction="row" spacing={{ xs: 1, md: 2 }} alignItems="center">
+            <IconButton onClick={() => navigate('/dashboard')} sx={{ color: 'white', p: { xs: 0.5, md: 1 } }}>
+              <ArrowBack fontSize={isMobile ? 'small' : 'medium'} />
             </IconButton>
-            <Typography variant="h6" fontWeight="bold">
+            <Typography variant={isMobile ? 'subtitle1' : 'h6'} fontWeight="bold">
               Nexus Chat
             </Typography>
           </Stack>
@@ -333,9 +333,11 @@ const ChatPortal = () => {
                   color: 'white',
                   backgroundColor: 'rgba(255,255,255,0.15)',
                   '&:hover': { backgroundColor: 'rgba(255,255,255,0.25)' },
+                  p: { xs: 0.75, md: 1 },
                 }}
+                size={isMobile ? 'small' : 'medium'}
               >
-                {mode === 'ai' ? <Person /> : <SmartToy />}
+                {mode === 'ai' ? <Person fontSize={isMobile ? 'small' : 'medium'} /> : <SmartToy fontSize={isMobile ? 'small' : 'medium'} />}
               </IconButton>
             </Tooltip>
           </Stack>
@@ -349,12 +351,12 @@ const ChatPortal = () => {
             gap: 1,
             backgroundColor: 'rgba(255,255,255,0.15)',
             borderRadius: '20px',
-            px: 2,
-            py: 0.5,
+            px: { xs: 1.5, md: 2 },
+            py: { xs: 0.4, md: 0.5 },
           }}
         >
           {mode === 'ai' ? <SmartToy fontSize="small" /> : <Person fontSize="small" />}
-          <Typography variant="body2" fontWeight="600">
+          <Typography variant={isMobile ? 'caption' : 'body2'} fontWeight="600">
             {mode === 'ai' ? 'AI Assistant Mode' : 'Human Chat Mode'}
           </Typography>
         </Box>
@@ -362,7 +364,7 @@ const ChatPortal = () => {
 
       {/* Search */}
       {mode === 'human' && (
-        <Box sx={{ p: 2, backgroundColor: theme.palette.mode === 'dark' ? '#111B21' : '#F0F2F5' }}>
+        <Box sx={{ p: { xs: 1.5, md: 2 }, backgroundColor: theme.palette.mode === 'dark' ? '#111B21' : '#F0F2F5' }}>
           <TextField
             fullWidth
             size="small"
@@ -370,17 +372,11 @@ const ChatPortal = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              backgroundColor: theme.palette.mode === 'dark' ? '#2A3942' : 'white',
-              borderRadius: '8px',
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': { border: 'none' },
+              startAdornment: <Search sx={{ color: 'text.secondary', mr: 1, fontSize: { xs: '1rem', md: '1.25rem' } }} />,
+              sx: {
+                backgroundColor: theme.palette.mode === 'dark' ? '#2A3942' : '#FFFFFF',
+                borderRadius: '10px',
+                fontSize: { xs: '0.875rem', md: '1rem' },
               },
             }}
           />
@@ -629,23 +625,23 @@ const ChatPortal = () => {
             sx={{
               background: `linear-gradient(135deg, ${whatsappGreen} 0%, ${whatsappDarkGreen} 100%)`,
               color: 'white',
-              p: 2,
+              p: { xs: 1.5, md: 2 },
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
             }}
           >
-            <Stack direction="row" spacing={2} alignItems="center">
+            <Stack direction="row" spacing={{ xs: 1, md: 2 }} alignItems="center">
               {isMobile && (
-                <IconButton onClick={() => setSelectedChat(null)} sx={{ color: 'white' }}>
-                  <ArrowBack />
+                <IconButton onClick={() => setSelectedChat(null)} sx={{ color: 'white', p: 0.5 }}>
+                  <ArrowBack fontSize="small" />
                 </IconButton>
               )}
-              <Avatar sx={{ width: 45, height: 45, bgcolor: 'rgba(255,255,255,0.2)' }}>
+              <Avatar sx={{ width: { xs: 40, md: 45 }, height: { xs: 40, md: 45 }, bgcolor: 'rgba(255,255,255,0.2)' }}>
                 {selectedChat.avatar || selectedChat.name[0]}
               </Avatar>
               <Box>
-                <Typography variant="subtitle1" fontWeight="600">
+                <Typography variant={isMobile ? 'body1' : 'subtitle1'} fontWeight="600">
                   {selectedChat.name}
                 </Typography>
                 <Typography variant="caption">
@@ -669,7 +665,7 @@ const ChatPortal = () => {
             sx={{
               flex: 1,
               overflowY: 'auto',
-              p: 2,
+              p: { xs: 1, md: 2 },
               backgroundImage:
                 theme.palette.mode === 'dark'
                   ? 'none'
@@ -690,9 +686,9 @@ const ChatPortal = () => {
                 >
                   <Paper
                     sx={{
-                      maxWidth: '70%',
-                      px: 2,
-                      py: 1,
+                      maxWidth: { xs: '85%', md: '70%' },
+                      px: { xs: 1.5, md: 2 },
+                      py: { xs: 0.75, md: 1 },
                       bgcolor: msg.sender === 'user' ? userBubbleColor : otherBubbleColor,
                       color: msg.sender === 'user' ? '#000' : 'text.primary',
                       borderRadius:
@@ -705,7 +701,14 @@ const ChatPortal = () => {
                         {msg.senderName}
                       </Typography>
                     )}
-                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    <Typography 
+                      variant={isMobile ? 'body2' : 'body1'} 
+                      sx={{ 
+                        whiteSpace: 'pre-wrap', 
+                        wordBreak: 'break-word',
+                        fontSize: { xs: '0.875rem', md: '1rem' },
+                      }}
+                    >
                       {msg.text}
                     </Typography>
                     <Typography
@@ -715,7 +718,7 @@ const ChatPortal = () => {
                         textAlign: 'right',
                         mt: 0.5,
                         opacity: 0.7,
-                        fontSize: '0.7rem',
+                        fontSize: { xs: '0.65rem', md: '0.7rem' },
                       }}
                     >
                       {msg.timestamp}
@@ -764,13 +767,13 @@ const ChatPortal = () => {
           </Box>
 
           {/* Input Area */}
-          <Box sx={{ p: 2, backgroundColor: theme.palette.mode === 'dark' ? '#1E2428' : '#F0F2F5' }}>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <IconButton sx={{ color: '#7D8B92' }}>
-                <EmojiEmotions />
+          <Box sx={{ p: { xs: 1.5, md: 2 }, backgroundColor: theme.palette.mode === 'dark' ? '#1E2428' : '#F0F2F5' }}>
+            <Stack direction="row" spacing={{ xs: 0.5, md: 1 }} alignItems="center">
+              <IconButton sx={{ color: '#7D8B92', p: { xs: 0.75, md: 1 } }} size={isMobile ? 'small' : 'medium'}>
+                <EmojiEmotions fontSize={isMobile ? 'small' : 'medium'} />
               </IconButton>
-              <IconButton sx={{ color: '#7D8B92' }}>
-                <AttachFile />
+              <IconButton sx={{ color: '#7D8B92', p: { xs: 0.75, md: 1 } }} size={isMobile ? 'small' : 'medium'}>
+                <AttachFile fontSize={isMobile ? 'small' : 'medium'} />
               </IconButton>
               <TextField
                 fullWidth
@@ -785,30 +788,33 @@ const ChatPortal = () => {
                     handleSendMessage();
                   }
                 }}
+                size={isMobile ? 'small' : 'medium'}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: '25px',
-                    backgroundColor: theme.palette.mode === 'dark' ? '#2A3942' : 'white',
-                    '& fieldset': { border: 'none' },
+                    backgroundColor: theme.palette.mode === 'dark' ? '#2A3942' : '#FFFFFF',
+                    fontSize: { xs: '0.875rem', md: '1rem' },
                   },
                 }}
               />
-              {inputMessage.trim() ? (
-                <IconButton
-                  onClick={handleSendMessage}
-                  sx={{
-                    bgcolor: whatsappGreen,
-                    color: 'white',
-                    '&:hover': { bgcolor: whatsappDarkGreen },
-                  }}
-                >
-                  <Send />
-                </IconButton>
-              ) : (
-                <IconButton sx={{ color: '#7D8B92' }}>
-                  <Mic />
-                </IconButton>
-              )}
+              <IconButton
+                onClick={handleSendMessage}
+                disabled={!inputMessage.trim()}
+                size={isMobile ? 'small' : 'medium'}
+                sx={{
+                  bgcolor: whatsappGreen,
+                  color: 'white',
+                  p: { xs: 0.75, md: 1 },
+                  '&:hover': {
+                    bgcolor: whatsappDarkGreen,
+                  },
+                  '&.Mui-disabled': {
+                    bgcolor: 'rgba(0,0,0,0.12)',
+                  },
+                }}
+              >
+                <Send fontSize={isMobile ? 'small' : 'medium'} />
+              </IconButton>
             </Stack>
           </Box>
         </>

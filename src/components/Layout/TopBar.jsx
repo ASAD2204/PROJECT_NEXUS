@@ -40,6 +40,7 @@ import {
   Info as InfoIcon,
   DarkMode as DarkModeIcon,
   LightMode as LightModeIcon,
+  ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -276,7 +277,7 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
   };
 
   const handleHelp = () => {
-    // Can navigate to help page or open documentation
+    navigate('/help-support');
     handleUserMenuClose();
   };
 
@@ -302,15 +303,15 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
       elevation={0}
     >
       <Toolbar sx={{ minHeight: 64, px: { xs: 2, sm: 3 } }}>
-        {/* Left: Hamburger Menu + Breadcrumbs */}
-        <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, minWidth: 0 }}>
+        {/* Left: Hamburger Menu + Back Button & Breadcrumbs */}
+        <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, minWidth: 0, gap: 1 }}>
           <IconButton
             color="inherit"
             aria-label="open drawer"
             edge="start"
             onClick={onMenuClick}
             sx={{ 
-              mr: 2, 
+              mr: 1, 
               display: { sm: 'none' },
               color: 'text.secondary',
             }}
@@ -318,75 +319,49 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
             <MenuIcon />
           </IconButton>
 
-          <Breadcrumbs
-            separator={<NavigateNext fontSize="small" sx={{ mx: 0.5, opacity: 0.6 }} />}
-            aria-label="breadcrumb"
-            sx={{ 
-              display: { xs: 'none', sm: 'flex' },
-              '& .MuiBreadcrumbs-ol': {
-                flexWrap: 'nowrap',
-              },
-              '& .MuiBreadcrumbs-li': {
+          {/* Current Page Title */}
+          {breadcrumbs.length > 0 && (
+            <Box
+              sx={{
                 display: 'flex',
                 alignItems: 'center',
-              },
-            }}
-          >
-            {breadcrumbs.length > 0 && breadcrumbs.map((crumb, index) => {
-              const isLast = index === breadcrumbs.length - 1;
-              return isLast ? (
-                <Typography
-                  key={crumb.path}
-                  color="text.primary"
-                  sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center',
-                    fontWeight: 600,
-                    fontSize: '0.95rem',
-                    px: 0.75,
-                    py: 0.5,
-                    borderRadius: 1,
-                    backgroundColor: 'action.selected',
-                  }}
-                >
-                  {crumb.label}
-                </Typography>
-              ) : (
-                <Link
-                  key={crumb.path}
-                  underline="hover"
-                  color="text.secondary"
-                  href={crumb.path}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate(crumb.path);
-                  }}
-                  sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem',
-                    fontWeight: 500,
-                    transition: 'all 0.2s ease',
-                    borderRadius: 1,
-                    px: 0.75,
-                    py: 0.5,
-                    '&:hover': {
-                      color: 'primary.main',
-                      backgroundColor: 'action.hover',
-                      textDecoration: 'none',
-                    },
-                  }}
-                >
-                  {crumb.label}
-                </Link>
-              );
-            })}
-          </Breadcrumbs>
+                gap: 1.5,
+                px: 2,
+                py: 1,
+                borderRadius: 2,
+                background: (theme) => theme.palette.mode === 'dark' 
+                  ? 'linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%)'
+                  : 'linear-gradient(135deg, rgba(37, 99, 235, 0.06) 0%, rgba(5, 150, 105, 0.04) 100%)',
+                border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(96, 165, 250, 0.2)' : 'rgba(37, 99, 235, 0.15)'}`,
+                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.08)',
+              }}
+            >
+              <Box
+                sx={{
+                  width: 4,
+                  height: 24,
+                  borderRadius: 1,
+                  background: (theme) => theme.palette.mode === 'dark'
+                    ? 'linear-gradient(180deg, #60A5FA 0%, #059669 100%)'
+                    : 'linear-gradient(180deg, #2563EB 0%, #059669 100%)',
+                }}
+              />
+              <Typography
+                color="text.primary"
+                sx={{ 
+                  fontWeight: 600,
+                  fontSize: { xs: '0.95rem', sm: '1.05rem' },
+                  letterSpacing: 0.3,
+                }}
+              >
+                {breadcrumbs[breadcrumbs.length - 1]?.label}
+              </Typography>
+            </Box>
+          )}
         </Box>
 
         {/* Center: Search Bar */}
-        <Box sx={{ mx: 3, display: { xs: 'none', md: 'block' } }}>
+        <Box sx={{ mx: { xs: 1, md: 3 }, display: { xs: 'none', md: 'block' }, flexGrow: { md: 0 } }}>
           <TextField
             placeholder="Search courses, students, assignments..."
             value={searchValue}
@@ -395,7 +370,7 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
             onBlur={handleSearchBlur}
             size="small"
             sx={{
-              width: searchFocused ? 500 : 400,
+              width: searchFocused ? { md: 500, lg: 500 } : { md: 300, lg: 400 },
               transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               '& .MuiOutlinedInput-root': {
                 backgroundColor: 'background.default',

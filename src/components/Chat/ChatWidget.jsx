@@ -168,13 +168,16 @@ const ChatWidget = ({ open, onClose, greetingMessage }) => {
         elevation={12}
         sx={{
           position: 'fixed',
-          bottom: 24,
-          right: 24,
-          width: 380,
-          height: 600,
+          bottom: { xs: 0, sm: 24 },
+          right: { xs: 0, sm: 24 },
+          left: { xs: 0, sm: 'auto' },
+          top: { xs: 0, sm: 'auto' },
+          width: { xs: '100%', sm: 400, md: 420 },
+          height: { xs: '100%', sm: 600 },
+          maxHeight: { xs: '100vh', sm: '80vh' },
           display: 'flex',
           flexDirection: 'column',
-          borderRadius: '16px',
+          borderRadius: { xs: 0, sm: '16px' },
           overflow: 'hidden',
           transformOrigin: 'bottom right',
           boxShadow: theme.palette.mode === 'dark'
@@ -188,14 +191,14 @@ const ChatWidget = ({ open, onClose, greetingMessage }) => {
           sx={{
             background: 'linear-gradient(135deg, #128C7E 0%, #075E54 100%)',
             color: 'white',
-            p: 2,
+            p: { xs: 1.5, sm: 2 },
             display: 'flex',
             flexDirection: 'column',
             gap: 1,
           }}
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="subtitle1" fontWeight="bold">
+            <Typography variant={{ xs: 'body1', sm: 'subtitle1' }} fontWeight="bold">
               Nexus Chat
             </Typography>
             <Stack direction="row" spacing={0.5}>
@@ -225,17 +228,17 @@ const ChatWidget = ({ open, onClose, greetingMessage }) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 0.5,
-                py: 0.75,
-                px: 1.5,
+                gap: { xs: 0.3, sm: 0.5 },
+                py: { xs: 0.6, sm: 0.75 },
+                px: { xs: 1, sm: 1.5 },
                 borderRadius: '10px',
                 backgroundColor: mode === 'ai' ? 'rgba(255,255,255,0.25)' : 'transparent',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
               }}
             >
-              <SmartToy fontSize="small" />
-              <Typography variant="caption" fontWeight={600}>AI Assistant</Typography>
+              <SmartToy sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
+              <Typography variant="caption" fontWeight={600} sx={{ fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>AI Assistant</Typography>
             </Box>
             <Box
               onClick={() => { setMode('human'); setView('contacts'); }}
@@ -244,17 +247,17 @@ const ChatWidget = ({ open, onClose, greetingMessage }) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 0.5,
-                py: 0.75,
-                px: 1.5,
+                gap: { xs: 0.3, sm: 0.5 },
+                py: { xs: 0.6, sm: 0.75 },
+                px: { xs: 1, sm: 1.5 },
                 borderRadius: '10px',
                 backgroundColor: mode === 'human' ? 'rgba(255,255,255,0.25)' : 'transparent',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
               }}
             >
-              <Person fontSize="small" />
-              <Typography variant="caption" fontWeight={600}>Contacts</Typography>
+              <Person sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
+              <Typography variant="caption" fontWeight={600} sx={{ fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>Contacts</Typography>
             </Box>
           </Box>
         </Box>
@@ -267,7 +270,7 @@ const ChatWidget = ({ open, onClose, greetingMessage }) => {
               sx={{
                 flex: 1,
                 overflowY: 'auto',
-                p: 2,
+                p: { xs: 1.5, sm: 2 },
                 backgroundColor: theme.palette.mode === 'dark' ? '#0A0A0A' : '#E5DDD5',
                 backgroundImage: theme.palette.mode === 'dark'
                   ? 'radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)'

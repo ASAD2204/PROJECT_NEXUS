@@ -371,7 +371,7 @@ const LivenessDetection = () => {
                       position: 'absolute',
                       width: 250,
                       height: 330,
-                      border: '4px solid #4caf50',
+                      border: '4px solid #059669',
                       borderRadius: 3,
                       animation: 'scanPulse 2s infinite',
                     }}
@@ -391,7 +391,7 @@ const LivenessDetection = () => {
                           width: 16,
                           height: 16,
                           borderRadius: '50%',
-                          bgcolor: '#4caf50',
+                          bgcolor: '#059669',
                           animation: 'cornerPulse 1s infinite',
                           animationDelay: `${i * 0.2}s`,
                         }}
@@ -405,8 +405,8 @@ const LivenessDetection = () => {
                       position: 'absolute',
                       width: 250,
                       height: 2,
-                      bgcolor: '#4caf50',
-                      boxShadow: '0 0 10px #4caf50',
+                      bgcolor: '#059669',
+                      boxShadow: '0 0 10px #059669',
                       animation: 'scan 2s linear infinite',
                     }}
                   />

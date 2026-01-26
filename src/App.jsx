@@ -33,6 +33,7 @@ import AdminGrievanceManagement from './pages/Admin/GrievanceManagement';
 import AdminSettings from './pages/Admin/Settings';
 import AlumniManagement from './pages/Admin/AlumniManagement';
 import DepartmentManagement from './pages/Admin/DepartmentManagement';
+import AnnouncementManagement from './pages/Admin/AnnouncementManagement';
 
 // Teacher Pages
 import TeacherDashboard from './pages/Teacher/Dashboard';
@@ -42,6 +43,7 @@ import StudentManagement from './pages/Teacher/StudentManagement';
 import TeacherReports from './pages/Teacher/Reports';
 import TeacherCourseManagement from './pages/Teacher/CourseManagement';
 import CreateAssignment from './pages/Teacher/CreateAssignment';
+import CreateQuiz from './pages/Teacher/CreateQuiz';
 import ViewSubmissions from './pages/Teacher/ViewSubmissions';
 import Assignments from './pages/Teacher/Assignments';
 import Quizzes from './pages/Teacher/Quizzes';
@@ -84,6 +86,7 @@ import JobBoard from './pages/Alumni/JobBoard';
 import Mentorship from './pages/Alumni/Mentorship';
 import SuccessStories from './pages/Alumni/SuccessStories';
 import TeacherGrievanceManagement from './pages/Teacher/GrievanceManagement';
+import HelpSupport from './pages/Support/HelpSupport';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -180,6 +183,7 @@ function App() {
         <Route path="admin/reports" element={<AdminReports />} />
         <Route path="admin/finance" element={<AdminFinance />} />
         <Route path="admin/grievances" element={<AdminGrievanceManagement />} />
+        <Route path="admin/announcements" element={<AnnouncementManagement />} />
         <Route path="admin/settings" element={<AdminSettings />} />
         
         {/* Teacher Routes */}
@@ -194,8 +198,8 @@ function App() {
         <Route path="teacher/assignment/:id/submissions" element={<ViewSubmissions />} />
         <Route path="teacher/create-assignment" element={<CreateAssignment />} />
         <Route path="teacher/quizzes" element={<Quizzes />} />
-        <Route path="teacher/quiz/create" element={<CreateAssignment />} />
-        <Route path="teacher/quiz/:id/edit" element={<CreateAssignment />} />
+        <Route path="teacher/quiz/create" element={<CreateQuiz />} />
+        <Route path="teacher/quiz/:id/edit" element={<CreateQuiz />} />
         <Route path="teacher/quiz/:id/results" element={<ViewSubmissions />} />
         <Route path="teacher/attendance" element={<TeacherAttendance />} />
         <Route path="teacher/reports" element={<TeacherReports />} />
@@ -220,6 +224,7 @@ function App() {
         {/* Support Routes */}
         <Route path="student/support" element={<MyTickets />} />
         <Route path="support" element={<MyTickets />} />
+        <Route path="help-support" element={<HelpSupport />} />
         
         {/* Finance Routes */}
         <Route path="finance" element={<FeeVouchers />} />

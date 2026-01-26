@@ -19,6 +19,7 @@ import {
   IconButton,
   Divider,
   Stack,
+  alpha,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import {
@@ -276,9 +277,8 @@ const Dashboard = () => {
             icon={PaymentIcon}
             color={unpaidFees.length > 0 ? 'error' : 'success'}
             subtitle={unpaidFees.length > 0 ? `${unpaidFees.length} invoice(s) due` : 'No pending fees'}
-            tooltip={unpaidFees.length > 0 ? 'Outstanding fee amount that needs to be paid. Click to view fee vouchers.' : 'All your fees are paid up to date!'}
+            tooltip={unpaidFees.length > 0 ? 'Outstanding fee amount that needs to be paid.' : 'All your fees are paid up to date!'}
             loading={loading}
-            onClick={() => navigate('/finance/fee-vouchers')}
           />
         </Grid>
       </Grid>
@@ -297,12 +297,13 @@ const Dashboard = () => {
         <Grid size={{ xs: 12 }}>
           <Card sx={{ 
             height: '100%',
+            p: { xs: 1, md: 0 },
             background: 'linear-gradient(135deg, rgba(25,118,210,0.05) 0%, rgba(21,101,192,0.05) 100%)',
             boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
             transition: 'all 0.3s ease',
             '&:hover': { boxShadow: '0 8px 30px rgba(0,0,0,0.12)' }
           }}>
-            <CardContent>
+            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Box>
                   <Typography variant="h6" fontWeight="bold">
@@ -374,12 +375,13 @@ const Dashboard = () => {
         <Grid size={{ xs: 12 }}>
           <Card sx={{ 
             height: '100%',
+            p: { xs: 1, md: 0 },
             background: 'linear-gradient(135deg, rgba(76,175,80,0.05) 0%, rgba(67,160,71,0.05) 100%)',
             boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
             transition: 'all 0.3s ease',
             '&:hover': { boxShadow: '0 8px 30px rgba(0,0,0,0.12)' }
           }}>
-            <CardContent>
+            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
               <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
                 <Box>
                   <Typography variant="h6" fontWeight="bold">
@@ -458,8 +460,8 @@ const Dashboard = () => {
       >
         {/* TODAY'S SCHEDULE */}
         <Grid size={{ xs: 12, lg: 5 }}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
+          <Card sx={{ height: '100%', p: { xs: 1, md: 0 } }}>
+            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>
                 Today's Classes
               </Typography>
@@ -519,12 +521,17 @@ const Dashboard = () => {
                             p: 2,
                             borderRadius: 2,
                             backgroundColor: classItem.status === 'completed' ? 'action.hover' : 
-                                           classItem.status === 'current' ? 'primary.light' : 
+                                           classItem.status === 'current' ? alpha(theme.palette.primary.main, 0.08) : 
                                            'background.default',
                             opacity: classItem.status === 'completed' ? 0.6 : 1,
+                            border: classItem.status === 'current' ? `2px solid ${alpha(theme.palette.primary.main, 0.3)}` : 'none',
                           }}
                         >
-                          <Typography variant="subtitle2" fontWeight="bold">
+                          <Typography 
+                            variant="subtitle2" 
+                            fontWeight="bold"
+                            color={classItem.status === 'current' ? 'primary.main' : 'text.primary'}
+                          >
                             {classItem.course} - {classItem.title}
                           </Typography>
                           <Typography variant="caption" color="text.secondary" display="block">
@@ -746,7 +753,7 @@ const Dashboard = () => {
                 fullWidth
                 variant="outlined"
                 sx={{ mt: 2 }}
-                onClick={() => navigate('/lms')}
+                onClick={() => navigate('/notifications')}
               >
                 View All Announcements
               </Button>

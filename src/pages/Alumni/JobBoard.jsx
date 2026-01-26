@@ -17,6 +17,10 @@ import {
   Select,
   FormControl,
   InputLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -26,6 +30,8 @@ import {
   Schedule as ScheduleIcon,
   TrendingUp as TrendingUpIcon,
   AttachMoney as MoneyIcon,
+  Add as AddIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import PageHeader from '../../components/Common/PageHeader';
 import StatCard from '../../components/Common/StatCard';
@@ -36,6 +42,16 @@ const JobBoard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterLocation, setFilterLocation] = useState('all');
+  const [openDialog, setOpenDialog] = useState(false);
+  const [jobFormData, setJobFormData] = useState({
+    title: '',
+    company: '',
+    location: '',
+    type: 'Full-time',
+    salary: '',
+    description: '',
+    requirements: '',
+  });
 
   // Mock job listings
   const jobs = [
@@ -175,13 +191,52 @@ const JobBoard = () => {
     }
   };
 
+  const handleOpenDialog = () => {
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setJobFormData({
+      title: '',
+      company: '',
+      location: '',
+      type: 'Full-time',
+      salary: '',
+      description: '',
+      requirements: '',
+    });
+  };
+
+  const handleFormChange = (field, value) => {
+    setJobFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmitJob = () => {
+    // Here you would typically send the data to your backend
+    console.log('Submitting job:', jobFormData);
+    // Show success message (you can add a snackbar)
+    alert('Job posted successfully!');
+    handleCloseDialog();
+  };
+
   return (
     <motion.div {...pageTransition}>
       <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
-        <PageHeader
-          title="Job Board"
-          subtitle="Explore career opportunities posted by alumni and partner companies"
-        />
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+          <PageHeader
+            title="Job Board"
+            subtitle="Explore career opportunities posted by alumni and partner companies"
+          />
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleOpenDialog}
+            sx={{ mt: 1 }}
+          >
+            Share Job
+          </Button>
+        </Box>
 
         {/* Stats Cards */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -373,6 +428,112 @@ const JobBoard = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Share Job Dialog */}
+        <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+          <DialogTitle>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h6" fontWeight="bold">Share a Job Opportunity</Typography>
+              <Button onClick={handleCloseDialog} size="small" sx={{ minWidth: 'auto' }}>
+                <CloseIcon />
+              </Button>
+            </Box>
+          </DialogTitle>
+          <DialogContent dividers>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Job Title"
+                  required
+                  value={jobFormData.title}
+                  onChange={(e) => handleFormChange('title', e.target.value)}
+                  placeholder="e.g., Senior Software Engineer"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Company Name"
+                  required
+                  value={jobFormData.company}
+                  onChange={(e) => handleFormChange('company', e.target.value)}
+                  placeholder="e.g., Tech Solutions Inc."
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Location"
+                  required
+                  value={jobFormData.location}
+                  onChange={(e) => handleFormChange('location', e.target.value)}
+                  placeholder="e.g., Karachi, Pakistan"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormControl fullWidth required>
+                  <InputLabel>Job Type</InputLabel>
+                  <Select
+                    value={jobFormData.type}
+                    onChange={(e) => handleFormChange('type', e.target.value)}
+                    label="Job Type"
+                  >
+                    <MenuItem value="Full-time">Full-time</MenuItem>
+                    <MenuItem value="Part-time">Part-time</MenuItem>
+                    <MenuItem value="Contract">Contract</MenuItem>
+                    <MenuItem value="Internship">Internship</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  label="Salary Range"
+                  value={jobFormData.salary}
+                  onChange={(e) => handleFormChange('salary', e.target.value)}
+                  placeholder="e.g., 200K - 300K PKR"
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  label="Job Description"
+                  required
+                  multiline
+                  rows={4}
+                  value={jobFormData.description}
+                  onChange={(e) => handleFormChange('description', e.target.value)}
+                  placeholder="Describe the job responsibilities and expectations..."
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  label="Requirements"
+                  multiline
+                  rows={3}
+                  value={jobFormData.requirements}
+                  onChange={(e) => handleFormChange('requirements', e.target.value)}
+                  placeholder="List key requirements (separate by commas)"
+                  helperText="e.g., 5+ years experience, React/Node.js, Team leadership"
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={handleCloseDialog} variant="outlined">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSubmitJob} 
+              variant="contained"
+              disabled={!jobFormData.title || !jobFormData.company || !jobFormData.location || !jobFormData.description}
+            >
+              Share Job
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </motion.div>
   );

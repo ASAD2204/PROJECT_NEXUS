@@ -32,6 +32,7 @@ import {
   Stack,
   alpha,
   Tooltip,
+  Divider,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import {
@@ -202,6 +203,35 @@ const UserManagement = () => {
       status: 'active',
       lastLogin: '2026-01-12 08:15 AM',
       avatar: 'https://i.pravatar.cc/150?img=30',
+    },
+  ];
+
+  const librarians = [
+    {
+      id: 1,
+      name: 'Ayesha Malik',
+      empId: 'LIB-001',
+      email: 'ayesha.malik@nexus.edu',
+      phone: '+92 303 5555555',
+      department: 'Library Services',
+      qualification: 'MLIS',
+      experience: '5 years',
+      status: 'active',
+      joinDate: '2019-07-01',
+      avatar: 'https://i.pravatar.cc/150?img=45',
+    },
+    {
+      id: 2,
+      name: 'Hassan Raza',
+      empId: 'LIB-002',
+      email: 'hassan.raza@nexus.edu',
+      phone: '+92 304 6666666',
+      department: 'Library Services',
+      qualification: 'MLS',
+      experience: '3 years',
+      status: 'active',
+      joinDate: '2021-08-15',
+      avatar: 'https://i.pravatar.cc/150?img=12',
     },
   ];
 
@@ -444,6 +474,55 @@ const UserManagement = () => {
     </TableContainer>
   );
 
+  const renderLibrarianTable = () => (
+    <TableContainer>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>Librarian</TableCell>
+            <TableCell>Employee ID</TableCell>
+            <TableCell>Department</TableCell>
+            <TableCell>Qualification</TableCell>
+            <TableCell>Experience</TableCell>
+            <TableCell>Status</TableCell>
+            <TableCell>Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {librarians.map((librarian) => (
+            <TableRow key={librarian.id} hover>
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar src={librarian.avatar} alt={librarian.name} />
+                  <Box>
+                    <Typography variant="body2" fontWeight="600">
+                      {librarian.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {librarian.email}
+                    </Typography>
+                  </Box>
+                </Box>
+              </TableCell>
+              <TableCell>{librarian.empId}</TableCell>
+              <TableCell>{librarian.department}</TableCell>
+              <TableCell>{librarian.qualification}</TableCell>
+              <TableCell>{librarian.experience}</TableCell>
+              <TableCell>
+                <Chip label={librarian.status} size="small" color={getStatusColor(librarian.status)} />
+              </TableCell>
+              <TableCell>
+                <IconButton size="small" onClick={(e) => handleMenuOpen(e, librarian)}>
+                  <MoreVert />
+                </IconButton>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+
   return (
     <motion.div {...pageTransition}>
       <Box className="page-container">
@@ -459,6 +538,7 @@ const UserManagement = () => {
               <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
                 <Tab label={`Students (${students.length})`} />
                 <Tab label={`Faculty (${faculty.length})`} />
+                <Tab label={`Librarians (${librarians.length})`} />
                 <Tab label={`Admin (${admins.length})`} />
               </Tabs>
             </Box>
@@ -506,12 +586,13 @@ const UserManagement = () => {
             {/* Table */}
             {activeTab === 0 && renderStudentTable()}
             {activeTab === 1 && renderFacultyTable()}
-            {activeTab === 2 && renderAdminTable()}
+            {activeTab === 2 && renderLibrarianTable()}
+            {activeTab === 3 && renderAdminTable()}
 
             {/* Pagination */}
             <TablePagination
               component="div"
-              count={activeTab === 0 ? students.length : activeTab === 1 ? faculty.length : admins.length}
+              count={activeTab === 0 ? students.length : activeTab === 1 ? faculty.length : activeTab === 2 ? librarians.length : admins.length}
               page={page}
               onPageChange={(e, newPage) => setPage(newPage)}
               rowsPerPage={rowsPerPage}

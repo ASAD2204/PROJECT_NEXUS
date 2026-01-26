@@ -46,6 +46,7 @@ import {
   Quiz as QuizIcon,
   AccountBalance as AccountBalanceIcon,
   CardMembership as CardMembershipIcon,
+  Campaign as CampaignIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -117,6 +118,7 @@ const adminMenuItems = [
   { text: 'Alumni Management', icon: CardMembershipIcon, path: '/admin/alumni' },
   { text: 'Finance Management', icon: PaymentIcon, path: '/admin/finance' },
   { text: 'Grievances', icon: SupportAgentIcon, path: '/admin/grievances' },
+  { text: 'Announcements', icon: CampaignIcon, path: '/admin/announcements' },
   { text: 'Reports', icon: AssessmentIcon, path: '/admin/reports' },
   { text: 'Settings', icon: SettingsIcon, path: '/admin/settings', divider: true },
   { text: 'Profile', icon: PersonIcon, path: '/admin/profile' },
@@ -158,7 +160,6 @@ const librarianMenuItems = [
   { text: 'Profile', icon: PersonIcon, path: '/librarian/profile' },
   { text: 'Nexus Chat', icon: ChatIcon, path: '/chat' },
   { text: 'Grievances', icon: SupportAgentIcon, path: '/librarian/grievances' },
-  { text: 'Settings', icon: SettingsIcon, path: '/admin/settings' },
 ];
 
 // Alumni menu items
@@ -250,7 +251,8 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
       <Box
         sx={{
           p: collapsed ? 1 : 2.5,
-          pt: collapsed ? 1.5 : 3,
+          pt: collapsed ? 2 : 3.5,
+          mt: 1.5,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -366,7 +368,12 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
 
             const listItemContent = (
               <ListItemButton
-                onClick={() => navigate(item.path)}
+                onClick={() => {
+                  navigate(item.path);
+                  if (isMobile && onDrawerToggle) {
+                    onDrawerToggle();
+                  }
+                }}
                 sx={{
                   borderRadius: collapsed ? '12px' : '16px',
                   background: isActive

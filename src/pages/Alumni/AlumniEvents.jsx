@@ -20,6 +20,10 @@ import {
   Avatar,
   AvatarGroup,
   Alert,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import {
@@ -37,6 +41,7 @@ import {
   BusinessCenter,
   School,
   History,
+  Add,
 } from '@mui/icons-material';
 import { alumniEvents, registerForEvent } from '../../data/dummyData';
 import PageHeader from '../../components/Common/PageHeader';
@@ -52,11 +57,23 @@ const AlumniEvents = () => {
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [registrationDialog, setRegistrationDialog] = useState(false);
+  const [organizeDialog, setOrganizeDialog] = useState(false);
   const [registrationData, setRegistrationData] = useState({
     fullName: '',
     email: '',
     phone: '',
     graduationYear: '',
+  });
+  const [eventFormData, setEventFormData] = useState({
+    title: '',
+    type: 'Reunion',
+    date: '',
+    time: '',
+    venue: '',
+    capacity: '',
+    fee: '',
+    description: '',
+    speakers: '',
   });
 
   useEffect(() => {
@@ -83,6 +100,40 @@ const AlumniEvents = () => {
     } else {
       showSnackbar(result.message, 'error');
     }
+  };
+
+  const handleOpenOrganizeDialog = () => {
+    setOrganizeDialog(true);
+  };
+
+  const handleCloseOrganizeDialog = () => {
+    setOrganizeDialog(false);
+    setEventFormData({
+      title: '',
+      type: 'Reunion',
+      date: '',
+      time: '',
+      venue: '',
+      capacity: '',
+      fee: '',
+      description: '',
+      speakers: '',
+    });
+  };
+
+  const handleEventFormChange = (field, value) => {
+    setEventFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmitEvent = () => {
+    if (!eventFormData.title || !eventFormData.date || !eventFormData.time || !eventFormData.venue) {
+      showSnackbar('Please fill all required fields', 'error');
+      return;
+    }
+    // Here you would typically send the data to your backend
+    console.log('Organizing event:', eventFormData);
+    showSnackbar('Event created successfully! It will be reviewed by admin.', 'success');
+    handleCloseOrganizeDialog();
   };
 
   const upcomingEvents = alumniEvents.filter((e) => e.status === 'Upcoming');
@@ -134,10 +185,20 @@ const AlumniEvents = () => {
   return (
     <PageTransition>
       <Box className="page-container">
-        <PageHeader
-          title="Alumni Events"
-          subtitle="Stay connected through reunions, workshops, and networking events"
-        />
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+          <PageHeader
+            title="Alumni Events"
+            subtitle="Stay connected through reunions, workshops, and networking events"
+          />
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={handleOpenOrganizeDialog}
+            sx={{ mt: 1 }}
+          >
+            Organize Event
+          </Button>
+        </Box>
 
         {/* Stats */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -421,6 +482,141 @@ const AlumniEvents = () => {
             <Button onClick={() => setRegistrationDialog(false)}>Cancel</Button>
             <Button variant="contained" onClick={handleSubmitRegistration} startIcon={<CheckCircle />}>
               Confirm Registration
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Organize Event Dialog */}
+        <Dialog open={organizeDialog} onClose={handleCloseOrganizeDialog} maxWidth="md" fullWidth>
+          <DialogTitle>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h6" fontWeight="bold">Organize an Event</Typography>
+              <IconButton onClick={handleCloseOrganizeDialog}>
+                <Close />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent dividers>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  label="Event Title"
+                  required
+                  value={eventFormData.title}
+                  onChange={(e) => handleEventFormChange('title', e.target.value)}
+                  placeholder="e.g., Annual Alumni Reunion 2026"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormControl fullWidth required>
+                  <InputLabel>Event Type</InputLabel>
+                  <Select
+                    value={eventFormData.type}
+                    onChange={(e) => handleEventFormChange('type', e.target.value)}
+                    label="Event Type"
+                  >
+                    <MenuItem value="Reunion">Reunion</MenuItem>
+                    <MenuItem value="Career Fair">Career Fair</MenuItem>
+                    <MenuItem value="Workshop">Workshop</MenuItem>
+                    <MenuItem value="Webinar">Webinar</MenuItem>
+                    <MenuItem value="Sports">Sports</MenuItem>
+                    <MenuItem value="Networking">Networking</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Venue"
+                  required
+                  value={eventFormData.venue}
+                  onChange={(e) => handleEventFormChange('venue', e.target.value)}
+                  placeholder="e.g., University Main Hall"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Event Date"
+                  type="date"
+                  required
+                  value={eventFormData.date}
+                  onChange={(e) => handleEventFormChange('date', e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Event Time"
+                  type="time"
+                  required
+                  value={eventFormData.time}
+                  onChange={(e) => handleEventFormChange('time', e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Capacity"
+                  type="number"
+                  value={eventFormData.capacity}
+                  onChange={(e) => handleEventFormChange('capacity', e.target.value)}
+                  placeholder="Maximum number of attendees"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Registration Fee (PKR)"
+                  type="number"
+                  value={eventFormData.fee}
+                  onChange={(e) => handleEventFormChange('fee', e.target.value)}
+                  placeholder="0 for free event"
+                  helperText="Leave empty or enter 0 for free events"
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  label="Event Description"
+                  required
+                  multiline
+                  rows={4}
+                  value={eventFormData.description}
+                  onChange={(e) => handleEventFormChange('description', e.target.value)}
+                  placeholder="Describe the event, its purpose, and what attendees can expect..."
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  label="Featured Speakers"
+                  value={eventFormData.speakers}
+                  onChange={(e) => handleEventFormChange('speakers', e.target.value)}
+                  placeholder="List speakers/presenters (separate by commas)"
+                  helperText="e.g., Dr. Ahmed Khan, Ms. Sarah Ali, Prof. Hassan Raza"
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <Alert severity="info">
+                  Your event will be submitted for admin review and approval before being published.
+                </Alert>
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={handleCloseOrganizeDialog} variant="outlined">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSubmitEvent} 
+              variant="contained"
+              disabled={!eventFormData.title || !eventFormData.date || !eventFormData.time || !eventFormData.venue}
+            >
+              Submit Event
             </Button>
           </DialogActions>
         </Dialog>

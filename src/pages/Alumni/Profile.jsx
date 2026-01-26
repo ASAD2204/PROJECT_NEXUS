@@ -173,15 +173,31 @@ const AlumniProfile = () => {
         </Grid>
 
         {/* Tabs */}
-        <Card sx={{ mb: 3 }}>
+        <Card sx={{ mb: 3, p: { xs: 0, md: 0 } }}>
           <Tabs
             value={activeTab}
             onChange={(e, newValue) => setActiveTab(newValue)}
-            sx={{ borderBottom: 1, borderColor: 'divider' }}
+            variant="fullWidth"
+            sx={{ 
+              borderBottom: 1, 
+              borderColor: 'divider',
+              '& .MuiTab-root': {
+                minHeight: { xs: 64, md: 64 },
+                minWidth: { xs: 0, md: 120 },
+                fontSize: { xs: '0.7rem', md: '0.875rem' },
+                px: { xs: 0.5, md: 2 },
+                flexDirection: { xs: 'column', md: 'row' },
+              },
+              '& .MuiTab-iconWrapper': {
+                fontSize: { xs: '1.5rem', md: '1.25rem' },
+                marginBottom: { xs: '4px', md: 0 },
+                marginRight: { xs: 0, md: '8px' },
+              },
+            }}
           >
-            <Tab icon={<Person />} label="Personal Information" iconPosition="start" />
-            <Tab icon={<Work />} label="Professional Information" iconPosition="start" />
-            <Tab icon={<EmojiEvents />} label="Achievements & Awards" iconPosition="start" />
+            <Tab icon={<Person />} label="Personal" iconPosition="start" />
+            <Tab icon={<Work />} label="Professional" iconPosition="start" />
+            <Tab icon={<EmojiEvents />} label="Achievements" iconPosition="start" />
             <Tab icon={<Settings />} label="Settings" iconPosition="start" />
           </Tabs>
         </Card>
