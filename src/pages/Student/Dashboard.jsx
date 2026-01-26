@@ -186,36 +186,51 @@ const Dashboard = () => {
               </Typography>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: 1.5, 
+                flexWrap: 'wrap', 
+                justifyContent: { xs: 'flex-start', md: 'flex-end' } 
+              }}>
                 <Button
                   variant="contained"
+                  size="small"
                   startIcon={<HowToReg />}
                   onClick={() => navigate('/attendance')}
                   sx={{
                     bgcolor: theme.palette.mode === 'dark' ? 'rgba(144, 202, 249, 0.2)' : 'rgba(255, 255, 255, 0.2)',
-                    '&:hover': { bgcolor: theme.palette.mode === 'dark' ? 'rgba(144, 202, 249, 0.2)' : 'rgba(255, 255, 255, 0.2)' },
+                    '&:hover': { bgcolor: theme.palette.mode === 'dark' ? 'rgba(144, 202, 249, 0.3)' : 'rgba(255, 255, 255, 0.3)' },
+                    width: { xs: '100%', sm: 'auto' },
+                    minWidth: { sm: 140 }
                   }}
                 >
                   Mark Attendance
                 </Button>
                 <Button
                   variant="contained"
+                  size="small"
                   startIcon={<AssignmentIcon />}
                   onClick={() => navigate('/lms')}
                   sx={{
                     bgcolor: theme.palette.mode === 'dark' ? 'rgba(144, 202, 249, 0.2)' : 'rgba(255, 255, 255, 0.2)',
-                    '&:hover': { bgcolor: theme.palette.mode === 'dark' ? 'rgba(144, 202, 249, 0.2)' : 'rgba(255, 255, 255, 0.2)' },
+                    '&:hover': { bgcolor: theme.palette.mode === 'dark' ? 'rgba(144, 202, 249, 0.3)' : 'rgba(255, 255, 255, 0.3)' },
+                    width: { xs: '100%', sm: 'auto' },
+                    minWidth: { sm: 140 }
                   }}
                 >
                   Submit Assignment
                 </Button>
                 <Button
                   variant="contained"
+                  size="small"
                   startIcon={<PaymentIcon />}
                   onClick={() => navigate('/finance')}
                   sx={{
                     bgcolor: theme.palette.mode === 'dark' ? 'rgba(144, 202, 249, 0.2)' : 'rgba(255, 255, 255, 0.2)',
-                    '&:hover': { bgcolor: theme.palette.mode === 'dark' ? 'rgba(144, 202, 249, 0.2)' : 'rgba(255, 255, 255, 0.2)' },
+                    '&:hover': { bgcolor: theme.palette.mode === 'dark' ? 'rgba(144, 202, 249, 0.3)' : 'rgba(255, 255, 255, 0.3)' },
+                    width: { xs: '100%', sm: 'auto' },
+                    minWidth: { sm: 140 }
                   }}
                 >
                   Pay Fees
@@ -565,6 +580,7 @@ const Dashboard = () => {
                   size="small"
                   endIcon={<ArrowForward />}
                   onClick={() => navigate('/lms')}
+                  sx={{ minWidth: { xs: 75, sm: 'auto' } }}
                 >
                   View All
                 </Button>
@@ -752,6 +768,7 @@ const Dashboard = () => {
               <Button
                 fullWidth
                 variant="outlined"
+                size="small"
                 sx={{ mt: 2 }}
                 onClick={() => navigate('/notifications')}
               >

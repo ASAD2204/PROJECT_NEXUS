@@ -192,9 +192,13 @@ const AlumniEvents = () => {
           />
           <Button
             variant="contained"
+            size="small"
             startIcon={<Add />}
             onClick={handleOpenOrganizeDialog}
-            sx={{ mt: 1 }}
+            sx={{ 
+              mt: 1,
+              minWidth: { xs: '100%', sm: 140 }
+            }}
           >
             Organize Event
           </Button>
@@ -478,9 +482,21 @@ const AlumniEvents = () => {
               </>
             )}
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setRegistrationDialog(false)}>Cancel</Button>
-            <Button variant="contained" onClick={handleSubmitRegistration} startIcon={<CheckCircle />}>
+          <DialogActions sx={{ p: 2, flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1, sm: 0 } }}>
+            <Button 
+              onClick={() => setRegistrationDialog(false)}
+              size="small"
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="contained" 
+              size="small"
+              onClick={handleSubmitRegistration} 
+              startIcon={<CheckCircle />}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            >
               Confirm Registration
             </Button>
           </DialogActions>
@@ -607,14 +623,21 @@ const AlumniEvents = () => {
               </Grid>
             </Grid>
           </DialogContent>
-          <DialogActions sx={{ p: 2 }}>
-            <Button onClick={handleCloseOrganizeDialog} variant="outlined">
+          <DialogActions sx={{ p: 2, flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1, sm: 0 } }}>
+            <Button 
+              onClick={handleCloseOrganizeDialog} 
+              variant="outlined"
+              size="small"
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            >
               Cancel
             </Button>
             <Button 
               onClick={handleSubmitEvent} 
               variant="contained"
+              size="small"
               disabled={!eventFormData.title || !eventFormData.date || !eventFormData.time || !eventFormData.venue}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
               Submit Event
             </Button>

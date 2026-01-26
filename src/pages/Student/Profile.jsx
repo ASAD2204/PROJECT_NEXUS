@@ -1188,7 +1188,11 @@ const Profile = () => {
               <Alert severity="error" sx={{ mb: 2 }}>
                 Deactivating your account will temporarily suspend your access to all university services. You can reactivate your account by contacting the administration.
               </Alert>
-              <Button variant="outlined" color="error" fullWidth={{ xs: true, sm: false }}>
+              <Button 
+                variant="outlined" 
+                color="error" 
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
+              >
                 Deactivate Account
               </Button>
             </CardContent>

@@ -173,7 +173,12 @@ const TeacherDashboard = () => {
                   <Typography variant="h6" fontWeight="bold">
                     My Courses
                   </Typography>
-                  <Button size="small" endIcon={<ArrowForward />} onClick={() => navigate('/teacher/courses')}>
+                  <Button 
+                    size="small" 
+                    endIcon={<ArrowForward />} 
+                    onClick={() => navigate('/teacher/courses')}
+                    sx={{ minWidth: { xs: 75, sm: 'auto' } }}
+                  >
                     View All
                   </Button>
                 </Box>
@@ -261,7 +266,11 @@ const TeacherDashboard = () => {
                   <Typography variant="h6" fontWeight="bold">
                     Recent Submissions
                   </Typography>
-                  <Button size="small" endIcon={<ArrowForward />}>
+                  <Button 
+                    size="small" 
+                    endIcon={<ArrowForward />}
+                    sx={{ minWidth: { xs: 75, sm: 'auto' } }}
+                  >
                     View All
                   </Button>
                 </Box>
@@ -356,32 +365,40 @@ const TeacherDashboard = () => {
                   <Button
                     variant="outlined"
                     fullWidth
+                    size="small"
                     startIcon={<Assignment />}
                     onClick={() => navigate('/teacher/create-assignment')}
+                    sx={{ justifyContent: 'flex-start', py: { xs: 1, sm: 1.5 } }}
                   >
                     Create Assignment
                   </Button>
                   <Button
                     variant="outlined"
                     fullWidth
+                    size="small"
                     startIcon={<CheckCircle />}
                     onClick={() => navigate('/attendance/smart-attendance')}
+                    sx={{ justifyContent: 'flex-start', py: { xs: 1, sm: 1.5 } }}
                   >
                     Mark Attendance
                   </Button>
                   <Button
                     variant="outlined"
                     fullWidth
+                    size="small"
                     startIcon={<People />}
                     onClick={() => navigate('/teacher/students')}
+                    sx={{ justifyContent: 'flex-start', py: { xs: 1, sm: 1.5 } }}
                   >
                     View Students
                   </Button>
                   <Button
                     variant="outlined"
                     fullWidth
+                    size="small"
                     startIcon={<Notifications />}
                     onClick={() => navigate('/teacher/courses')}
+                    sx={{ justifyContent: 'flex-start', py: { xs: 1, sm: 1.5 } }}
                   >
                     Manage Courses
                   </Button>

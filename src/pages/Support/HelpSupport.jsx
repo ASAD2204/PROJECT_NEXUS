@@ -334,11 +334,12 @@ const HelpSupport = () => {
 
                   <Button
                     variant="contained"
-                    size="large"
+                    size="small"
                     fullWidth
                     startIcon={<Send />}
                     onClick={handleSubmitTicket}
                     disabled={!ticketForm.subject || !ticketForm.category || !ticketForm.description}
+                    sx={{ py: { xs: 1.5, sm: 1 } }}
                   >
                     Submit Ticket
                   </Button>
@@ -369,7 +370,12 @@ const HelpSupport = () => {
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setShowSuccessDialog(false)} variant="contained">
+            <Button 
+              onClick={() => setShowSuccessDialog(false)} 
+              variant="contained"
+              size="small"
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            >
               Close
             </Button>
           </DialogActions>

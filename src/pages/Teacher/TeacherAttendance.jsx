@@ -235,12 +235,17 @@ const TeacherAttendance = () => {
               />
             </Grid>
             <Grid size={{ xs: 12, md: 5 }}>
-              <Stack direction="row" spacing={1} justifyContent="flex-end">
+              <Stack 
+                direction={{ xs: 'column', sm: 'row' }} 
+                spacing={1} 
+                justifyContent="flex-end"
+              >
                 <Button
                   variant="outlined"
                   size="small"
                   startIcon={<CheckCircle />}
                   onClick={() => handleSelectAll('present')}
+                  sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: { sm: 140 } }}
                 >
                   Mark All Present
                 </Button>
@@ -249,6 +254,7 @@ const TeacherAttendance = () => {
                   size="small"
                   startIcon={<Download />}
                   onClick={() => navigate('/attendance/history')}
+                  sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: { sm: 120 } }}
                 >
                   View History
                 </Button>

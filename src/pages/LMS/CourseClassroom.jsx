@@ -434,7 +434,10 @@ const CourseClassroom = () => {
                   size="small" 
                   startIcon={<ExitToApp />}
                   color="error"
-                  sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+                  sx={{ 
+                    display: { xs: 'none', sm: 'inline-flex' },
+                    minWidth: { sm: 120 }
+                  }}
                 >
                   Leave Course
                 </Button>
@@ -463,18 +466,21 @@ const CourseClassroom = () => {
                         onChange={(e) => setPostContent(e.target.value)}
                         sx={{ mb: 2 }}
                       />
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
                         <Button
                           startIcon={<AttachFile />}
                           size="small"
+                          sx={{ minWidth: { xs: 'auto', sm: 110 } }}
                         >
                           Attach File
                         </Button>
                         <Button
                           variant="contained"
+                          size="small"
                           endIcon={<Send />}
                           onClick={handlePostAnnouncement}
                           disabled={!postContent.trim()}
+                          sx={{ minWidth: { xs: 90, sm: 100 } }}
                         >
                           Post
                         </Button>

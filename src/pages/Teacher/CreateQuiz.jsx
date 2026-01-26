@@ -634,35 +634,52 @@ const CreateQuiz = () => {
       {/* Navigation Buttons */}
       <Card sx={{ mt: 3 }}>
         <CardContent>
-          <Stack direction="row" spacing={2} justifyContent="space-between">
+          <Stack 
+            direction={{ xs: 'column', sm: 'row' }} 
+            spacing={2} 
+            justifyContent="space-between"
+            sx={{ alignItems: { xs: 'stretch', sm: 'center' } }}
+          >
             <Button
               variant="outlined"
+              size="small"
               onClick={handleBack}
               disabled={activeStep === 0}
+              sx={{ order: { xs: 3, sm: 1 } }}
             >
               Back
             </Button>
-            <Stack direction="row" spacing={2}>
+            <Stack 
+              direction={{ xs: 'column', sm: 'row' }} 
+              spacing={1.5}
+              sx={{ order: { xs: 1, sm: 2 }, width: { xs: '100%', sm: 'auto' } }}
+            >
               <Button
                 variant="outlined"
+                size="small"
                 startIcon={<Save />}
                 onClick={handleSaveDraft}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 Save as Draft
               </Button>
               {activeStep < steps.length - 1 ? (
                 <Button
                   variant="contained"
+                  size="small"
                   onClick={handleNext}
+                  sx={{ width: { xs: '100%', sm: 'auto' } }}
                 >
                   Next
                 </Button>
               ) : (
                 <Button
                   variant="contained"
+                  size="small"
                   startIcon={<Publish />}
                   onClick={handlePublish}
                   color="success"
+                  sx={{ width: { xs: '100%', sm: 'auto' } }}
                 >
                   Publish Quiz
                 </Button>

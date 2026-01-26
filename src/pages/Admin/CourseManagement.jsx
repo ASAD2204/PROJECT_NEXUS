@@ -199,7 +199,13 @@ const CourseManagement = () => {
                       <MenuItem value="eng">Engineering</MenuItem>
                     </Select>
                   </FormControl>
-                  <Button startIcon={<Add />} variant="contained" onClick={() => setOpenDialog(true)}>
+                  <Button 
+                    startIcon={<Add />} 
+                    variant="contained" 
+                    size="small"
+                    onClick={() => setOpenDialog(true)}
+                    sx={{ minWidth: { xs: '100%', sm: 'auto' }, mt: { xs: 1, sm: 0 } }}
+                  >
                     Add Course
                   </Button>
                 </Stack>

@@ -562,21 +562,43 @@ const UserManagement = () => {
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 8 }}>
-                <Stack direction="row" spacing={2} justifyContent="flex-end">
+                <Stack 
+                  direction={{ xs: 'column', sm: 'row' }} 
+                  spacing={1.5} 
+                  justifyContent="flex-end"
+                  sx={{ flexWrap: 'wrap' }}
+                >
                   <Button
                     startIcon={<FilterList />}
                     variant="outlined"
                     size="small"
+                    sx={{ flex: { xs: '1 1 100%', sm: '0 0 auto' } }}
                   >
                     Filters
                   </Button>
-                  <Button startIcon={<Download />} variant="outlined" size="small">
+                  <Button 
+                    startIcon={<Download />} 
+                    variant="outlined" 
+                    size="small"
+                    sx={{ flex: { xs: '1 1 100%', sm: '0 0 auto' } }}
+                  >
                     Export
                   </Button>
-                  <Button startIcon={<Upload />} variant="outlined" size="small">
+                  <Button 
+                    startIcon={<Upload />} 
+                    variant="outlined" 
+                    size="small"
+                    sx={{ flex: { xs: '1 1 100%', sm: '0 0 auto' } }}
+                  >
                     Import
                   </Button>
-                  <Button startIcon={<Add />} variant="contained" size="small" onClick={handleAddUser}>
+                  <Button 
+                    startIcon={<Add />} 
+                    variant="contained" 
+                    size="small" 
+                    onClick={handleAddUser}
+                    sx={{ flex: { xs: '1 1 100%', sm: '0 0 auto' } }}
+                  >
                     Add User
                   </Button>
                 </Stack>

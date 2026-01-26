@@ -361,12 +361,24 @@ const FeeVouchers = () => {
                   </FormControl>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                  <Button fullWidth variant="outlined" startIcon={<DateRange />}>
+                  <Button 
+                    fullWidth 
+                    variant="outlined" 
+                    size="small"
+                    startIcon={<DateRange />}
+                    sx={{ minHeight: 36 }}
+                  >
                     Date Range
                   </Button>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                  <Button fullWidth variant="outlined" startIcon={<FileDownload />}>
+                  <Button 
+                    fullWidth 
+                    variant="outlined" 
+                    size="small"
+                    startIcon={<FileDownload />}
+                    sx={{ minHeight: 36 }}
+                  >
                     Export CSV
                   </Button>
                 </Grid>
@@ -871,13 +883,17 @@ const FeeVouchers = () => {
                 </Grid>
               </Grid>
             </DialogContent>
-            <DialogActions sx={{ p: 3 }}>
-              <Button onClick={() => setPaymentModalOpen(false)} size="large">
+            <DialogActions sx={{ p: 3, flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1, sm: 0 } }}>
+              <Button 
+                onClick={() => setPaymentModalOpen(false)} 
+                size="small"
+                sx={{ order: { xs: 2, sm: 1 }, width: { xs: '100%', sm: 'auto' } }}
+              >
                 Cancel
               </Button>
               <Button
                 variant="contained"
-                size="large"
+                size="small"
                 startIcon={<Payment />}
                 onClick={handlePaymentSubmit}
                 disabled={
@@ -885,7 +901,7 @@ const FeeVouchers = () => {
                   (paymentMethod === 0 && (!cardNumber || !cardName || !expiryDate || !cvv)) ||
                   ((paymentMethod === 1 || paymentMethod === 2) && (!phoneNumber || !pin))
                 }
-                sx={{ px: 4 }}
+                sx={{ px: { xs: 2, sm: 4 }, order: { xs: 1, sm: 2 } }}
               >
                 Process Payment
               </Button>
@@ -962,11 +978,23 @@ const FeeVouchers = () => {
               </CardContent>
             </Card>
 
-            <Stack direction="row" spacing={2}>
-              <Button variant="contained" startIcon={<Download />} size="large">
+            <Stack 
+              direction={{ xs: 'column', sm: 'row' }} 
+              spacing={2}
+              sx={{ width: '100%' }}
+            >
+              <Button 
+                variant="contained" 
+                startIcon={<Download />} 
+                size="small"
+                sx={{ flex: { sm: 1 }, width: { xs: '100%', sm: 'auto' } }}
+              >
                 Download Receipt
               </Button>
-              <Button variant="outlined" onClick={() => {
+              <Button 
+                variant="outlined" 
+                size="small"
+                onClick={() => {
                 setPaymentModalOpen(false);
                 setPaymentSuccess(false);
                 setSelectedInvoice(null);
@@ -977,7 +1005,9 @@ const FeeVouchers = () => {
                 setPhoneNumber('');
                 setPin('');
                 setTermsAccepted(false);
-              }} size="large">
+              }} 
+                sx={{ flex: { sm: 1 }, width: { xs: '100%', sm: 'auto' } }}
+              >
                 Done
               </Button>
             </Stack>
@@ -1023,10 +1053,30 @@ const FeeVouchers = () => {
             </Box>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowReceipt(false)}>Close</Button>
-          <Button variant="contained" startIcon={<Download />}>Download PDF</Button>
-          <Button variant="outlined" startIcon={<Print />}>Print</Button>
+        <DialogActions sx={{ flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1, sm: 0 }, p: 2 }}>
+          <Button 
+            onClick={() => setShowReceipt(false)}
+            size="small"
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
+          >
+            Close
+          </Button>
+          <Button 
+            variant="contained" 
+            startIcon={<Download />}
+            size="small"
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
+          >
+            Download PDF
+          </Button>
+          <Button 
+            variant="outlined" 
+            startIcon={<Print />}
+            size="small"
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
+          >
+            Print
+          </Button>
         </DialogActions>
       </Dialog>
 

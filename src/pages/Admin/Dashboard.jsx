@@ -230,9 +230,10 @@ const AdminDashboard = () => {
                     </Typography>
                   </Box>
                   <Button 
-                    size="small" 
+                    size="small"
                     endIcon={<ArrowForward />}
                     onClick={() => navigate('/admin/departments')}
+                    sx={{ minWidth: { xs: 80, sm: 'auto' } }}
                   >
                     View All
                   </Button>
@@ -390,36 +391,40 @@ const AdminDashboard = () => {
                   <Button 
                     variant="outlined" 
                     fullWidth 
+                    size="small"
                     startIcon={<PersonAdd />}
                     onClick={() => navigate('/admin/users')}
-                    sx={{ justifyContent: 'flex-start', py: 1.5 }}
+                    sx={{ justifyContent: 'flex-start', py: { xs: 1, sm: 1.5 } }}
                   >
                     Add New User
                   </Button>
                   <Button 
                     variant="outlined" 
                     fullWidth 
+                    size="small"
                     startIcon={<School />}
                     onClick={() => navigate('/admin/courses')}
-                    sx={{ justifyContent: 'flex-start', py: 1.5 }}
+                    sx={{ justifyContent: 'flex-start', py: { xs: 1, sm: 1.5 } }}
                   >
                     Manage Courses
                   </Button>
                   <Button 
                     variant="outlined" 
                     fullWidth 
+                    size="small"
                     startIcon={<Payment />}
                     onClick={() => navigate('/admin/finance')}
-                    sx={{ justifyContent: 'flex-start', py: 1.5 }}
+                    sx={{ justifyContent: 'flex-start', py: { xs: 1, sm: 1.5 } }}
                   >
                     View Finances
                   </Button>
                   <Button 
                     variant="outlined" 
                     fullWidth 
+                    size="small"
                     startIcon={<Assignment />}
                     onClick={() => navigate('/admin/reports')}
-                    sx={{ justifyContent: 'flex-start', py: 1.5 }}
+                    sx={{ justifyContent: 'flex-start', py: { xs: 1, sm: 1.5 } }}
                   >
                     Generate Report
                   </Button>
@@ -542,7 +547,11 @@ const AdminDashboard = () => {
                   <Typography variant="h6" fontWeight="bold">
                     Recent Activities
                   </Typography>
-                  <Button size="small" endIcon={<ArrowForward />}>
+                  <Button 
+                    size="small" 
+                    endIcon={<ArrowForward />}
+                    sx={{ minWidth: { xs: 80, sm: 'auto' } }}
+                  >
                     View All
                   </Button>
                 </Box>

@@ -247,7 +247,7 @@ const TeacherGrievanceManagement = () => {
 
   return (
     <motion.div {...pageTransition}>
-      <Box>
+      <Box className="page-container">
         <PageHeader
           title="Grievance Management"
           subtitle="Review and respond to student academic grievances referred by admin"

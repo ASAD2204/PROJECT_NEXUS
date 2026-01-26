@@ -235,8 +235,10 @@ const AnnouncementManagement = () => {
               </Typography>
               <Button
                 variant="contained"
+                size="small"
                 startIcon={<Add />}
                 onClick={handleAddAnnouncement}
+                sx={{ minWidth: { xs: '100%', sm: 160 }, mt: { xs: 1, sm: 0 } }}
               >
                 Create Announcement
               </Button>
