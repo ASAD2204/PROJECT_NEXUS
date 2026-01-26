@@ -8,6 +8,7 @@ import App from './App.jsx';
 import { getTheme } from './theme.js';
 import { ThemeProvider, useThemeMode } from './contexts/ThemeContext.jsx';
 import { AuthProvider } from './contexts/AuthContext.jsx';
+import { SnackbarProvider } from './contexts/SnackbarContext.jsx';
 import globalStyles from './styles/globalStyles.js';
 
 // Theme Wrapper Component
@@ -19,11 +20,13 @@ const ThemedApp = () => {
     <MuiThemeProvider theme={theme}>
       <CssBaseline />
       <MuiGlobalStyles styles={globalStyles} />
-      <BrowserRouter>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </BrowserRouter>
+      <SnackbarProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </BrowserRouter>
+      </SnackbarProvider>
     </MuiThemeProvider>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box,
   Card,
@@ -44,6 +44,8 @@ import {
   LinearProgress,
   Avatar,
   Snackbar,
+  alpha,
+  useTheme,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import {
@@ -68,6 +70,8 @@ import {
   Payment,
   TrendingUp,
   LibraryBooks,
+  LocalLibrary,
+  AccountBalance,
 } from '@mui/icons-material';
 import {
   libraryBooks,
@@ -83,6 +87,7 @@ import { GridSkeleton } from '../../components/Common/LoadingSkeleton';
 import { pageTransition, staggerContainer, fadeInUp } from '../../utils/animations';
 
 const LibraryCatalog = () => {
+  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -104,28 +109,25 @@ const LibraryCatalog = () => {
     return dueDate < new Date() && book.status === 'issued';
   });
 
-  // Loading effect
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 1400);
+    }, 1000);
     return () => clearTimeout(timer);
   }, []);
 
-  // Calculate fines
   const calculateFine = (dueDate) => {
     const due = new Date(dueDate);
     const today = new Date();
     if (today > due) {
       const daysOverdue = Math.floor((today - due) / (1000 * 60 * 60 * 24));
-      return daysOverdue * 50; // PKR 50 per day
+      return daysOverdue * 50;
     }
     return 0;
   };
 
   const totalFines = myIssuedBooks.reduce((sum, book) => sum + calculateFine(book.dueDate), 0);
 
-  // Filter and sort books
   const filteredBooks = libraryBooks
     .filter(book => {
       const matchesSearch = 
@@ -134,7 +136,6 @@ const LibraryCatalog = () => {
         book.isbn.includes(searchQuery);
       
       const matchesCategory = categoryFilter === 'All' || book.category === categoryFilter;
-      
       const matchesAvailability = 
         availabilityFilter === 'All' ||
         (availabilityFilter === 'Available' && book.availableCopies > 0) ||
@@ -204,16 +205,15 @@ const LibraryCatalog = () => {
   const availabilityOptions = ['All', 'Available', 'Issued'];
   const languages = ['All', 'English', 'Urdu'];
 
-  // Show loading skeleton
   if (loading) {
     return (
       <Box sx={{ pb: 4 }}>
         <Box sx={{ mb: 3 }}>
           <Typography variant="h4" fontWeight="bold" gutterBottom>
-            Digital Library
+            Digital Library Catalog
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Browse and manage your books
+            Loading your books...
           </Typography>
         </Box>
         <GridSkeleton items={12} columns={{ xs: 12, sm: 6, md: 4, lg: 3 }} />
@@ -222,75 +222,285 @@ const LibraryCatalog = () => {
   }
 
   return (
-    <Box className="page-container">
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
-          Digital Library
-        </Typography>
-        <Typography variant="body1" color="text.secondary" gutterBottom>
-          Browse {libraryBooks.length * 100}+ books and resources
-        </Typography>
+    <Box className="page-container" component={motion.div} {...pageTransition}>
+      {/* Enhanced Header */}
+      <Box 
+        sx={{ 
+          mb: 4,
+          p: 4,
+          borderRadius: 3,
+          background: theme.palette.mode === 'dark'
+            ? 'linear-gradient(135deg, rgba(103,58,183,0.15) 0%, rgba(63,81,181,0.15) 50%, rgba(25,118,210,0.15) 100%)'
+            : 'linear-gradient(135deg, rgba(103,58,183,0.08) 0%, rgba(63,81,181,0.08) 50%, rgba(25,118,210,0.08) 100%)',
+          border: '1px solid',
+          borderColor: theme.palette.mode === 'dark' ? 'rgba(144,202,249,0.2)' : 'rgba(25,118,210,0.2)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        <Box sx={{ position: 'relative', zIndex: 1 }}>
+          <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 1 }}>
+            <Box
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: 2,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 16px rgba(102,126,234,0.4)',
+              }}
+            >
+              <LocalLibrary sx={{ fontSize: 32, color: 'white' }} />
+            </Box>
+            <Box>
+              <Typography variant="h4" fontWeight="bold" gutterBottom>
+                Digital Library Catalog
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Browse {libraryBooks.length * 100}+ books and digital resources
+              </Typography>
+            </Box>
+          </Stack>
+        </Box>
+        
+        {/* Decorative Corner Markers */}
+        <Box sx={{ 
+          position: 'absolute', 
+          top: 0, 
+          right: 0, 
+          width: 120, 
+          height: 120,
+          borderRadius: '0 24px 0 0',
+          background: 'linear-gradient(135deg, rgba(102,126,234,0.1) 0%, transparent 100%)',
+        }} />
       </Box>
 
       {/* Overdue Warning */}
-      {overdueBooks.length > 0 && (
-        <Alert
-          severity="error"
-          sx={{ mb: 3 }}
-          action={
-            <Button color="inherit" size="small" startIcon={<Payment />}>
-              Pay Fine
-            </Button>
-          }
-        >
-          <strong>Overdue Books Alert!</strong> You have {overdueBooks.length} overdue book(s). 
-          Total Fine: PKR {totalFines}
-        </Alert>
-      )}
+      <AnimatePresence>
+        {overdueBooks.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
+            <Alert
+              severity="error"
+              sx={{ 
+                mb: 3,
+                borderRadius: 2,
+                border: '2px solid',
+                borderColor: 'error.main',
+                boxShadow: '0 4px 12px rgba(211,47,47,0.2)',
+              }}
+              action={
+                <Button 
+                  color="inherit" 
+                  size="small" 
+                  startIcon={<Payment />}
+                  sx={{ fontWeight: 600 }}
+                >
+                  Pay Fine
+                </Button>
+              }
+            >
+              <Typography variant="subtitle2" fontWeight="bold">
+                ⚠️ Overdue Books Alert!
+              </Typography>
+              <Typography variant="body2">
+                You have {overdueBooks.length} overdue book(s). Total Fine: PKR {totalFines}
+              </Typography>
+            </Alert>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Quick Stats */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            title="Books Issued"
-            value={issuedBooksCount}
-            icon={<MenuBook />}
-            color="primary"
-          />
+      {/* Enhanced Stats Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={staggerContainer} initial="initial" animate="animate">
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
+          <Card
+            sx={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              borderRadius: 3,
+              border: '2px solid rgba(255,255,255,0.1)',
+              boxShadow: '0 8px 24px rgba(102,126,234,0.35)',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <CardContent>
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Box
+                  sx={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 2,
+                    background: 'rgba(255,255,255,0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backdropFilter: 'blur(10px)',
+                  }}
+                >
+                  <MenuBook sx={{ fontSize: 28 }} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ opacity: 0.9, fontWeight: 600 }}>
+                    Books Issued
+                  </Typography>
+                  <Typography variant="h4" fontWeight="bold">
+                    {issuedBooksCount}
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            title="Available Books"
-            value={availableBooks}
-            icon={CheckCircle}
-            color="success"
-          />
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
+          <Card
+            sx={{
+              background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+              color: 'white',
+              borderRadius: 3,
+              border: '2px solid rgba(255,255,255,0.1)',
+              boxShadow: '0 8px 24px rgba(17,153,142,0.35)',
+            }}
+          >
+            <CardContent>
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Box
+                  sx={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 2,
+                    background: 'rgba(255,255,255,0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backdropFilter: 'blur(10px)',
+                  }}
+                >
+                  <CheckCircle sx={{ fontSize: 28 }} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ opacity: 0.9, fontWeight: 600 }}>
+                    Available Books
+                  </Typography>
+                  <Typography variant="h4" fontWeight="bold">
+                    {availableBooks}
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            title="Overdue Books"
-            value={overdueBooks.length}
-            icon={Warning}
-            color="error"
-          />
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
+          <Card
+            sx={{
+              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+              color: 'white',
+              borderRadius: 3,
+              border: '2px solid rgba(255,255,255,0.1)',
+              boxShadow: '0 8px 24px rgba(240,147,251,0.35)',
+            }}
+          >
+            <CardContent>
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Box
+                  sx={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 2,
+                    background: 'rgba(255,255,255,0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backdropFilter: 'blur(10px)',
+                  }}
+                >
+                  <Warning sx={{ fontSize: 28 }} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ opacity: 0.9, fontWeight: 600 }}>
+                    Overdue Books
+                  </Typography>
+                  <Typography variant="h4" fontWeight="bold">
+                    {overdueBooks.length}
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            title="Total Fines"
-            value={`PKR ${totalFines}`}
-            icon={Payment}
-            color="warning"
-          />
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
+          <Card
+            sx={{
+              background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+              color: 'white',
+              borderRadius: 3,
+              border: '2px solid rgba(255,255,255,0.1)',
+              boxShadow: '0 8px 24px rgba(250,112,154,0.35)',
+            }}
+          >
+            <CardContent>
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Box
+                  sx={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 2,
+                    background: 'rgba(255,255,255,0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backdropFilter: 'blur(10px)',
+                  }}
+                >
+                  <Payment sx={{ fontSize: 28 }} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ opacity: 0.9, fontWeight: 600 }}>
+                    Total Fines
+                  </Typography>
+                  <Typography variant="h4" fontWeight="bold">
+                    ₨{totalFines}
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
 
-      {/* Tabs */}
-      <Card sx={{ mb: 3 }}>
+      {/* Enhanced Tabs */}
+      <Card 
+        sx={{ 
+          mb: 3, 
+          borderRadius: 3,
+          border: '1px solid',
+          borderColor: 'divider',
+          boxShadow: theme.palette.mode === 'dark'
+            ? '0 4px 12px rgba(0,0,0,0.4)'
+            : '0 4px 12px rgba(0,0,0,0.08)',
+        }}
+      >
         <Tabs
           value={activeTab}
           onChange={(e, newValue) => setActiveTab(newValue)}
-          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          sx={{ 
+            borderBottom: 1, 
+            borderColor: 'divider',
+            '& .MuiTab-root': {
+              fontWeight: 600,
+              textTransform: 'none',
+              fontSize: '1rem',
+            },
+          }}
         >
           <Tab icon={<LibraryBooks />} label="Browse Books" iconPosition="start" />
           <Tab icon={<MenuBook />} label="My Books" iconPosition="start" />
@@ -300,95 +510,127 @@ const LibraryCatalog = () => {
       {/* TAB 1: Browse Books */}
       {activeTab === 0 && (
         <Box>
-          {/* Search & Filter Bar */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Grid container spacing={2} alignItems="center">
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <TextField
-                    fullWidth
-                    placeholder="Search by title, author, ISBN..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Search />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 8 }}>
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <FilterList color="action" />
-                    <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
-                      Category:
+          {/* Enhanced Search & Filter Card */}
+          <Card 
+            sx={{ 
+              mb: 3,
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: 'divider',
+              background: theme.palette.mode === 'dark'
+                ? 'rgba(255,255,255,0.02)'
+                : 'rgba(255,255,255,0.9)',
+            }}
+          >
+            <CardContent sx={{ p: 3 }}>
+              <Stack spacing={3}>
+                <TextField
+                  fullWidth
+                  placeholder="Search by title, author, ISBN..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search sx={{ color: 'primary.main' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      background: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : '#ffffff',
+                    },
+                  }}
+                />
+                
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                    <FilterList color="primary" />
+                    <Typography variant="subtitle2" fontWeight="bold">
+                      Filters
                     </Typography>
-                    {categories.map((cat) => (
-                      <Chip
-                        key={cat}
-                        label={cat}
-                        onClick={() => setCategoryFilter(cat)}
-                        color={categoryFilter === cat ? 'primary' : 'default'}
-                        variant={categoryFilter === cat ? 'filled' : 'outlined'}
-                        size="small"
-                      />
-                    ))}
                   </Box>
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center', mt: 1 }}>
-                    <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
-                      Availability:
-                    </Typography>
-                    {availabilityOptions.map((opt) => (
-                      <Chip
-                        key={opt}
-                        label={opt}
-                        onClick={() => setAvailabilityFilter(opt)}
-                        color={availabilityFilter === opt ? 'primary' : 'default'}
-                        variant={availabilityFilter === opt ? 'filled' : 'outlined'}
-                        size="small"
-                      />
-                    ))}
-                    <Typography variant="caption" color="text.secondary" sx={{ ml: 2, mr: 1 }}>
-                      Language:
-                    </Typography>
-                    {languages.map((lang) => (
-                      <Chip
-                        key={lang}
-                        label={lang}
-                        onClick={() => setLanguageFilter(lang)}
-                        color={languageFilter === lang ? 'primary' : 'default'}
-                        variant={languageFilter === lang ? 'filled' : 'outlined'}
-                        size="small"
-                      />
-                    ))}
-                  </Box>
-                </Grid>
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Sort By</InputLabel>
-                    <Select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      label="Sort By"
-                    >
-                      <MenuItem value="title">Title (A-Z)</MenuItem>
-                      <MenuItem value="author">Author (A-Z)</MenuItem>
-                      <MenuItem value="newest">Newest First</MenuItem>
-                      <MenuItem value="popular">Most Popular</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-              </Grid>
+                  <Stack spacing={2}>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ minWidth: 80 }}>
+                        Category:
+                      </Typography>
+                      {categories.map((cat) => (
+                        <Chip
+                          key={cat}
+                          label={cat}
+                          onClick={() => setCategoryFilter(cat)}
+                          sx={{
+                            fontWeight: 600,
+                            ...(categoryFilter === cat && {
+                              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                              color: 'white',
+                            }),
+                          }}
+                          color={categoryFilter === cat ? undefined : 'default'}
+                          variant={categoryFilter === cat ? undefined : 'outlined'}
+                          size="small"
+                        />
+                      ))}
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ minWidth: 80 }}>
+                        Availability:
+                      </Typography>
+                      {availabilityOptions.map((opt) => (
+                        <Chip
+                          key={opt}
+                          label={opt}
+                          onClick={() => setAvailabilityFilter(opt)}
+                          sx={{
+                            fontWeight: 600,
+                            ...(availabilityFilter === opt && {
+                              background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                              color: 'white',
+                            }),
+                          }}
+                          color={availabilityFilter === opt ? undefined : 'default'}
+                          variant={availabilityFilter === opt ? undefined : 'outlined'}
+                          size="small"
+                        />
+                      ))}
+                    </Box>
+                  </Stack>
+                </Box>
+
+                <FormControl fullWidth size="small">
+                  <InputLabel>Sort By</InputLabel>
+                  <Select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    label="Sort By"
+                    sx={{ borderRadius: 2 }}
+                  >
+                    <MenuItem value="title">Title (A-Z)</MenuItem>
+                    <MenuItem value="author">Author (A-Z)</MenuItem>
+                    <MenuItem value="newest">Newest First</MenuItem>
+                    <MenuItem value="popular">Most Popular</MenuItem>
+                  </Select>
+                </FormControl>
+              </Stack>
             </CardContent>
           </Card>
 
           {/* Book Grid */}
-          <Typography variant="h6" gutterBottom>
-            {filteredBooks.length} books found
-          </Typography>
-          <Grid container spacing={3} component={motion.div} variants={staggerContainer} initial="initial" animate="animate">
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="h6" fontWeight="bold">
+              {filteredBooks.length} books found
+            </Typography>
+          </Box>
+          <Grid 
+            container 
+            spacing={3} 
+            component={motion.div} 
+            variants={staggerContainer} 
+            initial="initial" 
+            animate="animate"
+          >
             {filteredBooks.map((book) => (
               <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={book.id} component={motion.div} variants={fadeInUp}>
                 <Card
@@ -396,21 +638,44 @@ const LibraryCatalog = () => {
                     height: '100%',
                     display: 'flex',
                     flexDirection: 'column',
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
-                      boxShadow: 6,
-                      transform: 'translateY(-4px)',
-                      transition: 'all 0.3s',
+                      transform: 'translateY(-8px)',
+                      boxShadow: theme.palette.mode === 'dark'
+                        ? '0 12px 32px rgba(0,0,0,0.5)'
+                        : '0 12px 32px rgba(25,118,210,0.2)',
+                      borderColor: 'primary.main',
                     },
                   }}
                 >
-                  <CardMedia
-                    component="img"
-                    height="250"
-                    image={book.coverImage}
-                    alt={book.title}
-                    sx={{ objectFit: 'cover' }}
-                  />
-                  <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                  <Box sx={{ position: 'relative' }}>
+                    <CardMedia
+                      component="img"
+                      height="280"
+                      image={book.coverImage}
+                      alt={book.title}
+                      sx={{ objectFit: 'cover' }}
+                    />
+                    <Chip
+                      label={book.availableCopies > 0 ? 'Available' : 'Issued'}
+                      size="small"
+                      sx={{
+                        position: 'absolute',
+                        top: 12,
+                        right: 12,
+                        fontWeight: 'bold',
+                        background: book.availableCopies > 0 
+                          ? 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)'
+                          : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                        color: 'white',
+                        border: '2px solid rgba(255,255,255,0.3)',
+                      }}
+                    />
+                  </Box>
+                  <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 2.5 }}>
                     <Typography variant="h6" fontWeight="bold" gutterBottom noWrap>
                       {book.title}
                     </Typography>
@@ -421,12 +686,15 @@ const LibraryCatalog = () => {
                       ISBN: {book.isbn}
                     </Typography>
                     
-                    <Box sx={{ display: 'flex', gap: 0.5, my: 1, flexWrap: 'wrap' }}>
-                      <Chip label={book.category} size="small" color="primary" variant="outlined" />
-                      <Chip
-                        label={book.availableCopies > 0 ? 'Available' : 'Issued'}
-                        size="small"
-                        color={book.availableCopies > 0 ? 'success' : 'warning'}
+                    <Box sx={{ display: 'flex', gap: 0.5, my: 1.5, flexWrap: 'wrap' }}>
+                      <Chip 
+                        label={book.category} 
+                        size="small" 
+                        sx={{
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          color: 'white',
+                          fontWeight: 600,
+                        }}
                       />
                     </Box>
 
@@ -448,6 +716,15 @@ const LibraryCatalog = () => {
                         size="small"
                         onClick={() => handleViewDetails(book)}
                         startIcon={<Visibility />}
+                        sx={{
+                          borderRadius: 2,
+                          fontWeight: 600,
+                          textTransform: 'none',
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          '&:hover': {
+                            background: 'linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%)',
+                          },
+                        }}
                       >
                         View Details
                       </Button>
@@ -458,11 +735,16 @@ const LibraryCatalog = () => {
                           size="small"
                           onClick={() => handleReserve(book.id)}
                           startIcon={<BookmarkAdd />}
+                          sx={{
+                            borderRadius: 2,
+                            fontWeight: 600,
+                            textTransform: 'none',
+                          }}
                         >
                           Reserve
                         </Button>
                       ) : (
-                        <Button fullWidth variant="outlined" size="small" disabled>
+                        <Button fullWidth variant="outlined" size="small" disabled sx={{ borderRadius: 2 }}>
                           Not Available
                         </Button>
                       )}
@@ -479,12 +761,12 @@ const LibraryCatalog = () => {
       {activeTab === 1 && (
         <Box>
           {/* Currently Issued Books */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
+          <Card sx={{ mb: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+            <CardContent sx={{ p: 3 }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>
                 Currently Issued Books ({myIssuedBooks.length})
               </Typography>
-              <Divider sx={{ mb: 2 }} />
+              <Divider sx={{ mb: 3 }} />
               {myIssuedBooks.length > 0 ? (
                 <TableContainer>
                   <Table>
@@ -503,34 +785,84 @@ const LibraryCatalog = () => {
                         const daysLeft = Math.ceil((new Date(book.dueDate) - new Date()) / (1000 * 60 * 60 * 24));
                         return (
                           <TableRow key={book.id}>
-                            <TableCell>{book.bookTitle}</TableCell>
+                            <TableCell>
+                              <Typography variant="body2" fontWeight={600}>
+                                {book.bookTitle}
+                              </Typography>
+                            </TableCell>
                             <TableCell>{book.issueDate}</TableCell>
                             <TableCell>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 {book.dueDate}
                                 {daysLeft < 0 && (
-                                  <Chip label="Overdue" size="small" color="error" />
+                                  <Chip 
+                                    label="Overdue" 
+                                    size="small" 
+                                    sx={{
+                                      background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                                      color: 'white',
+                                      fontWeight: 600,
+                                    }}
+                                  />
                                 )}
                                 {daysLeft >= 0 && daysLeft <= 3 && (
-                                  <Chip label={`${daysLeft} days left`} size="small" color="warning" />
+                                  <Chip 
+                                    label={`${daysLeft} days left`} 
+                                    size="small" 
+                                    sx={{
+                                      background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                                      color: 'white',
+                                      fontWeight: 600,
+                                    }}
+                                  />
                                 )}
                               </Box>
                             </TableCell>
                             <TableCell align="right">
                               {fine > 0 ? (
-                                <Chip label={`PKR ${fine}`} size="small" color="error" />
+                                <Chip 
+                                  label={`PKR ${fine}`} 
+                                  size="small" 
+                                  sx={{
+                                    background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                                    color: 'white',
+                                    fontWeight: 600,
+                                  }}
+                                />
                               ) : (
-                                <Chip label="PKR 0" size="small" color="success" />
+                                <Chip 
+                                  label="PKR 0" 
+                                  size="small" 
+                                  sx={{
+                                    background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                                    color: 'white',
+                                    fontWeight: 600,
+                                  }}
+                                />
                               )}
                             </TableCell>
                             <TableCell align="right">
                               <Tooltip title="Return Book">
-                                <IconButton size="small" onClick={() => handleReturn(book.id)} color="primary">
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleReturn(book.id)} 
+                                  sx={{
+                                    color: 'success.main',
+                                    '&:hover': { background: alpha(theme.palette.success.main, 0.1) },
+                                  }}
+                                >
                                   <CheckCircle />
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title="Renew">
-                                <IconButton size="small" onClick={() => handleRenew(book.id)} color="info">
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleRenew(book.id)} 
+                                  sx={{
+                                    color: 'info.main',
+                                    '&:hover': { background: alpha(theme.palette.info.main, 0.1) },
+                                  }}
+                                >
                                   <Replay />
                                 </IconButton>
                               </Tooltip>
@@ -542,18 +874,20 @@ const LibraryCatalog = () => {
                   </Table>
                 </TableContainer>
               ) : (
-                <Alert severity="info">No books currently issued</Alert>
+                <Alert severity="info" sx={{ borderRadius: 2 }}>
+                  No books currently issued
+                </Alert>
               )}
             </CardContent>
           </Card>
 
           {/* Reserved Books */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
+          <Card sx={{ mb: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+            <CardContent sx={{ p: 3 }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>
                 Reserved Books ({myReservedBooks.length})
               </Typography>
-              <Divider sx={{ mb: 2 }} />
+              <Divider sx={{ mb: 3 }} />
               {myReservedBooks.length > 0 ? (
                 <TableContainer>
                   <Table>
@@ -568,7 +902,11 @@ const LibraryCatalog = () => {
                     <TableBody>
                       {myReservedBooks.map((reservation) => (
                         <TableRow key={reservation.id}>
-                          <TableCell>{reservation.bookTitle}</TableCell>
+                          <TableCell>
+                            <Typography variant="body2" fontWeight={600}>
+                              {reservation.bookTitle}
+                            </Typography>
+                          </TableCell>
                           <TableCell>{reservation.reservedDate}</TableCell>
                           <TableCell>{reservation.expiresOn}</TableCell>
                           <TableCell align="right">
@@ -576,7 +914,10 @@ const LibraryCatalog = () => {
                               <IconButton
                                 size="small"
                                 onClick={() => handleCancelReservation(reservation.id)}
-                                color="error"
+                                sx={{
+                                  color: 'error.main',
+                                  '&:hover': { background: alpha(theme.palette.error.main, 0.1) },
+                                }}
                               >
                                 <CancelIcon />
                               </IconButton>
@@ -588,29 +929,43 @@ const LibraryCatalog = () => {
                   </Table>
                 </TableContainer>
               ) : (
-                <Alert severity="info">No reserved books</Alert>
+                <Alert severity="info" sx={{ borderRadius: 2 }}>
+                  No reserved books
+                </Alert>
               )}
             </CardContent>
           </Card>
 
           {/* Reading History */}
-          <Card>
-            <CardContent>
+          <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+            <CardContent sx={{ p: 3 }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>
                 Reading History ({readingHistory.length})
               </Typography>
-              <Divider sx={{ mb: 2 }} />
+              <Divider sx={{ mb: 3 }} />
               <Timeline position="right">
                 {readingHistory.map((record, index) => (
                   <TimelineItem key={record.id}>
                     <TimelineSeparator>
-                      <TimelineDot color="success">
-                        <CheckCircle />
+                      <TimelineDot 
+                        sx={{
+                          background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                        }}
+                      >
+                        <CheckCircle sx={{ color: 'white' }} />
                       </TimelineDot>
                       {index < readingHistory.length - 1 && <TimelineConnector />}
                     </TimelineSeparator>
                     <TimelineContent>
-                      <Paper elevation={2} sx={{ p: 2 }}>
+                      <Paper 
+                        elevation={2} 
+                        sx={{ 
+                          p: 2.5, 
+                          borderRadius: 2,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
                         <Typography variant="subtitle2" fontWeight="bold">
                           {record.bookTitle}
                         </Typography>
@@ -622,7 +977,17 @@ const LibraryCatalog = () => {
                   </TimelineItem>
                 ))}
               </Timeline>
-              <Button fullWidth variant="outlined" startIcon={<Download />} sx={{ mt: 2 }}>
+              <Button 
+                fullWidth 
+                variant="outlined" 
+                startIcon={<Download />} 
+                sx={{ 
+                  mt: 3, 
+                  borderRadius: 2,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                }}
+              >
                 Export Reading History
               </Button>
             </CardContent>
@@ -630,12 +995,18 @@ const LibraryCatalog = () => {
         </Box>
       )}
 
-      {/* Book Details Modal */}
+      {/* Book Details Modal - Enhanced */}
       <Dialog
         open={detailsModalOpen}
         onClose={() => setDetailsModalOpen(false)}
         maxWidth="md"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: '0 24px 48px rgba(0,0,0,0.3)',
+          },
+        }}
       >
         {selectedBook && (
           <>
@@ -649,13 +1020,18 @@ const LibraryCatalog = () => {
                 </IconButton>
               </Box>
             </DialogTitle>
-            <DialogContent>
+            <DialogContent dividers>
               <Grid container spacing={3}>
                 <Grid size={{ xs: 12, md: 4 }}>
                   <img
                     src={selectedBook.coverImage}
                     alt={selectedBook.title}
-                    style={{ width: '100%', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0,0,0,0.2)' }}
+                    style={{ 
+                      width: '100%', 
+                      borderRadius: '12px', 
+                      boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
+                      border: '1px solid rgba(0,0,0,0.1)',
+                    }}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 8 }}>
@@ -694,7 +1070,15 @@ const LibraryCatalog = () => {
                     </Grid>
                     <Grid size={6}>
                       <Typography variant="caption" color="text.secondary">Category</Typography>
-                      <Chip label={selectedBook.category} size="small" color="primary" />
+                      <Chip 
+                        label={selectedBook.category} 
+                        size="small" 
+                        sx={{
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          color: 'white',
+                          fontWeight: 600,
+                        }}
+                      />
                     </Grid>
                     <Grid size={6}>
                       <Typography variant="caption" color="text.secondary">Language</Typography>
@@ -717,7 +1101,15 @@ const LibraryCatalog = () => {
                     {selectedBook.description}
                   </Typography>
 
-                  <Paper sx={{ p: 2, backgroundColor: 'action.hover' }}>
+                  <Paper 
+                    sx={{ 
+                      p: 2.5, 
+                      borderRadius: 2,
+                      background: theme.palette.mode === 'dark'
+                        ? 'rgba(255,255,255,0.05)'
+                        : 'rgba(0,0,0,0.02)',
+                    }}
+                  >
                     <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
                       Availability
                     </Typography>
@@ -736,7 +1128,16 @@ const LibraryCatalog = () => {
                     <LinearProgress
                       variant="determinate"
                       value={(selectedBook.availableCopies / selectedBook.totalCopies) * 100}
-                      sx={{ mt: 2, height: 8, borderRadius: 4 }}
+                      sx={{ 
+                        mt: 2, 
+                        height: 10, 
+                        borderRadius: 5,
+                        background: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                        '& .MuiLinearProgress-bar': {
+                          borderRadius: 5,
+                          background: 'linear-gradient(90deg, #11998e 0%, #38ef7d 100%)',
+                        },
+                      }}
                     />
                   </Paper>
                 </Grid>
@@ -744,17 +1145,21 @@ const LibraryCatalog = () => {
             </DialogContent>
             <DialogActions sx={{ p: 3 }}>
               <Button onClick={() => setDetailsModalOpen(false)}>Close</Button>
-              <Button variant="outlined" startIcon={<Share />}>
+              <Button variant="outlined" startIcon={<Share />} sx={{ borderRadius: 2 }}>
                 Share
-              </Button>
-              <Button variant="outlined" startIcon={<BookmarkAdd />}>
-                Add to Wishlist
               </Button>
               {selectedBook.availableCopies > 0 && (
                 <Button
                   variant="contained"
                   startIcon={<BookmarkAdd />}
                   onClick={() => handleReserve(selectedBook.id)}
+                  sx={{
+                    borderRadius: 2,
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%)',
+                    },
+                  }}
                 >
                   Reserve Book
                 </Button>
@@ -764,46 +1169,20 @@ const LibraryCatalog = () => {
         )}
       </Dialog>
 
-      {/* QR Scanner Modal */}
-      <Dialog open={qrScannerOpen} onClose={() => setQrScannerOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6" fontWeight="bold">
-              Scan Book QR Code
-            </Typography>
-            <IconButton onClick={() => setQrScannerOpen(false)}>
-              <Close />
-            </IconButton>
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          <Box
-            sx={{
-              height: 400,
-              backgroundColor: 'black',
-              borderRadius: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Typography variant="h6" color="white">
-              📷 Camera View
-            </Typography>
-          </Box>
-          <Alert severity="info" sx={{ mt: 2 }}>
-            Position the QR code within the camera frame. The book details will be fetched automatically.
-          </Alert>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setQrScannerOpen(false)}>Cancel</Button>
-        </DialogActions>
-      </Dialog>
-
       {/* QR Scanner FAB */}
       <Fab
-        color="primary"
-        sx={{ position: 'fixed', bottom: 24, right: 24 }}
+        sx={{ 
+          position: 'fixed', 
+          bottom: 24, 
+          right: 24,
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          boxShadow: '0 8px 16px rgba(102,126,234,0.4)',
+          '&:hover': {
+            background: 'linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%)',
+            boxShadow: '0 12px 24px rgba(102,126,234,0.5)',
+          },
+        }}
         onClick={() => setQrScannerOpen(true)}
       >
         <QrCodeScanner />
@@ -814,8 +1193,13 @@ const LibraryCatalog = () => {
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+        <Alert 
+          severity={snackbar.severity} 
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          sx={{ borderRadius: 2 }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

@@ -7,7 +7,7 @@ const ThemeContext = createContext();
 export const ThemeProvider = ({ children }) => {
   // Initialize theme mode from localStorage or default to 'light'
   const [mode, setMode] = useState(() => {
-    const savedMode = localStorage.getItem('themeMode');
+    const savedMode = localStorage.getItem('nexus-theme');
     return savedMode || 'light';
   });
 
@@ -15,14 +15,14 @@ export const ThemeProvider = ({ children }) => {
   const toggleTheme = () => {
     setMode((prevMode) => {
       const newMode = prevMode === 'light' ? 'dark' : 'light';
-      localStorage.setItem('themeMode', newMode);
+      localStorage.setItem('nexus-theme', newMode);
       return newMode;
     });
   };
 
   // Save mode to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('themeMode', mode);
+    localStorage.setItem('nexus-theme', mode);
   }, [mode]);
 
   return (

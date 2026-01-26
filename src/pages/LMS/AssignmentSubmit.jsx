@@ -345,11 +345,11 @@ const AssignmentSubmit = () => {
                   sx={{ 
                     mb: 3, 
                     background: `linear-gradient(135deg, ${
-                      countdown.color === 'error' ? '#f44336' : 
-                      countdown.color === 'warning' ? '#ff9800' : '#4caf50'
+                      countdown.color === 'error' ? '#DC2626' : 
+                      countdown.color === 'warning' ? '#D97706' : '#059669'
                     } 0%, ${
-                      countdown.color === 'error' ? '#d32f2f' : 
-                      countdown.color === 'warning' ? '#f57c00' : '#388e3c'
+                      countdown.color === 'error' ? '#B91C1C' : 
+                      countdown.color === 'warning' ? '#B45309' : '#047857'
                     } 100%)`,
                   }}
                 >
@@ -735,7 +735,7 @@ const AssignmentSubmit = () => {
                   {/* Grade Card */}
                   <Card 
                     sx={{ 
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      background: 'linear-gradient(135deg, #2563EB 0%, #059669 100%)',
                       mb: 3,
                       animation: 'fadeIn 1s ease',
                       '@keyframes fadeIn': {

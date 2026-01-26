@@ -325,21 +325,22 @@ const CourseClassroom = () => {
               <Box
                 sx={{
                   position: 'absolute',
-                  bottom: 20,
-                  left: 20,
+                  bottom: { xs: 10, sm: 20 },
+                  left: { xs: 10, sm: 20 },
                   color: 'white',
                   display: 'flex',
                   alignItems: 'flex-end',
-                  gap: 2,
+                  gap: { xs: 1, sm: 2 },
                 }}
               >
                 <Avatar 
                   src={course.instructorPhoto} 
-                  sx={{ width: 70, height: 70, border: '3px solid white' }}
+                  sx={{ width: { xs: 50, sm: 70 }, height: { xs: 50, sm: 70 }, border: '3px solid white' }}
                 />
                 <Box>
                   <Chip 
                     label={course.code} 
+                    size="small"
                     sx={{ 
                       mb: 1, 
                       backgroundColor: 'rgba(255,255,255,0.9)', 
@@ -347,27 +348,28 @@ const CourseClassroom = () => {
                       backdropFilter: 'blur(10px)',
                     }} 
                   />
-                  <Typography variant="h4" fontWeight="bold" sx={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
+                  <Typography variant="h4" fontWeight="bold" sx={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)', fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
                     {course.title}
                   </Typography>
-                  <Typography variant="body1" sx={{ mt: 0.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body1" sx={{ mt: 0.5, display: 'flex', alignItems: 'center', gap: 1, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                     <People fontSize="small" />
                     {course.instructor} • {enrolledStudents} students enrolled
                   </Typography>
                 </Box>
               </Box>
 
-              {/* Progress Indicator - Top Right */}
+              {/* Progress Indicator - Top Right (Hidden on mobile) */}
               <Box
                 sx={{
                   position: 'absolute',
-                  top: 20,
-                  right: 20,
+                  top: { xs: 10, sm: 20 },
+                  right: { xs: 10, sm: 20 },
                   backgroundColor: 'rgba(255,255,255,0.95)',
                   borderRadius: 3,
-                  p: 2,
+                  p: { xs: 1, sm: 2 },
                   textAlign: 'center',
                   backdropFilter: 'blur(10px)',
+                  display: { xs: 'none', sm: 'block' },
                 }}
               >
                 <Box sx={{ position: 'relative', display: 'inline-flex' }}>
@@ -398,21 +400,32 @@ const CourseClassroom = () => {
             </Box>
 
             {/* ACTION BAR */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, py: 1, borderBottom: 1, borderColor: 'divider' }}>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
+              justifyContent: 'space-between', 
+              alignItems: { xs: 'stretch', sm: 'center' }, 
+              px: { xs: 1, sm: 2 }, 
+              py: 1, 
+              borderBottom: 1, 
+              borderColor: 'divider',
+              gap: { xs: 1, sm: 0 }
+            }}>
               <Tabs
                 value={activeTab}
                 onChange={(e, newValue) => setActiveTab(newValue)}
                 variant="scrollable"
                 scrollButtons="auto"
+                sx={{ minHeight: { xs: 40, sm: 48 } }}
               >
-                <Tab label="Stream" />
-                <Tab label="Assignments" />
-                <Tab label="Quizzes" />
-                <Tab label="Content" />
-                <Tab label="Grades" />
-                <Tab label="People" />
+                <Tab label="Stream" sx={{ minHeight: { xs: 40, sm: 48 }, px: { xs: 1, sm: 2 } }} />
+                <Tab label="Assignments" sx={{ minHeight: { xs: 40, sm: 48 }, px: { xs: 1, sm: 2 } }} />
+                <Tab label="Quizzes" sx={{ minHeight: { xs: 40, sm: 48 }, px: { xs: 1, sm: 2 } }} />
+                <Tab label="Content" sx={{ minHeight: { xs: 40, sm: 48 }, px: { xs: 1, sm: 2 } }} />
+                <Tab label="Grades" sx={{ minHeight: { xs: 40, sm: 48 }, px: { xs: 1, sm: 2 } }} />
+                <Tab label="People" sx={{ minHeight: { xs: 40, sm: 48 }, px: { xs: 1, sm: 2 } }} />
               </Tabs>
-              <Box sx={{ display: 'flex', gap: 1 }}>
+              <Box sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'center', sm: 'flex-end' } }}>
                 <IconButton size="small">
                   <Settings />
                 </IconButton>
@@ -421,6 +434,7 @@ const CourseClassroom = () => {
                   size="small" 
                   startIcon={<ExitToApp />}
                   color="error"
+                  sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
                 >
                   Leave Course
                 </Button>
@@ -567,34 +581,38 @@ const CourseClassroom = () => {
                 {/* Filter Bar */}
                 <Card sx={{ mb: 3 }}>
                   <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', md: 'center' }, gap: 2 }}>
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
                         <Chip 
                           label="All" 
                           color={assignmentFilter === 'all' ? 'primary' : 'default'}
                           onClick={() => setAssignmentFilter('all')}
                           clickable
+                          size="small"
                         />
                         <Chip 
                           label="Pending" 
                           color={assignmentFilter === 'pending' ? 'warning' : 'default'}
                           onClick={() => setAssignmentFilter('pending')}
                           clickable
+                          size="small"
                         />
                         <Chip 
                           label="Submitted" 
                           color={assignmentFilter === 'submitted' ? 'info' : 'default'}
                           onClick={() => setAssignmentFilter('submitted')}
                           clickable
+                          size="small"
                         />
                         <Chip 
                           label="Graded" 
                           color={assignmentFilter === 'graded' ? 'success' : 'default'}
                           onClick={() => setAssignmentFilter('graded')}
                           clickable
+                          size="small"
                         />
                       </Box>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Box sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'center', md: 'flex-end' } }}>
                         <ToggleButtonGroup
                           value={viewMode}
                           exclusive
@@ -882,16 +900,44 @@ const CourseClassroom = () => {
                           <Typography variant="h6" color="white" gutterBottom>
                             Grade Distribution
                           </Typography>
-                          <ResponsiveContainer width="100%" height={150}>
-                            <RechartsBarChart data={chartData}>
+                          <ResponsiveContainer width="100%" height={180}>
+                            <RechartsBarChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                              <defs>
+                                <linearGradient id="yourGradeGradient" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="#90caf9" stopOpacity={1}/>
+                                  <stop offset="100%" stopColor="#64b5f6" stopOpacity={0.7}/>
+                                </linearGradient>
+                                <linearGradient id="avgGradeGradient" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="#fff" stopOpacity={0.9}/>
+                                  <stop offset="100%" stopColor="#fff" stopOpacity={0.6}/>
+                                </linearGradient>
+                              </defs>
                               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
-                              <XAxis dataKey="name" stroke="white" />
-                              <YAxis stroke="white" />
-                              <RechartsTooltip />
-                              <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                                {chartData.map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={index === 0 ? '#90caf9' : '#fff'} />
-                                ))}
+                              <XAxis 
+                                dataKey="name" 
+                                stroke="white" 
+                                style={{ fontSize: '0.75rem' }}
+                                tickLine={false}
+                                tick={{ fontSize: 12 }}
+                              />
+                              <YAxis 
+                                stroke="white" 
+                                style={{ fontSize: '0.75rem' }}
+                                tickLine={false}
+                                axisLine={false}
+                                width={35}
+                                tick={{ fontSize: 12 }}
+                              />
+                              <RechartsTooltip 
+                                contentStyle={{ 
+                                  borderRadius: 8, 
+                                  border: 'none',
+                                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                                }}
+                              />
+                              <Bar dataKey="value" radius={[8, 8, 0, 0]} maxBarSize={60}>
+                                <Cell fill="url(#yourGradeGradient)" />
+                                <Cell fill="url(#avgGradeGradient)" />
                               </Bar>
                             </RechartsBarChart>
                           </ResponsiveContainer>
@@ -1178,6 +1224,7 @@ const CourseClassroom = () => {
                     fullWidth 
                     startIcon={<CloudDownload />}
                     size="small"
+                    onClick={() => window.open(`/resources/syllabus-${course.code}.pdf`, '_blank')}
                   >
                     Course Syllabus
                   </Button>
@@ -1186,6 +1233,7 @@ const CourseClassroom = () => {
                     fullWidth 
                     startIcon={<Schedule />}
                     size="small"
+                    onClick={() => navigate('/student/timetable')}
                   >
                     Class Schedule
                   </Button>
@@ -1194,6 +1242,7 @@ const CourseClassroom = () => {
                     fullWidth 
                     startIcon={<Help />}
                     size="small"
+                    onClick={() => navigate('/help-support')}
                   >
                     Help & Support
                   </Button>

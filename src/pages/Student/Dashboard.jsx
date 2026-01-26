@@ -18,6 +18,8 @@ import {
   CardMedia,
   IconButton,
   Divider,
+  Stack,
+  alpha,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import {
@@ -60,6 +62,7 @@ import {
   AreaChart,
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '@mui/material/styles';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   courses,
@@ -75,6 +78,7 @@ import { pageTransition, staggerContainer, fadeInUp } from '../../utils/animatio
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
   const { user } = useAuth();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [loading, setLoading] = useState(true);
@@ -163,8 +167,10 @@ const Dashboard = () => {
       <Card 
         sx={{ 
           mb: 3, 
-          background: 'linear-gradient(135deg, #1976D2 0%, #00796B 100%)',
-          color: 'white',
+          background: theme.palette.mode === 'dark'
+            ? 'linear-gradient(135deg, #1E1E1E 0%, #2A2A2A 100%)'
+            : 'linear-gradient(135deg, #1976D2 0%, #00796B 100%)',
+          color: theme.palette.mode === 'dark' ? 'text.primary' : 'white',
           opacity: isLoaded('header') ? 1 : 0,
           animation: isLoaded('header') ? 'fadeIn 0.3s ease-in-out' : 'none',
         }}
@@ -175,7 +181,7 @@ const Dashboard = () => {
               <Typography variant="h4" fontWeight="bold" gutterBottom>
                 {getGreeting()}, {currentUser.name.split(' ')[0]}! 👋
               </Typography>
-              <Typography variant="body1" sx={{ opacity: 0.9 }}>
+              <Typography variant="body1" sx={{ opacity: theme.palette.mode === 'dark' ? 0.85 : 0.9 }}>
                 {formatDateTime()}
               </Typography>
             </Grid>
@@ -186,8 +192,8 @@ const Dashboard = () => {
                   startIcon={<HowToReg />}
                   onClick={() => navigate('/attendance')}
                   sx={{
-                    bgcolor: 'rgba(255, 255, 255, 0.2)',
-                    '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.3)' },
+                    bgcolor: theme.palette.mode === 'dark' ? 'rgba(144, 202, 249, 0.2)' : 'rgba(255, 255, 255, 0.2)',
+                    '&:hover': { bgcolor: theme.palette.mode === 'dark' ? 'rgba(144, 202, 249, 0.2)' : 'rgba(255, 255, 255, 0.2)' },
                   }}
                 >
                   Mark Attendance
@@ -197,8 +203,8 @@ const Dashboard = () => {
                   startIcon={<AssignmentIcon />}
                   onClick={() => navigate('/lms')}
                   sx={{
-                    bgcolor: 'rgba(255, 255, 255, 0.2)',
-                    '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.3)' },
+                    bgcolor: theme.palette.mode === 'dark' ? 'rgba(144, 202, 249, 0.2)' : 'rgba(255, 255, 255, 0.2)',
+                    '&:hover': { bgcolor: theme.palette.mode === 'dark' ? 'rgba(144, 202, 249, 0.2)' : 'rgba(255, 255, 255, 0.2)' },
                   }}
                 >
                   Submit Assignment
@@ -208,8 +214,8 @@ const Dashboard = () => {
                   startIcon={<PaymentIcon />}
                   onClick={() => navigate('/finance')}
                   sx={{
-                    bgcolor: 'rgba(255, 255, 255, 0.2)',
-                    '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.3)' },
+                    bgcolor: theme.palette.mode === 'dark' ? 'rgba(144, 202, 249, 0.2)' : 'rgba(255, 255, 255, 0.2)',
+                    '&:hover': { bgcolor: theme.palette.mode === 'dark' ? 'rgba(144, 202, 249, 0.2)' : 'rgba(255, 255, 255, 0.2)' },
                   }}
                 >
                   Pay Fees
@@ -238,52 +244,20 @@ const Dashboard = () => {
             color="primary"
             trend={{ direction: 'up', value: '+0.05' }}
             subtitle="Last Semester: 3.92"
+            tooltip="Cumulative Grade Point Average across all completed semesters. Higher CGPA indicates better overall academic performance."
             loading={loading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
-          <Card sx={{ height: '100%', borderRadius: 3 }} className="hover-lift">
-            <CardContent sx={{ p: 3 }}>
-              <Box display="flex" alignItems="flex-start" justifyContent="space-between">
-                <Box sx={{ flexGrow: 1, mr: 2 }}>
-                  <Typography variant="h4" component="div" fontWeight="bold" sx={{ fontSize: '2rem', mb: 0.5 }}>
-                    {attendanceStats.percentage}%
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem', mb: 2 }}>
-                    Attendance
-                  </Typography>
-                  <Box display="flex" alignItems="center">
-                    <CircularProgress
-                      variant="determinate"
-                      value={attendanceStats.percentage}
-                      size={48}
-                      thickness={5}
-                      sx={{ color: 'success.main' }}
-                    />
-                    <Typography variant="body2" color="text.secondary" sx={{ ml: 1.5 }}>
-                      {attendanceStats.attended}/{attendanceStats.totalClasses} classes
-                    </Typography>
-                  </Box>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '50%',
-                    backgroundColor: 'success.main',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    boxShadow: '0 4px 12px rgba(56, 142, 60, 0.3)',
-                  }}
-                >
-                  <CheckCircleIcon sx={{ fontSize: 24 }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="Attendance"
+            value={`${attendanceStats.percentage}%`}
+            icon={HowToReg}
+            color="success"
+            subtitle={`${attendanceStats.attended}/${attendanceStats.totalClasses} classes`}
+            tooltip="Overall attendance percentage. Maintain above 75% to avoid attendance shortage issues."
+            loading={loading}
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
           <StatCard
@@ -292,6 +266,7 @@ const Dashboard = () => {
             icon={AssignmentIcon}
             color="warning"
             subtitle={`${assignments.length} total assignments`}
+            tooltip="Number of assignments pending submission. Complete them before the deadline to avoid penalties."
             loading={loading}
           />
         </Grid>
@@ -302,6 +277,7 @@ const Dashboard = () => {
             icon={PaymentIcon}
             color={unpaidFees.length > 0 ? 'error' : 'success'}
             subtitle={unpaidFees.length > 0 ? `${unpaidFees.length} invoice(s) due` : 'No pending fees'}
+            tooltip={unpaidFees.length > 0 ? 'Outstanding fee amount that needs to be paid.' : 'All your fees are paid up to date!'}
             loading={loading}
           />
         </Grid>
@@ -317,11 +293,18 @@ const Dashboard = () => {
           animation: isLoaded('charts') ? 'fadeIn 0.3s ease-in-out' : 'none',
         }}
       >
-        {/* LEFT: Line Chart - GPA Trend */}
-        <Grid size={{ xs: 12, lg: 7 }}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        {/* GPA Trend Chart - Full Width */}
+        <Grid size={{ xs: 12 }}>
+          <Card sx={{ 
+            height: '100%',
+            p: { xs: 1, md: 0 },
+            background: 'linear-gradient(135deg, rgba(25,118,210,0.05) 0%, rgba(21,101,192,0.05) 100%)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+            transition: 'all 0.3s ease',
+            '&:hover': { boxShadow: '0 8px 30px rgba(0,0,0,0.12)' }
+          }}>
+            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Box>
                   <Typography variant="h6" fontWeight="bold">
                     Academic Performance
@@ -330,27 +313,45 @@ const Dashboard = () => {
                     GPA trend over 7 semesters
                   </Typography>
                 </Box>
-                <TrendingUpIcon sx={{ color: 'success.main', fontSize: 32 }} />
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Chip label="7 Semesters" size="small" color="primary" variant="outlined" />
+                  <TrendingUpIcon sx={{ color: 'success.main', fontSize: 32 }} />
+                </Stack>
               </Box>
               {loading ? (
                 <Skeleton variant="rectangular" height={430} sx={{ borderRadius: 2 }} />
               ) : (
-                <ResponsiveContainer width="100%" height={450}>
-                  <AreaChart data={gpaHistory}>
+                <ResponsiveContainer width="100%" height={380}>
+                  <AreaChart data={gpaHistory} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
                     <defs>
                       <linearGradient id="colorGpa" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#1976D2" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#1976D2" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#1976D2" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="#1976D2" stopOpacity={0.05}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="semester" stroke="#757575" />
-                    <YAxis domain={[0, 4.0]} stroke="#757575" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" opacity={0.5} />
+                    <XAxis 
+                      dataKey="semester" 
+                      stroke="#666" 
+                      style={{ fontSize: '0.75rem' }}
+                      tickLine={false}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <YAxis 
+                      domain={[0, 4.0]} 
+                      stroke="#666" 
+                      style={{ fontSize: '0.75rem' }}
+                      tickLine={false}
+                      axisLine={false}
+                      width={35}
+                      tick={{ fontSize: 12 }}
+                    />
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: 'white', 
-                        border: '1px solid #e0e0e0',
+                        border: 'none',
                         borderRadius: 8,
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                       }}
                     />
                     <Area
@@ -359,6 +360,8 @@ const Dashboard = () => {
                       stroke="#1976D2"
                       strokeWidth={3}
                       fill="url(#colorGpa)"
+                      dot={{ fill: '#1976D2', r: 5, strokeWidth: 2, stroke: 'white' }}
+                      activeDot={{ r: 7, strokeWidth: 2, stroke: 'white' }}
                       animationDuration={1500}
                     />
                   </AreaChart>
@@ -368,42 +371,75 @@ const Dashboard = () => {
           </Card>
         </Grid>
 
-        {/* RIGHT: Bar Chart - Attendance Overview */}
-        <Grid size={{ xs: 12, lg: 5 }}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" fontWeight="bold">
-                  Attendance Overview
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Course-wise attendance percentage
-                </Typography>
-              </Box>
+        {/* Attendance Overview Chart - Full Width */}
+        <Grid size={{ xs: 12 }}>
+          <Card sx={{ 
+            height: '100%',
+            p: { xs: 1, md: 0 },
+            background: 'linear-gradient(135deg, rgba(76,175,80,0.05) 0%, rgba(67,160,71,0.05) 100%)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+            transition: 'all 0.3s ease',
+            '&:hover': { boxShadow: '0 8px 30px rgba(0,0,0,0.12)' }
+          }}>
+            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                <Box>
+                  <Typography variant="h6" fontWeight="bold">
+                    Attendance Overview
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Course-wise attendance percentage
+                  </Typography>
+                </Box>
+                <Chip label="Current Semester" size="small" color="success" variant="outlined" />
+              </Stack>
               {loading ? (
                 <Skeleton variant="rectangular" height={430} sx={{ borderRadius: 2 }} />
               ) : (
-                <ResponsiveContainer width="100%" height={450}>
-                  <BarChart data={attendanceData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="course" stroke="#757575" />
-                    <YAxis domain={[0, 100]} stroke="#757575" />
+                <ResponsiveContainer width="100%" height={380}>
+                  <BarChart data={attendanceData} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
+                    <defs>
+                      <linearGradient id="attendanceBarGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#4caf50" stopOpacity={1}/>
+                        <stop offset="100%" stopColor="#2e7d32" stopOpacity={0.7}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" opacity={0.5} />
+                    <XAxis 
+                      dataKey="course" 
+                      stroke="#666" 
+                      style={{ fontSize: '0.7rem' }}
+                      tickLine={false}
+                      angle={-15}
+                      textAnchor="end"
+                      height={70}
+                      tick={{ fontSize: 11 }}
+                    />
+                    <YAxis 
+                      domain={[0, 100]} 
+                      stroke="#666" 
+                      style={{ fontSize: '0.75rem' }}
+                      tickLine={false}
+                      axisLine={false}
+                      width={35}
+                      tick={{ fontSize: 12 }}
+                    />
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: 'white', 
-                        border: '1px solid #e0e0e0',
+                        border: 'none',
                         borderRadius: 8,
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                       }}
+                      cursor={{ fill: 'rgba(76,175,80,0.1)' }}
                     />
                     <Bar 
-                      dataKey="percentage" 
+                      dataKey="percentage"
+                      fill="url(#attendanceBarGradient)"
                       radius={[8, 8, 0, 0]}
+                      maxBarSize={50}
                       animationDuration={1500}
-                    >
-                      {attendanceData.map((entry, index) => (
-                        <Bar key={`bar-${index}`} fill={entry.color} />
-                      ))}
-                    </Bar>
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -424,8 +460,8 @@ const Dashboard = () => {
       >
         {/* TODAY'S SCHEDULE */}
         <Grid size={{ xs: 12, lg: 5 }}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
+          <Card sx={{ height: '100%', p: { xs: 1, md: 0 } }}>
+            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>
                 Today's Classes
               </Typography>
@@ -485,12 +521,17 @@ const Dashboard = () => {
                             p: 2,
                             borderRadius: 2,
                             backgroundColor: classItem.status === 'completed' ? 'action.hover' : 
-                                           classItem.status === 'current' ? 'primary.light' : 
+                                           classItem.status === 'current' ? alpha(theme.palette.primary.main, 0.08) : 
                                            'background.default',
                             opacity: classItem.status === 'completed' ? 0.6 : 1,
+                            border: classItem.status === 'current' ? `2px solid ${alpha(theme.palette.primary.main, 0.3)}` : 'none',
                           }}
                         >
-                          <Typography variant="subtitle2" fontWeight="bold">
+                          <Typography 
+                            variant="subtitle2" 
+                            fontWeight="bold"
+                            color={classItem.status === 'current' ? 'primary.main' : 'text.primary'}
+                          >
                             {classItem.course} - {classItem.title}
                           </Typography>
                           <Typography variant="caption" color="text.secondary" display="block">
@@ -712,7 +753,7 @@ const Dashboard = () => {
                 fullWidth
                 variant="outlined"
                 sx={{ mt: 2 }}
-                onClick={() => navigate('/lms')}
+                onClick={() => navigate('/notifications')}
               >
                 View All Announcements
               </Button>

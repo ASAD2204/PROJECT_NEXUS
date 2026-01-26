@@ -421,7 +421,7 @@ export const libraryBooks = [
     pages: 1248,
     totalCopies: 5,
     availableCopies: 3,
-    coverImage: "https://via.placeholder.com/200x300/1976d2/ffffff?text=Database+Systems",
+    coverImage: "https://images.unsplash.com/photo-1589998059171-988d887df646?w=400&h=600&fit=crop",
     shelfLocation: "CS-A-104",
     description: "Comprehensive guide to database systems covering data models, relational algebra, SQL, database design, query processing, transaction management, and more. Essential reading for computer science students.",
     language: "English",
@@ -439,7 +439,7 @@ export const libraryBooks = [
     pages: 1312,
     totalCopies: 8,
     availableCopies: 5,
-    coverImage: "https://via.placeholder.com/200x300/2e7d32/ffffff?text=Algorithms",
+    coverImage: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=600&fit=crop",
     shelfLocation: "CS-A-215",
     description: "The leading introduction to algorithms. This book provides a comprehensive introduction to the modern study of computer algorithms covering analysis, design, and implementation.",
     language: "English",
@@ -457,7 +457,7 @@ export const libraryBooks = [
     pages: 944,
     totalCopies: 6,
     availableCopies: 2,
-    coverImage: "https://via.placeholder.com/200x300/d32f2f/ffffff?text=OS+Concepts",
+    coverImage: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=400&h=600&fit=crop",
     shelfLocation: "CS-B-088",
     description: "Operating System Concepts continues to provide a solid theoretical foundation for understanding operating systems, covering process management, memory management, storage management, protection and security.",
     language: "English",
@@ -475,7 +475,7 @@ export const libraryBooks = [
     pages: 960,
     totalCopies: 7,
     availableCopies: 7,
-    coverImage: "https://via.placeholder.com/200x300/7b1fa2/ffffff?text=Networks",
+    coverImage: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=600&fit=crop",
     shelfLocation: "IT-C-142",
     description: "This classic best seller has been thoroughly updated to reflect the newest and most exciting advances in networking. Features coverage of wireless networks, 3G cellular, Gigabit Ethernet, and more.",
     language: "English",
@@ -493,7 +493,7 @@ export const libraryBooks = [
     pages: 1152,
     totalCopies: 4,
     availableCopies: 0,
-    coverImage: "https://via.placeholder.com/200x300/f57c00/ffffff?text=AI+Modern",
+    coverImage: "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&h=600&fit=crop",
     shelfLocation: "CS-D-225",
     description: "The long-anticipated revision of this best-selling text offers the most comprehensive, up-to-date introduction to the theory and practice of artificial intelligence.",
     language: "English",
@@ -511,7 +511,7 @@ export const libraryBooks = [
     pages: 816,
     totalCopies: 5,
     availableCopies: 4,
-    coverImage: "https://via.placeholder.com/200x300/0288d1/ffffff?text=Software+Eng",
+    coverImage: "https://images.unsplash.com/photo-1516259762381-22954d7d3ad2?w=400&h=600&fit=crop",
     shelfLocation: "CS-A-301",
     description: "For courses in computer science and software engineering. The fundamental practice of software engineering. Presents a broad perspective on software systems engineering.",
     language: "English",
@@ -529,7 +529,7 @@ export const libraryBooks = [
     pages: 800,
     totalCopies: 6,
     availableCopies: 3,
-    coverImage: "https://via.placeholder.com/200x300/388e3c/ffffff?text=DS+Java",
+    coverImage: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=600&fit=crop",
     shelfLocation: "CS-B-156",
     description: "Data Structures and Algorithms in Java provides an introduction to data structures and algorithms, including their design, analysis, and implementation.",
     language: "English",
@@ -547,7 +547,7 @@ export const libraryBooks = [
     pages: 972,
     totalCopies: 10,
     availableCopies: 8,
-    coverImage: "https://via.placeholder.com/200x300/c62828/ffffff?text=Discrete+Math",
+    coverImage: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&h=600&fit=crop",
     shelfLocation: "MATH-A-045",
     description: "Discrete Mathematics and its Applications is a focused introduction to the primary themes in a discrete mathematics course.",
     language: "English",
@@ -565,7 +565,7 @@ export const libraryBooks = [
     pages: 720,
     totalCopies: 4,
     availableCopies: 4,
-    coverImage: "https://via.placeholder.com/200x300/00796b/ffffff?text=BI",
+    coverImage: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&h=600&fit=crop",
     shelfLocation: "BUS-C-089",
     description: "The book presents the fundamentals of business intelligence in a user-friendly format with real-world examples and case studies.",
     language: "English",
@@ -583,7 +583,7 @@ export const libraryBooks = [
     pages: 800,
     totalCopies: 5,
     availableCopies: 2,
-    coverImage: "https://via.placeholder.com/200x300/5e35b1/ffffff?text=CO+Design",
+    coverImage: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=600&fit=crop",
     shelfLocation: "CS-A-178",
     description: "The classic textbook that builds a strong foundation in the fundamentals of computer organization and design.",
     language: "English",
@@ -601,7 +601,7 @@ export const libraryBooks = [
     pages: 1616,
     totalCopies: 8,
     availableCopies: 6,
-    coverImage: "https://via.placeholder.com/200x300/1565c0/ffffff?text=Physics",
+    coverImage: "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=400&h=600&fit=crop",
     shelfLocation: "SCI-A-234",
     description: "Achieve success in your physics course by making the most of what this best-selling physics text has to offer.",
     language: "English",
@@ -619,7 +619,7 @@ export const libraryBooks = [
     pages: 392,
     totalCopies: 3,
     availableCopies: 1,
-    coverImage: "https://via.placeholder.com/200x300/558b2f/ffffff?text=Node.js",
+    coverImage: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=600&fit=crop",
     shelfLocation: "IT-B-267",
     description: "Learn to build fast and scalable web applications with Node.js. This book covers Express.js, MongoDB, and modern JavaScript.",
     language: "English",
@@ -627,6 +627,74 @@ export const libraryBooks = [
     reviews: 89,
   },
 ];
+
+export const libraryTransactions = [
+  {
+    id: 'LTX-1001',
+    studentId: 'STU001',
+    studentName: 'Muhammad Asad',
+    isbn: '978-0131873254',
+    bookTitle: 'Database Systems: The Complete Book',
+    issuedOn: '2026-01-05',
+    dueDate: '2026-02-04',
+    status: 'Issued',
+    condition: 'Good',
+    fine: 0,
+  },
+  {
+    id: 'LTX-1002',
+    studentId: 'STU002',
+    studentName: 'Ayesha Khan',
+    isbn: '978-1118063330',
+    bookTitle: 'Operating System Concepts',
+    issuedOn: '2026-01-10',
+    dueDate: '2026-02-09',
+    status: 'Issued',
+    condition: 'Good',
+    fine: 0,
+  },
+];
+
+export const issueBookTransaction = (studentId, studentName, isbn) => {
+  const book = libraryBooks.find((b) => b.isbn === isbn);
+  if (!book || book.availableCopies < 1) {
+    return { success: false, message: 'Book not available.' };
+  }
+  const issuedOn = new Date().toISOString().split('T')[0];
+  const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0];
+  const transaction = {
+    id: `LTX-${String(libraryTransactions.length + 1000)}`,
+    studentId,
+    studentName,
+    isbn,
+    bookTitle: book.title,
+    issuedOn,
+    dueDate,
+    status: 'Issued',
+    condition: 'Good',
+    fine: 0,
+  };
+  libraryTransactions.unshift(transaction);
+  book.availableCopies -= 1;
+  return { success: true, transaction };
+};
+
+export const returnBookTransaction = (transactionId, condition) => {
+  const transaction = libraryTransactions.find((t) => t.id === transactionId);
+  if (!transaction) {
+    return { success: false, message: 'Transaction not found.' };
+  }
+  const book = libraryBooks.find((b) => b.isbn === transaction.isbn);
+  if (book) {
+    book.availableCopies += 1;
+  }
+  transaction.status = 'Returned';
+  transaction.condition = condition;
+  transaction.fine = condition === 'Damaged' ? 500 : condition === 'Lost' ? 2000 : 0;
+  return { success: true, transaction };
+};
 
 export const myIssuedBooks = [
   {
@@ -688,21 +756,47 @@ export const readingHistory = [
 ];
 
 export const reserveBook = (bookId) => {
-  const book = libraryBooks.find(b => b.id === bookId);
-  if (book && book.availableCopies > 0) {
-    const reservation = {
-      id: myReservedBooks.length + 1,
-      bookId: bookId,
-      bookTitle: book.title,
-      reservedDate: new Date().toISOString().split('T')[0],
-      expiresOn: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      status: 'reserved',
+  // Check eligibility: User must have < 3 books issued
+  if (myIssuedBooks.length >= 3) {
+    return { 
+      success: false, 
+      message: '❌ Cannot reserve: You have reached the maximum limit of 3 issued books.' 
     };
-    myReservedBooks.push(reservation);
-    book.availableCopies--;
-    return { success: true, message: 'Book reserved successfully!' };
   }
-  return { success: false, message: 'Book not available for reservation.' };
+
+  const book = libraryBooks.find(b => b.id === bookId);
+  
+  if (!book) {
+    return { success: false, message: '❌ Book not found.' };
+  }
+
+  if (book.availableCopies <= 0) {
+    return { success: false, message: '❌ Book not available for reservation.' };
+  }
+
+  // Create reservation with 24-hour timer
+  const now = new Date();
+  const expiresOn = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours from now
+  
+  const reservation = {
+    id: myReservedBooks.length + 1,
+    bookId: bookId,
+    bookTitle: book.title,
+    reservedDate: now.toISOString().split('T')[0],
+    reservedTime: now.toLocaleTimeString(),
+    expiresOn: expiresOn.toISOString().split('T')[0],
+    expiresTime: expiresOn.toLocaleTimeString(),
+    status: 'reserved',
+  };
+
+  // Decrement available copies and set status to Reserved
+  myReservedBooks.push(reservation);
+  book.availableCopies--;
+
+  return { 
+    success: true, 
+    message: `✅ Book reserved successfully! Please pick up from library within 24 hours. Reservation expires on ${expiresOn.toLocaleDateString()} at ${expiresOn.toLocaleTimeString()}.` 
+  };
 };
 
 export const returnBook = (issuedBookId) => {
@@ -931,4 +1025,234 @@ export const addChatMessage = (text, isAi = false, citations = null) => {
   };
   chatMessages.push(newMessage);
   return newMessage;
+};
+
+// Alumni Data
+export const alumni = [
+  {
+    id: 'ALU001',
+    name: 'Dr. Zainab Ahmed',
+    email: 'zainab.ahmed@techcorp.com',
+    graduationYear: 2018,
+    degree: 'BS Computer Science',
+    photoUrl: 'https://i.pravatar.cc/150?img=45',
+    currentCompany: 'Microsoft',
+    companyLogo: 'https://img.icons8.com/color/96/microsoft.png',
+    position: 'Senior Software Engineer',
+    location: 'Seattle, USA',
+    linkedIn: 'https://linkedin.com/in/zainab-ahmed',
+    achievements: ['Published 3 research papers', 'Speaker at Tech Summit 2024'],
+    expertise: ['Cloud Computing', 'AI/ML', 'System Design'],
+  },
+  {
+    id: 'ALU002',
+    name: 'Muhammad Hassan',
+    email: 'hassan@google.com',
+    graduationYear: 2019,
+    degree: 'BS Software Engineering',
+    photoUrl: 'https://i.pravatar.cc/150?img=12',
+    currentCompany: 'Google',
+    companyLogo: 'https://img.icons8.com/color/96/google-logo.png',
+    position: 'Product Manager',
+    location: 'Mountain View, USA',
+    linkedIn: 'https://linkedin.com/in/muhammad-hassan',
+    achievements: ['Led 5+ product launches', 'Google Cloud Certified'],
+    expertise: ['Product Management', 'Data Analytics', 'UX Research'],
+  },
+  {
+    id: 'ALU003',
+    name: 'Ayesha Malik',
+    email: 'ayesha@amazon.com',
+    graduationYear: 2017,
+    degree: 'BS Information Technology',
+    photoUrl: 'https://i.pravatar.cc/150?img=32',
+    currentCompany: 'Amazon',
+    companyLogo: 'https://img.icons8.com/color/96/amazon.png',
+    position: 'Solutions Architect',
+    location: 'Dubai, UAE',
+    linkedIn: 'https://linkedin.com/in/ayesha-malik',
+    achievements: ['AWS Certified Solutions Architect', 'Built scalable systems for 100M+ users'],
+    expertise: ['Cloud Architecture', 'DevOps', 'Microservices'],
+  },
+  {
+    id: 'ALU004',
+    name: 'Ali Raza',
+    email: 'ali@startup.io',
+    graduationYear: 2020,
+    degree: 'BS Computer Science',
+    photoUrl: 'https://i.pravatar.cc/150?img=51',
+    currentCompany: 'TechVenture (Founder)',
+    companyLogo: 'https://img.icons8.com/color/96/rocket.png',
+    position: 'CEO & Co-Founder',
+    location: 'Karachi, Pakistan',
+    linkedIn: 'https://linkedin.com/in/ali-raza',
+    achievements: ['Raised $2M in funding', 'Forbes 30 Under 30'],
+    expertise: ['Entrepreneurship', 'FinTech', 'Business Strategy'],
+  },
+  {
+    id: 'ALU005',
+    name: 'Sara Khan',
+    email: 'sara@meta.com',
+    graduationYear: 2016,
+    degree: 'BS Information Technology',
+    photoUrl: 'https://i.pravatar.cc/150?img=25',
+    currentCompany: 'Meta (Facebook)',
+    companyLogo: 'https://img.icons8.com/color/96/meta.png',
+    position: 'Engineering Manager',
+    location: 'London, UK',
+    linkedIn: 'https://linkedin.com/in/sara-khan',
+    achievements: ['Led team of 15 engineers', 'Meta Bootcamp Mentor'],
+    expertise: ['Engineering Leadership', 'React', 'Mobile Development'],
+  },
+  {
+    id: 'ALU006',
+    name: 'Usman Tariq',
+    email: 'usman@ibm.com',
+    graduationYear: 2021,
+    degree: 'BS Software Engineering',
+    photoUrl: 'https://i.pravatar.cc/150?img=33',
+    currentCompany: 'IBM',
+    companyLogo: 'https://img.icons8.com/color/96/ibm.png',
+    position: 'Data Scientist',
+    location: 'Toronto, Canada',
+    linkedIn: 'https://linkedin.com/in/usman-tariq',
+    achievements: ['Published AI research', 'Kaggle Competitions Master'],
+    expertise: ['Machine Learning', 'Deep Learning', 'NLP'],
+  },
+  {
+    id: 'ALU007',
+    name: 'Fatima Noor',
+    email: 'fatima@oracle.com',
+    graduationYear: 2019,
+    degree: 'BS Computer Science',
+    photoUrl: 'https://i.pravatar.cc/150?img=44',
+    currentCompany: 'Oracle',
+    companyLogo: 'https://img.icons8.com/color/96/oracle-logo.png',
+    position: 'Database Architect',
+    location: 'Singapore',
+    linkedIn: 'https://linkedin.com/in/fatima-noor',
+    achievements: ['Oracle Certified Master', 'Database performance optimization expert'],
+    expertise: ['Database Design', 'SQL', 'Performance Tuning'],
+  },
+  {
+    id: 'ALU008',
+    name: 'Ahmed Siddiqui',
+    email: 'ahmed@salesforce.com',
+    graduationYear: 2018,
+    degree: 'BS Information Technology',
+    photoUrl: 'https://i.pravatar.cc/150?img=60',
+    currentCompany: 'Salesforce',
+    companyLogo: 'https://img.icons8.com/color/96/salesforce.png',
+    position: 'Technical Lead',
+    location: 'San Francisco, USA',
+    linkedIn: 'https://linkedin.com/in/ahmed-siddiqui',
+    achievements: ['15x Salesforce Certified', 'Community Speaker'],
+    expertise: ['CRM', 'Apex', 'Lightning Web Components'],
+  },
+];
+
+export const alumniEvents = [
+  {
+    id: 'EVT001',
+    title: 'Annual Alumni Reunion 2026',
+    description: 'Join us for our annual reunion! Network with fellow alumni, share experiences, and reconnect with your batch mates.',
+    date: '2026-03-15',
+    time: '06:00 PM',
+    venue: 'University Main Auditorium',
+    type: 'Reunion',
+    capacity: 500,
+    registered: 234,
+    fee: 2000, // PKR
+    organizer: 'Alumni Relations Office',
+    coverImage: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=600',
+    features: ['Networking Dinner', 'Live Music', 'Photo Booth', 'Awards Ceremony'],
+    speakers: ['Dr. Zainab Ahmed', 'Muhammad Hassan'],
+    status: 'Upcoming',
+  },
+  {
+    id: 'EVT002',
+    title: 'Tech Career Fair 2026',
+    description: 'Exclusive career fair featuring top tech companies. Get interview opportunities, resume reviews, and career guidance.',
+    date: '2026-02-28',
+    time: '10:00 AM',
+    venue: 'Campus Expo Center',
+    type: 'Career Fair',
+    capacity: 300,
+    registered: 178,
+    fee: 0,
+    organizer: 'Career Services',
+    coverImage: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600',
+    features: ['Company Booths', 'Mock Interviews', 'Resume Clinic', 'Panel Discussions'],
+    speakers: ['Ayesha Malik', 'Ali Raza', 'Sara Khan'],
+    status: 'Upcoming',
+  },
+  {
+    id: 'EVT003',
+    title: 'Entrepreneurship Workshop',
+    description: 'Learn from successful alumni entrepreneurs. Discover how to start your own venture and navigate the startup ecosystem.',
+    date: '2026-04-10',
+    time: '02:00 PM',
+    venue: 'Innovation Hub, Block C',
+    type: 'Workshop',
+    capacity: 100,
+    registered: 67,
+    fee: 500,
+    organizer: 'Entrepreneurship Cell',
+    coverImage: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=600',
+    features: ['Interactive Sessions', 'Networking', 'Pitch Practice', 'Mentorship'],
+    speakers: ['Ali Raza'],
+    status: 'Upcoming',
+  },
+  {
+    id: 'EVT004',
+    title: 'AI & Machine Learning Webinar',
+    description: 'Virtual webinar on latest trends in AI/ML. Get insights from industry experts working at top tech companies.',
+    date: '2026-02-20',
+    time: '07:00 PM',
+    venue: 'Online (Zoom)',
+    type: 'Webinar',
+    capacity: 1000,
+    registered: 543,
+    fee: 0,
+    organizer: 'CS Department',
+    coverImage: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600',
+    features: ['Live Q&A', 'Recording Access', 'Certificate', 'Resource Materials'],
+    speakers: ['Dr. Zainab Ahmed', 'Usman Tariq'],
+    status: 'Upcoming',
+  },
+  {
+    id: 'EVT005',
+    title: 'Sports Gala 2025',
+    description: 'Annual sports meet for alumni and students. Participate in cricket, football, badminton and more!',
+    date: '2025-12-20',
+    time: '08:00 AM',
+    venue: 'University Sports Complex',
+    type: 'Sports',
+    capacity: 400,
+    registered: 312,
+    fee: 1000,
+    organizer: 'Sports Department',
+    coverImage: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600',
+    features: ['Multiple Sports', 'Refreshments', 'Prizes', 'Team Building'],
+    speakers: [],
+    status: 'Completed',
+  },
+];
+
+export const registerForEvent = (eventId) => {
+  const event = alumniEvents.find(e => e.id === eventId);
+  if (event && event.registered < event.capacity) {
+    event.registered++;
+    return { success: true, message: 'Successfully registered for the event!', event };
+  }
+  return { success: false, message: 'Event is full or not found.' };
+};
+
+export const connectWithAlumni = (alumniId) => {
+  const alumnus = alumni.find(a => a.id === alumniId);
+  if (alumnus) {
+    // Simulate LinkedIn connection
+    return { success: true, message: `Connection request sent to ${alumnus.name}!`, linkedIn: alumnus.linkedIn };
+  }
+  return { success: false, message: 'Alumni not found.' };
 };

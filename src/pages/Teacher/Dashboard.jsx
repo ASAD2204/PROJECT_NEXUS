@@ -40,34 +40,34 @@ const TeacherDashboard = () => {
     {
       title: 'My Courses',
       value: '5',
-      change: '+1 new',
-      trend: 'up',
+      subtitle: '+1 new',
       icon: School,
-      color: theme.palette.primary.main,
+      color: 'primary',
+      tooltip: 'Total courses you are teaching this semester. Manage course content, assignments, and student performance',
     },
     {
       title: 'Total Students',
       value: '312',
-      change: '+18 this sem',
-      trend: 'up',
+      subtitle: '+18 this sem',
       icon: People,
-      color: theme.palette.success.main,
+      color: 'success',
+      tooltip: 'Total students enrolled across all your courses. View individual student profiles and track their progress',
     },
     {
       title: 'Pending Assignments',
       value: '23',
-      change: '5 overdue',
-      trend: 'down',
+      subtitle: '5 overdue',
       icon: Assignment,
-      color: theme.palette.warning.main,
+      color: 'warning',
+      tooltip: 'Assignments awaiting grading. 5 submissions are past the grading deadline and need immediate attention',
     },
     {
       title: 'Attendance Rate',
       value: '87%',
-      change: '+2.3%',
-      trend: 'up',
+      subtitle: '+2.3%',
       icon: CheckCircle,
-      color: theme.palette.info.main,
+      color: 'info',
+      tooltip: 'Average attendance rate across all your courses. Improved by 2.3% compared to last month',
     },
   ];
 
@@ -151,14 +151,14 @@ const TeacherDashboard = () => {
         {/* Stats Cards */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
           {stats.map((stat, index) => (
-            <Grid key={index} size={{ xs: 12, sm: 6, lg: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={index}>
               <StatCard
                 title={stat.title}
                 value={stat.value}
-                change={stat.change}
-                trend={stat.trend}
+                subtitle={stat.subtitle}
                 icon={stat.icon}
                 color={stat.color}
+                tooltip={stat.tooltip}
               />
             </Grid>
           ))}
@@ -353,17 +353,37 @@ const TeacherDashboard = () => {
                   Quick Actions
                 </Typography>
                 <Stack spacing={1.5}>
-                  <Button variant="outlined" fullWidth startIcon={<Assignment />}>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    startIcon={<Assignment />}
+                    onClick={() => navigate('/teacher/create-assignment')}
+                  >
                     Create Assignment
                   </Button>
-                  <Button variant="outlined" fullWidth startIcon={<CheckCircle />}>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    startIcon={<CheckCircle />}
+                    onClick={() => navigate('/attendance/smart-attendance')}
+                  >
                     Mark Attendance
                   </Button>
-                  <Button variant="outlined" fullWidth startIcon={<People />}>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    startIcon={<People />}
+                    onClick={() => navigate('/teacher/students')}
+                  >
                     View Students
                   </Button>
-                  <Button variant="outlined" fullWidth startIcon={<Notifications />}>
-                    Send Announcement
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    startIcon={<Notifications />}
+                    onClick={() => navigate('/teacher/courses')}
+                  >
+                    Manage Courses
                   </Button>
                 </Stack>
               </CardContent>

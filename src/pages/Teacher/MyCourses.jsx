@@ -274,7 +274,13 @@ const TeacherCourses = () => {
         >
           View Details
         </Button>
-        <Button fullWidth variant="contained" size="small" startIcon={<Edit />}>
+        <Button
+          fullWidth
+          variant="contained"
+          size="small"
+          startIcon={<Edit />}
+          onClick={() => navigate(`/teacher/course/${course.id}/manage`)}
+        >
           Manage
         </Button>
       </Stack>
