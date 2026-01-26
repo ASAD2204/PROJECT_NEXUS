@@ -66,6 +66,29 @@ const UserManagement = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [filterDepartment, setFilterDepartment] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [userType, setUserType] = useState('student');
+  const [formData, setFormData] = useState({
+    // Student fields
+    fullName: '',
+    email: '',
+    rollNumber: '',
+    department: '',
+    program: '',
+    semester: '',
+    session: '',
+    password: '',
+    // Teacher fields
+    employeeId: '',
+    designation: '',
+    specialization: '',
+    type: '',
+    // Alumni fields
+    graduationYear: '',
+    degree: '',
+    personalEmail: '',
+    currentCompany: '',
+    linkedInProfile: '',
+  });
 
   // Mock data
   const students = [
@@ -198,6 +221,53 @@ const UserManagement = () => {
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
+    setFormData({
+      fullName: '',
+      email: '',
+      rollNumber: '',
+      department: '',
+      program: '',
+      semester: '',
+      session: '',
+      password: '',
+      employeeId: '',
+      designation: '',
+      specialization: '',
+      type: '',
+      graduationYear: '',
+      degree: '',
+      personalEmail: '',
+      currentCompany: '',
+      linkedInProfile: '',
+    });
+  };
+
+  const handleChange = (field) => (event) => {
+    setFormData({ ...formData, [field]: event.target.value });
+  };
+
+  const handleUserTypeChange = (event) => {
+    setUserType(event.target.value);
+    // Reset form when changing user type
+    setFormData({
+      fullName: '',
+      email: '',
+      rollNumber: '',
+      department: '',
+      program: '',
+      semester: '',
+      session: '',
+      password: '',
+      employeeId: '',
+      designation: '',
+      specialization: '',
+      type: '',
+      graduationYear: '',
+      degree: '',
+      personalEmail: '',
+      currentCompany: '',
+      linkedInProfile: '',
+    });
   };
 
   const getStatusColor = (status) => {
@@ -467,35 +537,298 @@ const UserManagement = () => {
         </Menu>
 
         {/* Add User Dialog */}
-        <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+        <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
           <DialogTitle>Add New User</DialogTitle>
           <DialogContent>
-            <Stack spacing={2} sx={{ mt: 2 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>User Type</InputLabel>
-                <Select label="User Type">
+            <Stack spacing={3} sx={{ mt: 2 }}>
+              {/* User Type Selection */}
+              <FormControl fullWidth>
+                <InputLabel>User Type *</InputLabel>
+                <Select value={userType} onChange={handleUserTypeChange} label="User Type *">
                   <MenuItem value="student">Student</MenuItem>
-                  <MenuItem value="faculty">Faculty</MenuItem>
-                  <MenuItem value="admin">Admin</MenuItem>
+                  <MenuItem value="teacher">Teacher / Faculty</MenuItem>
+                  <MenuItem value="alumni">Alumni</MenuItem>
                 </Select>
               </FormControl>
-              <TextField fullWidth size="small" label="Full Name" />
-              <TextField fullWidth size="small" label="Email" type="email" />
-              <TextField fullWidth size="small" label="Phone" />
-              <FormControl fullWidth size="small">
-                <InputLabel>Department</InputLabel>
-                <Select label="Department">
-                  <MenuItem value="cs">Computer Science</MenuItem>
-                  <MenuItem value="bba">Business Admin</MenuItem>
-                  <MenuItem value="eng">Engineering</MenuItem>
-                </Select>
-              </FormControl>
+
+              <Divider />
+
+              {/* Student Form */}
+              {userType === 'student' && (
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12 }}>
+                    <TextField
+                      fullWidth
+                      label="Full Name *"
+                      placeholder="e.g., Muhammad Asad"
+                      value={formData.fullName}
+                      onChange={handleChange('fullName')}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Email *"
+                      type="email"
+                      placeholder="e.g., bit22031@uni.edu.pk"
+                      value={formData.email}
+                      onChange={handleChange('email')}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Roll Number *"
+                      placeholder="e.g., BIT22031"
+                      value={formData.rollNumber}
+                      onChange={handleChange('rollNumber')}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Department *</InputLabel>
+                      <Select
+                        value={formData.department}
+                        onChange={handleChange('department')}
+                        label="Department *"
+                      >
+                        <MenuItem value="Information Technology">Information Technology</MenuItem>
+                        <MenuItem value="Computer Science">Computer Science</MenuItem>
+                        <MenuItem value="Business Administration">Business Administration</MenuItem>
+                        <MenuItem value="Engineering">Engineering</MenuItem>
+                        <MenuItem value="Medical Sciences">Medical Sciences</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Program *</InputLabel>
+                      <Select
+                        value={formData.program}
+                        onChange={handleChange('program')}
+                        label="Program *"
+                      >
+                        <MenuItem value="BS IT">BS IT</MenuItem>
+                        <MenuItem value="BS CS">BS CS</MenuItem>
+                        <MenuItem value="BBA">BBA</MenuItem>
+                        <MenuItem value="BS Engineering">BS Engineering</MenuItem>
+                        <MenuItem value="MBBS">MBBS</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <TextField
+                      fullWidth
+                      label="Semester *"
+                      type="number"
+                      placeholder="e.g., 1"
+                      value={formData.semester}
+                      onChange={handleChange('semester')}
+                      inputProps={{ min: 1, max: 8 }}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <TextField
+                      fullWidth
+                      label="Session *"
+                      placeholder="e.g., 2022-2026"
+                      value={formData.session}
+                      onChange={handleChange('session')}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <TextField
+                      fullWidth
+                      label="Initial Password *"
+                      type="password"
+                      placeholder="Auto-generated"
+                      value={formData.password}
+                      onChange={handleChange('password')}
+                    />
+                  </Grid>
+                </Grid>
+              )}
+
+              {/* Teacher Form */}
+              {userType === 'teacher' && (
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12 }}>
+                    <TextField
+                      fullWidth
+                      label="Full Name *"
+                      placeholder="e.g., Dr. Ghulam Mustafa"
+                      value={formData.fullName}
+                      onChange={handleChange('fullName')}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Email *"
+                      type="email"
+                      placeholder="Official faculty email"
+                      value={formData.email}
+                      onChange={handleChange('email')}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Employee ID *"
+                      placeholder="e.g., EMP-102"
+                      value={formData.employeeId}
+                      onChange={handleChange('employeeId')}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Designation *</InputLabel>
+                      <Select
+                        value={formData.designation}
+                        onChange={handleChange('designation')}
+                        label="Designation *"
+                      >
+                        <MenuItem value="Lecturer">Lecturer</MenuItem>
+                        <MenuItem value="Assistant Professor">Assistant Professor</MenuItem>
+                        <MenuItem value="Associate Professor">Associate Professor</MenuItem>
+                        <MenuItem value="Professor">Professor</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Department *</InputLabel>
+                      <Select
+                        value={formData.department}
+                        onChange={handleChange('department')}
+                        label="Department *"
+                      >
+                        <MenuItem value="Information Technology">Information Technology</MenuItem>
+                        <MenuItem value="Computer Science">Computer Science</MenuItem>
+                        <MenuItem value="Business Administration">Business Administration</MenuItem>
+                        <MenuItem value="Engineering">Engineering</MenuItem>
+                        <MenuItem value="Medical Sciences">Medical Sciences</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Specialization"
+                      placeholder="e.g., Data Science"
+                      value={formData.specialization}
+                      onChange={handleChange('specialization')}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Type *</InputLabel>
+                      <Select
+                        value={formData.type}
+                        onChange={handleChange('type')}
+                        label="Type *"
+                      >
+                        <MenuItem value="Permanent">Permanent</MenuItem>
+                        <MenuItem value="Visiting">Visiting</MenuItem>
+                        <MenuItem value="Contract">Contract</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <TextField
+                      fullWidth
+                      label="Initial Password *"
+                      type="password"
+                      placeholder="Auto-generated"
+                      value={formData.password}
+                      onChange={handleChange('password')}
+                    />
+                  </Grid>
+                </Grid>
+              )}
+
+              {/* Alumni Form */}
+              {userType === 'alumni' && (
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12 }}>
+                    <TextField
+                      fullWidth
+                      label="Full Name *"
+                      placeholder="Full name of alumni"
+                      value={formData.fullName}
+                      onChange={handleChange('fullName')}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Graduation Year *</InputLabel>
+                      <Select
+                        value={formData.graduationYear}
+                        onChange={handleChange('graduationYear')}
+                        label="Graduation Year *"
+                      >
+                        <MenuItem value="2026">2026</MenuItem>
+                        <MenuItem value="2025">2025</MenuItem>
+                        <MenuItem value="2024">2024</MenuItem>
+                        <MenuItem value="2023">2023</MenuItem>
+                        <MenuItem value="2022">2022</MenuItem>
+                        <MenuItem value="2021">2021</MenuItem>
+                        <MenuItem value="2020">2020</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Degree *</InputLabel>
+                      <Select
+                        value={formData.degree}
+                        onChange={handleChange('degree')}
+                        label="Degree *"
+                      >
+                        <MenuItem value="BS CS">BS CS</MenuItem>
+                        <MenuItem value="BS IT">BS IT</MenuItem>
+                        <MenuItem value="BBA">BBA</MenuItem>
+                        <MenuItem value="BS Engineering">BS Engineering</MenuItem>
+                        <MenuItem value="MBBS">MBBS</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <TextField
+                      fullWidth
+                      label="Personal Email *"
+                      type="email"
+                      placeholder="Contact email outside university"
+                      value={formData.personalEmail}
+                      onChange={handleChange('personalEmail')}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Current Company"
+                      placeholder="Optional"
+                      value={formData.currentCompany}
+                      onChange={handleChange('currentCompany')}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="LinkedIn Profile"
+                      placeholder="https://linkedin.com/in/username"
+                      value={formData.linkedInProfile}
+                      onChange={handleChange('linkedInProfile')}
+                    />
+                  </Grid>
+                </Grid>
+              )}
             </Stack>
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ px: 3, pb: 3 }}>
             <Button onClick={handleCloseDialog}>Cancel</Button>
             <Button variant="contained" onClick={handleCloseDialog}>
-              Add User
+              Add {userType === 'student' ? 'Student' : userType === 'teacher' ? 'Teacher' : 'Alumni'}
             </Button>
           </DialogActions>
         </Dialog>

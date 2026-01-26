@@ -38,7 +38,8 @@ const CreateAssignment = () => {
     course: '',
     description: '',
     dueDate: '',
-    totalMarks: 100,
+    dueTime: '',
+    totalMarks: 10,
     instructions: '',
     attachments: [],
   });
@@ -119,7 +120,7 @@ const CreateAssignment = () => {
 
               {/* Course Selection */}
               <Grid container spacing={3}>
-                <Grid size={{ xs: 12, md: 6 }}>
+                <Grid size={{ xs: 12, md: 12 }}>
                   <FormControl fullWidth>
                     <FormLabel sx={{ mb: 1, fontWeight: 600 }}>Course *</FormLabel>
                     <TextField
@@ -139,14 +140,16 @@ const CreateAssignment = () => {
                   </FormControl>
                 </Grid>
 
-                <Grid size={{ xs: 12, md: 3 }}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <FormControl fullWidth>
                     <FormLabel sx={{ mb: 1, fontWeight: 600 }}>Total Marks *</FormLabel>
                     <TextField
                       fullWidth
                       type="number"
+                      placeholder="e.g., 10 or 20"
                       value={formData.totalMarks}
                       onChange={handleChange('totalMarks')}
+                      inputProps={{ min: 5, max: 100 }}
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
@@ -178,18 +181,33 @@ const CreateAssignment = () => {
                     />
                   </FormControl>
                 </Grid>
+
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <FormControl fullWidth>
+                    <FormLabel sx={{ mb: 1, fontWeight: 600 }}>Due Time *</FormLabel>
+                    <TextField
+                      fullWidth
+                      type="time"
+                      value={formData.dueTime}
+                      onChange={handleChange('dueTime')}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                    />
+                  </FormControl>
+                </Grid>
               </Grid>
 
               <Divider />
 
-              {/* Description */}
+              {/* Description (Rich Text) */}
               <FormControl fullWidth>
-                <FormLabel sx={{ mb: 1, fontWeight: 600 }}>Short Description *</FormLabel>
+                <FormLabel sx={{ mb: 1, fontWeight: 600 }}>
+                  Assignment Description (Instructions) *
+                </FormLabel>
                 <TextField
                   fullWidth
                   multiline
-                  rows={2}
-                  placeholder="Brief overview of the assignment"
+                  rows={6}
+                  placeholder="Provide detailed assignment instructions, requirements, objectives, and submission guidelines..."
                   value={formData.description}
                   onChange={handleChange('description')}
                   InputProps={{
@@ -199,27 +217,16 @@ const CreateAssignment = () => {
                       </InputAdornment>
                     ),
                   }}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                />
-              </FormControl>
-
-              {/* Detailed Instructions */}
-              <FormControl fullWidth>
-                <FormLabel sx={{ mb: 1, fontWeight: 600 }}>Detailed Instructions</FormLabel>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={6}
-                  placeholder="Provide detailed instructions, requirements, and guidelines for students..."
-                  value={formData.instructions}
-                  onChange={handleChange('instructions')}
                   sx={{ 
                     '& .MuiOutlinedInput-root': { 
                       borderRadius: 2,
-                      fontFamily: 'monospace',
+                      fontSize: '0.95rem',
                     } 
                   }}
                 />
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                  📝 Provide clear instructions for students including objectives, requirements, and submission format
+                </Typography>
               </FormControl>
 
               <Divider />
@@ -229,7 +236,7 @@ const CreateAssignment = () => {
                 <FormLabel sx={{ mb: 2, fontWeight: 600 }}>
                   <Stack direction="row" alignItems="center" spacing={1}>
                     <AttachFile />
-                    <span>Attachments (Optional)</span>
+                    <span>File Attachment (Resource Material)</span>
                   </Stack>
                 </FormLabel>
                 <FileDropzone 
@@ -237,7 +244,7 @@ const CreateAssignment = () => {
                   maxFiles={5}
                 />
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-                  Upload reference materials, datasets, or any supporting documents
+                  📎 Upload PDF/Doc files with reference materials, datasets, or supporting documents (Optional)
                 </Typography>
               </FormControl>
 

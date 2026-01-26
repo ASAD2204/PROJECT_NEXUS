@@ -50,6 +50,20 @@ const CourseManagement = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
+  const [formData, setFormData] = useState({
+    courseCode: '',
+    courseTitle: '',
+    creditHours: 3,
+    department: '',
+    instructor: '',
+    semester: '',
+    capacity: 50,
+    description: '',
+  });
+
+  const handleChange = (field) => (event) => {
+    setFormData({ ...formData, [field]: event.target.value });
+  };
 
   const courses = [
     {
@@ -321,42 +335,116 @@ const CourseManagement = () => {
           <DialogContent>
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid size={{ xs: 12, md: 6 }}>
-                <TextField fullWidth size="small" label="Course Code" required />
+                <TextField 
+                  fullWidth 
+                  label="Course Code *" 
+                  placeholder="e.g., CS-501"
+                  value={formData.courseCode}
+                  onChange={handleChange('courseCode')}
+                  required 
+                />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <TextField fullWidth size="small" label="Course Name" required />
+                <TextField 
+                  fullWidth 
+                  label="Course Title *" 
+                  placeholder="e.g., Advanced Web Technologies"
+                  value={formData.courseTitle}
+                  onChange={handleChange('courseTitle')}
+                  required 
+                />
               </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FormControl fullWidth size="small" required>
-                  <InputLabel>Department</InputLabel>
-                  <Select label="Department">
-                    <MenuItem value="cs">Computer Science</MenuItem>
-                    <MenuItem value="bba">Business Admin</MenuItem>
-                    <MenuItem value="eng">Engineering</MenuItem>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <FormControl fullWidth required>
+                  <InputLabel>Credit Hours *</InputLabel>
+                  <Select 
+                    value={formData.creditHours}
+                    onChange={handleChange('creditHours')}
+                    label="Credit Hours *"
+                  >
+                    <MenuItem value={1}>1</MenuItem>
+                    <MenuItem value={2}>2</MenuItem>
+                    <MenuItem value={3}>3</MenuItem>
+                    <MenuItem value={4}>4</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid size={{ xs: 12, md: 8 }}>
+                <FormControl fullWidth required>
+                  <InputLabel>Department *</InputLabel>
+                  <Select 
+                    value={formData.department}
+                    onChange={handleChange('department')}
+                    label="Department *"
+                  >
+                    <MenuItem value="Computer Science">Computer Science</MenuItem>
+                    <MenuItem value="Information Technology">Information Technology</MenuItem>
+                    <MenuItem value="Business Administration">Business Administration</MenuItem>
+                    <MenuItem value="Engineering">Engineering</MenuItem>
+                    <MenuItem value="Medical Sciences">Medical Sciences</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <TextField fullWidth size="small" label="Credit Hours" type="number" required />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FormControl fullWidth size="small" required>
-                  <InputLabel>Semester</InputLabel>
-                  <Select label="Semester">
-                    <MenuItem value="fall2025">Fall 2025</MenuItem>
-                    <MenuItem value="spring2026">Spring 2026</MenuItem>
+                <FormControl fullWidth required>
+                  <InputLabel>Instructor *</InputLabel>
+                  <Select 
+                    value={formData.instructor}
+                    onChange={handleChange('instructor')}
+                    label="Instructor *"
+                  >
+                    <MenuItem value="dr-ahmed">Dr. Ahmed Hassan - Computer Science</MenuItem>
+                    <MenuItem value="prof-sarah">Prof. Sarah Khan - Business Admin</MenuItem>
+                    <MenuItem value="dr-usman">Dr. Usman Ali - Engineering</MenuItem>
+                    <MenuItem value="dr-mustafa">Dr. Ghulam Mustafa - Data Science</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField fullWidth size="small" label="Capacity" type="number" required />
+              <Grid size={{ xs: 12, md: 3 }}>
+                <FormControl fullWidth required>
+                  <InputLabel>Semester *</InputLabel>
+                  <Select 
+                    value={formData.semester}
+                    onChange={handleChange('semester')}
+                    label="Semester *"
+                  >
+                    <MenuItem value="1">1st Semester</MenuItem>
+                    <MenuItem value="2">2nd Semester</MenuItem>
+                    <MenuItem value="3">3rd Semester</MenuItem>
+                    <MenuItem value="4">4th Semester</MenuItem>
+                    <MenuItem value="5">5th Semester</MenuItem>
+                    <MenuItem value="6">6th Semester</MenuItem>
+                    <MenuItem value="7">7th Semester</MenuItem>
+                    <MenuItem value="8">8th Semester</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid size={{ xs: 12, md: 3 }}>
+                <TextField 
+                  fullWidth 
+                  label="Capacity *" 
+                  type="number" 
+                  placeholder="e.g., 50"
+                  value={formData.capacity}
+                  onChange={handleChange('capacity')}
+                  inputProps={{ min: 10, max: 200 }}
+                  required 
+                />
               </Grid>
               <Grid size={12}>
-                <TextField fullWidth size="small" label="Description" multiline rows={3} />
+                <TextField 
+                  fullWidth 
+                  label="Course Description" 
+                  multiline 
+                  rows={3} 
+                  placeholder="Brief description of the course content and objectives"
+                  value={formData.description}
+                  onChange={handleChange('description')}
+                />
               </Grid>
             </Grid>
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ px: 3, pb: 3 }}>
             <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
             <Button variant="contained" onClick={() => setOpenDialog(false)}>
               Create Course

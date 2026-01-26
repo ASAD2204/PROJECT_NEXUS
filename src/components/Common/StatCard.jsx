@@ -29,46 +29,21 @@ const StatCard = ({
   onClick,
 }) => {
   const theme = useTheme();
-  const [animatedValue, setAnimatedValue] = useState(0);
   const [mounted, setMounted] = useState(false);
 
-  // Animate value on mount
+  // Simple mount effect without animation
   useEffect(() => {
     setMounted(true);
-    
-    // Check if value is a number for animation
-    const numericValue = typeof value === 'number' ? value : parseFloat(value);
-    
-    if (!isNaN(numericValue) && !loading) {
-      const duration = 1000; // 1 second
-      const steps = 60;
-      const increment = numericValue / steps;
-      let currentStep = 0;
-
-      const timer = setInterval(() => {
-        currentStep++;
-        setAnimatedValue(Math.min(increment * currentStep, numericValue));
-        
-        if (currentStep >= steps) {
-          clearInterval(timer);
-          setAnimatedValue(numericValue);
-        }
-      }, duration / steps);
-
-      return () => clearInterval(timer);
-    } else if (!loading) {
-      setAnimatedValue(value);
-    }
-  }, [value, loading]);
+  }, []);
 
   // Format the displayed value
   const displayValue = () => {
     if (typeof value === 'number') {
       // Preserve decimal places from original value
       const decimalPlaces = value.toString().split('.')[1]?.length || 0;
-      return animatedValue.toFixed(decimalPlaces);
+      return value.toFixed(decimalPlaces);
     }
-    return animatedValue;
+    return value;
   };
 
   // Determine trend color and icon

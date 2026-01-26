@@ -882,8 +882,8 @@ const CourseClassroom = () => {
                           <Typography variant="h6" color="white" gutterBottom>
                             Grade Distribution
                           </Typography>
-                          <ResponsiveContainer width="100%" height={150}>
-                            <RechartsBarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                          <ResponsiveContainer width="100%" height={180}>
+                            <RechartsBarChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                               <defs>
                                 <linearGradient id="yourGradeGradient" x1="0" y1="0" x2="0" y2="1">
                                   <stop offset="0%" stopColor="#90caf9" stopOpacity={1}/>
@@ -898,14 +898,17 @@ const CourseClassroom = () => {
                               <XAxis 
                                 dataKey="name" 
                                 stroke="white" 
-                                style={{ fontSize: '0.85rem' }}
+                                style={{ fontSize: '0.75rem' }}
                                 tickLine={false}
+                                tick={{ fontSize: 12 }}
                               />
                               <YAxis 
                                 stroke="white" 
-                                style={{ fontSize: '0.85rem' }}
+                                style={{ fontSize: '0.75rem' }}
                                 tickLine={false}
                                 axisLine={false}
+                                width={35}
+                                tick={{ fontSize: 12 }}
                               />
                               <RechartsTooltip 
                                 contentStyle={{ 

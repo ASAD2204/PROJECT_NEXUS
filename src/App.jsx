@@ -15,7 +15,7 @@ import OTP from './pages/Auth/OTP';
 
 // Student Pages
 import Dashboard from './pages/Student/Dashboard';
-import Profile from './pages/Student/Profile';
+import StudentProfile from './pages/Student/Profile';
 import Transcript from './pages/Student/Transcript';
 import MyAssignments from './pages/Student/MyAssignments';
 import MyTickets from './pages/Student/MyTickets';
@@ -24,6 +24,7 @@ import AlumniDirectory from './pages/Student/AlumniDirectory';
 
 // Admin Pages
 import AdminDashboard from './pages/Admin/Dashboard';
+import AdminProfile from './pages/Admin/Profile';
 import UserManagement from './pages/Admin/UserManagement';
 import AdminCourseManagement from './pages/Admin/CourseManagement';
 import AdminReports from './pages/Admin/Reports';
@@ -35,6 +36,7 @@ import DepartmentManagement from './pages/Admin/DepartmentManagement';
 
 // Teacher Pages
 import TeacherDashboard from './pages/Teacher/Dashboard';
+import TeacherProfile from './pages/Teacher/Profile';
 import TeacherCourses from './pages/Teacher/MyCourses';
 import StudentManagement from './pages/Teacher/StudentManagement';
 import TeacherReports from './pages/Teacher/Reports';
@@ -68,6 +70,7 @@ import ChatPortal from './pages/Chat/ChatPortal';
 // Other Pages
 import Library from './pages/Library/Library';
 import LibrarianDashboard from './pages/Library/LibrarianDashboard';
+import LibrarianProfile from './pages/Library/Profile';
 import BookManagement from './pages/Library/BookManagement';
 import IssuedBooks from './pages/Library/IssuedBooks';
 import Reservations from './pages/Library/Reservations';
@@ -75,6 +78,7 @@ import LibrarianReports from './pages/Library/LibrarianReports';
 import LibrarianGrievances from './pages/Library/LibrarianGrievances';
 import Grievances from './pages/Grievances/Grievances';
 import AlumniNetwork from './pages/Alumni/AlumniNetwork';
+import AlumniProfile from './pages/Alumni/Profile';
 import AlumniEvents from './pages/Alumni/AlumniEvents';
 import JobBoard from './pages/Alumni/JobBoard';
 import Mentorship from './pages/Alumni/Mentorship';
@@ -160,13 +164,15 @@ function App() {
         
         {/* Student Routes */}
         <Route path="dashboard" element={<Dashboard />} />
-        <Route path="profile" element={<Profile />} />
+        <Route path="profile" element={<StudentProfile />} />
+        <Route path="student/profile" element={<StudentProfile />} />
         <Route path="transcript" element={<Transcript />} />
         <Route path="notifications" element={<Notifications />} />
         <Route path="notifications" element={<Notifications />} />
         
         {/* Admin Routes */}
         <Route path="admin/dashboard" element={<AdminDashboard />} />
+        <Route path="admin/profile" element={<AdminProfile />} />
         <Route path="admin/users" element={<UserManagement />} />
         <Route path="admin/courses" element={<AdminCourseManagement />} />
         <Route path="admin/departments" element={<DepartmentManagement />} />
@@ -178,6 +184,7 @@ function App() {
         
         {/* Teacher Routes */}
         <Route path="teacher/dashboard" element={<TeacherDashboard />} />
+        <Route path="teacher/profile" element={<TeacherProfile />} />
         <Route path="teacher/courses" element={<TeacherCourses />} />
         <Route path="teacher/students" element={<StudentManagement />} />
         <Route path="teacher/course/:id" element={<CourseClassroom />} />
@@ -224,6 +231,7 @@ function App() {
         {/* Library Routes */}
         <Route path="library" element={<Library />} />
         <Route path="librarian/dashboard" element={<LibrarianDashboard />} />
+        <Route path="librarian/profile" element={<LibrarianProfile />} />
         <Route path="librarian/books" element={<BookManagement />} />
         <Route path="librarian/issued" element={<IssuedBooks />} />
         <Route path="librarian/reservations" element={<Reservations />} />
@@ -232,6 +240,7 @@ function App() {
         
         {/* Alumni Routes */}
         <Route path="alumni/network" element={<AlumniNetwork />} />
+        <Route path="alumni/profile" element={<AlumniProfile />} />
         <Route path="alumni/events" element={<AlumniEvents />} />
         <Route path="alumni/jobs" element={<JobBoard />} />
         <Route path="alumni/mentorship" element={<Mentorship />} />

@@ -178,7 +178,7 @@ const LibrarianReports = () => {
 
         <Grid container spacing={3}>
           {/* Monthly Circulation Trends */}
-          <Grid size={{ xs: 12, lg: 8 }}>
+          <Grid size={{ xs: 12 }}>
             <Card sx={{ 
               height: '100%',
               background: 'linear-gradient(135deg, rgba(33,150,243,0.05) 0%, rgba(156,39,176,0.05) 100%)',
@@ -267,7 +267,7 @@ const LibrarianReports = () => {
           </Grid>
 
           {/* Collection by Category */}
-          <Grid size={{ xs: 12, lg: 4 }}>
+          <Grid size={{ xs: 12 }}>
             <Card sx={{ 
               height: '100%',
               background: 'linear-gradient(135deg, rgba(156,39,176,0.05) 0%, rgba(233,30,99,0.05) 100%)',

@@ -293,8 +293,8 @@ const Dashboard = () => {
           animation: isLoaded('charts') ? 'fadeIn 0.3s ease-in-out' : 'none',
         }}
       >
-        {/* LEFT: Line Chart - GPA Trend */}
-        <Grid size={{ xs: 12, lg: 7 }}>
+        {/* GPA Trend Chart - Full Width */}
+        <Grid size={{ xs: 12 }}>
           <Card sx={{ 
             height: '100%',
             background: 'linear-gradient(135deg, rgba(25,118,210,0.05) 0%, rgba(21,101,192,0.05) 100%)',
@@ -320,8 +320,8 @@ const Dashboard = () => {
               {loading ? (
                 <Skeleton variant="rectangular" height={430} sx={{ borderRadius: 2 }} />
               ) : (
-                <ResponsiveContainer width="100%" height={window.innerWidth < 1200 ? 380 : 420}>
-                  <AreaChart data={gpaHistory} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
+                <ResponsiveContainer width="100%" height={380}>
+                  <AreaChart data={gpaHistory} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
                     <defs>
                       <linearGradient id="colorGpa" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#1976D2" stopOpacity={0.4}/>
@@ -332,15 +332,18 @@ const Dashboard = () => {
                     <XAxis 
                       dataKey="semester" 
                       stroke="#666" 
-                      style={{ fontSize: '0.85rem' }}
+                      style={{ fontSize: '0.75rem' }}
                       tickLine={false}
+                      tick={{ fontSize: 12 }}
                     />
                     <YAxis 
                       domain={[0, 4.0]} 
                       stroke="#666" 
-                      style={{ fontSize: '0.85rem' }}
+                      style={{ fontSize: '0.75rem' }}
                       tickLine={false}
                       axisLine={false}
+                      width={35}
+                      tick={{ fontSize: 12 }}
                     />
                     <Tooltip 
                       contentStyle={{ 
@@ -367,8 +370,8 @@ const Dashboard = () => {
           </Card>
         </Grid>
 
-        {/* RIGHT: Bar Chart - Attendance Overview */}
-        <Grid size={{ xs: 12, lg: 5 }}>
+        {/* Attendance Overview Chart - Full Width */}
+        <Grid size={{ xs: 12 }}>
           <Card sx={{ 
             height: '100%',
             background: 'linear-gradient(135deg, rgba(76,175,80,0.05) 0%, rgba(67,160,71,0.05) 100%)',
@@ -391,8 +394,8 @@ const Dashboard = () => {
               {loading ? (
                 <Skeleton variant="rectangular" height={430} sx={{ borderRadius: 2 }} />
               ) : (
-                <ResponsiveContainer width="100%" height={window.innerWidth < 1200 ? 380 : 420}>
-                  <BarChart data={attendanceData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+                <ResponsiveContainer width="100%" height={380}>
+                  <BarChart data={attendanceData} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
                     <defs>
                       <linearGradient id="attendanceBarGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#4caf50" stopOpacity={1}/>
@@ -403,18 +406,21 @@ const Dashboard = () => {
                     <XAxis 
                       dataKey="course" 
                       stroke="#666" 
-                      style={{ fontSize: '0.8rem' }}
+                      style={{ fontSize: '0.7rem' }}
                       tickLine={false}
                       angle={-15}
                       textAnchor="end"
                       height={70}
+                      tick={{ fontSize: 11 }}
                     />
                     <YAxis 
                       domain={[0, 100]} 
                       stroke="#666" 
-                      style={{ fontSize: '0.85rem' }}
+                      style={{ fontSize: '0.75rem' }}
                       tickLine={false}
                       axisLine={false}
+                      width={35}
+                      tick={{ fontSize: 12 }}
                     />
                     <Tooltip 
                       contentStyle={{ 

@@ -37,6 +37,7 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
+  Legend,
   ResponsiveContainer,
 } from 'recharts';
 import PageHeader from '../../components/Common/PageHeader';
@@ -107,6 +108,30 @@ const AdminReports = () => {
     { month: 'Apr', revenue: 7.5 },
     { month: 'May', revenue: 8.1 },
     { month: 'Jun', revenue: 8.5 },
+  ];
+
+  const attendanceByDepartment = [
+    { dept: 'CS', attendance: 89 },
+    { dept: 'Business', attendance: 85 },
+    { dept: 'Engineering', attendance: 87 },
+    { dept: 'Medical', attendance: 92 },
+    { dept: 'Arts', attendance: 83 },
+  ];
+
+  const studentGrowth = [
+    { year: '2021', students: 2145 },
+    { year: '2022', students: 2387 },
+    { year: '2023', students: 2543 },
+    { year: '2024', students: 2689 },
+    { year: '2025', students: 2847 },
+  ];
+
+  const facultyDistribution = [
+    { department: 'CS', faculty: 45, students: 852 },
+    { department: 'Business', faculty: 38, students: 743 },
+    { department: 'Engineering', faculty: 42, students: 621 },
+    { department: 'Medical', faculty: 35, students: 431 },
+    { department: 'Arts', faculty: 22, students: 200 },
   ];
 
   return (
@@ -195,7 +220,7 @@ const AdminReports = () => {
 
         {/* Charts */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid size={{ xs: 12, lg: 8 }}>
+          <Grid size={{ xs: 12 }}>
             <Card>
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -211,9 +236,9 @@ const AdminReports = () => {
                     </IconButton>
                   </Stack>
                 </Box>
-                <Box sx={{ height: 300 }}>
+                <Box sx={{ height: { xs: 280, sm: 320, md: 350 } }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={revenueData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                    <LineChart data={revenueData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                       <defs>
                         <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor={theme.palette.success.main} stopOpacity={0.3}/>
@@ -224,14 +249,17 @@ const AdminReports = () => {
                       <XAxis 
                         dataKey="month" 
                         stroke="#666" 
-                        style={{ fontSize: '0.85rem' }}
+                        style={{ fontSize: '0.75rem' }}
                         tickLine={false}
+                        tick={{ fontSize: 12 }}
                       />
                       <YAxis 
                         stroke="#666" 
-                        style={{ fontSize: '0.85rem' }}
+                        style={{ fontSize: '0.75rem' }}
                         tickLine={false}
                         axisLine={false}
+                        width={40}
+                        tick={{ fontSize: 12 }}
                       />
                       <Tooltip 
                         contentStyle={{ 
@@ -255,15 +283,15 @@ const AdminReports = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid size={{ xs: 12, lg: 4 }}>
+          <Grid size={{ xs: 12 }}>
             <Card>
               <CardContent>
                 <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
                   Department Enrollment
                 </Typography>
-                <Box sx={{ height: 300 }}>
+                <Box sx={{ height: { xs: 280, sm: 320, md: 350 } }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={enrollmentData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                    <BarChart data={enrollmentData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                       <defs>
                         <linearGradient id="enrollmentGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor={theme.palette.primary.main} stopOpacity={1}/>
@@ -274,14 +302,17 @@ const AdminReports = () => {
                       <XAxis 
                         dataKey="department" 
                         stroke="#666" 
-                        style={{ fontSize: '0.85rem' }}
+                        style={{ fontSize: '0.7rem' }}
                         tickLine={false}
+                        tick={{ fontSize: 11 }}
                       />
                       <YAxis 
                         stroke="#666" 
-                        style={{ fontSize: '0.85rem' }}
+                        style={{ fontSize: '0.75rem' }}
                         tickLine={false}
                         axisLine={false}
+                        width={40}
+                        tick={{ fontSize: 12 }}
                       />
                       <Tooltip 
                         contentStyle={{ 
@@ -296,6 +327,220 @@ const AdminReports = () => {
                         fill="url(#enrollmentGradient)"
                         radius={[8, 8, 0, 0]}
                         maxBarSize={60}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* STUDENT GROWTH TREND */}
+          <Grid size={{ xs: 12 }}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Box>
+                    <Typography variant="h6" fontWeight="bold">
+                      Student Enrollment Growth
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Year-over-year student enrollment trends
+                    </Typography>
+                  </Box>
+                  <Chip label="5 Year Trend" size="small" color="primary" variant="outlined" />
+                </Box>
+                <Box sx={{ height: { xs: 300, sm: 350, md: 400 } }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={studentGrowth} margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                      <defs>
+                        <linearGradient id="growthGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={theme.palette.primary.main} stopOpacity={0.3}/>
+                          <stop offset="100%" stopColor={theme.palette.primary.main} stopOpacity={0.05}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} stroke="#e0e0e0" />
+                      <XAxis 
+                        dataKey="year" 
+                        stroke="#666" 
+                        style={{ fontSize: '0.75rem' }}
+                        tickLine={false}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <YAxis 
+                        stroke="#666" 
+                        style={{ fontSize: '0.75rem' }}
+                        tickLine={false}
+                        axisLine={false}
+                        width={50}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          borderRadius: 8, 
+                          border: 'none',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                        }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="students" 
+                        stroke={theme.palette.primary.main}
+                        strokeWidth={4}
+                        fill="url(#growthGradient)"
+                        dot={{ fill: theme.palette.primary.main, r: 6, strokeWidth: 3, stroke: 'white' }}
+                        activeDot={{ r: 8, strokeWidth: 3, stroke: 'white' }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* ATTENDANCE BY DEPARTMENT */}
+          <Grid size={{ xs: 12 }}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Box>
+                    <Typography variant="h6" fontWeight="bold">
+                      Attendance Rate by Department
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Department-wise attendance performance comparison
+                    </Typography>
+                  </Box>
+                  <Chip label="Current Semester" size="small" color="success" variant="outlined" />
+                </Box>
+                <Box sx={{ height: { xs: 300, sm: 350, md: 400 } }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={attendanceByDepartment} margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                      <defs>
+                        <linearGradient id="attendDeptGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={theme.palette.success.main} stopOpacity={1}/>
+                          <stop offset="100%" stopColor={theme.palette.success.main} stopOpacity={0.6}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} stroke="#e0e0e0" />
+                      <XAxis 
+                        dataKey="dept" 
+                        stroke="#666" 
+                        style={{ fontSize: '0.75rem' }}
+                        tickLine={false}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <YAxis 
+                        domain={[0, 100]}
+                        stroke="#666" 
+                        style={{ fontSize: '0.75rem' }}
+                        tickLine={false}
+                        axisLine={false}
+                        width={40}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          borderRadius: 8, 
+                          border: 'none',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                        }}
+                        cursor={{ fill: 'rgba(76,175,80,0.1)' }}
+                      />
+                      <Bar 
+                        dataKey="attendance" 
+                        fill="url(#attendDeptGradient)"
+                        radius={[8, 8, 0, 0]}
+                        maxBarSize={80}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* FACULTY TO STUDENT RATIO */}
+          <Grid size={{ xs: 12 }}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Box>
+                    <Typography variant="h6" fontWeight="bold">
+                      Faculty-Student Ratio Analysis
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Faculty count vs student enrollment by department
+                    </Typography>
+                  </Box>
+                  <Chip label="All Departments" size="small" color="info" variant="outlined" />
+                </Box>
+                <Box sx={{ height: { xs: 300, sm: 350, md: 400 } }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={facultyDistribution} margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                      <defs>
+                        <linearGradient id="facultyGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={theme.palette.info.main} stopOpacity={1}/>
+                          <stop offset="100%" stopColor={theme.palette.info.main} stopOpacity={0.6}/>
+                        </linearGradient>
+                        <linearGradient id="studentGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={theme.palette.warning.main} stopOpacity={1}/>
+                          <stop offset="100%" stopColor={theme.palette.warning.main} stopOpacity={0.6}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} stroke="#e0e0e0" />
+                      <XAxis 
+                        dataKey="department" 
+                        stroke="#666" 
+                        style={{ fontSize: '0.75rem' }}
+                        tickLine={false}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <YAxis 
+                        yAxisId="left"
+                        stroke="#666" 
+                        style={{ fontSize: '0.75rem' }}
+                        tickLine={false}
+                        axisLine={false}
+                        width={40}
+                        tick={{ fontSize: 12 }}
+                        label={{ value: 'Faculty', angle: -90, position: 'insideLeft' }}
+                      />
+                      <YAxis 
+                        yAxisId="right"
+                        orientation="right"
+                        stroke="#666" 
+                        style={{ fontSize: '0.75rem' }}
+                        tickLine={false}
+                        axisLine={false}
+                        width={50}
+                        tick={{ fontSize: 12 }}
+                        label={{ value: 'Students', angle: 90, position: 'insideRight' }}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          borderRadius: 8, 
+                          border: 'none',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                        }}
+                        cursor={{ fill: 'rgba(33,150,243,0.1)' }}
+                      />
+                      <Legend />
+                      <Bar 
+                        yAxisId="left"
+                        dataKey="faculty" 
+                        fill="url(#facultyGrad)"
+                        radius={[8, 8, 0, 0]}
+                        maxBarSize={60}
+                        name="Faculty Members"
+                      />
+                      <Bar 
+                        yAxisId="right"
+                        dataKey="students" 
+                        fill="url(#studentGrad)"
+                        radius={[8, 8, 0, 0]}
+                        maxBarSize={60}
+                        name="Students Enrolled"
                       />
                     </BarChart>
                   </ResponsiveContainer>

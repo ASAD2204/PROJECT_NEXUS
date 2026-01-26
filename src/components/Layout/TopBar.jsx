@@ -114,9 +114,13 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
   // Generate breadcrumbs based on current route
   const generateBreadcrumbs = () => {
     const pathnames = location.pathname.split('/').filter(x => x);
-    const breadcrumbs = [
-      { label: 'Home', path: '/dashboard', icon: <HomeIcon sx={{ fontSize: 16, mr: 0.5 }} /> }
-    ];
+    
+    // Don't show breadcrumbs if on root or login
+    if (pathnames.length === 0 || location.pathname === '/login') {
+      return [];
+    }
+
+    const breadcrumbs = [];
 
     const routeNames = {
       dashboard: 'Dashboard',
@@ -126,11 +130,15 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
       history: 'History',
       lms: 'My Courses',
       course: 'Course Details',
+      classroom: 'Course Classroom',
       assignment: 'Assignment',
       assignments: 'Assignments',
+      submit: 'Submit Assignment',
       finance: 'Fee Management',
+      vouchers: 'Fee Vouchers',
       chat: 'Nexus Chat',
       library: 'Library',
+      catalog: 'Library Catalog',
       grievances: 'Grievances',
       admin: 'Admin',
       users: 'User Management',
@@ -155,11 +163,21 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
       notifications: 'Notifications',
       'alumni-directory': 'Alumni Directory',
       'smart-attendance': 'Smart Attendance',
+      'biometric-enrollment': 'Biometric Enrollment',
+      student: 'Student',
+      operations: 'Operations',
+      'my-courses': 'My Courses',
     };
 
     pathnames.forEach((value, index) => {
       const path = `/${pathnames.slice(0, index + 1).join('/')}`;
       const label = routeNames[value] || value.toUpperCase();
+      
+      // Skip IDs and numeric values in breadcrumbs
+      if (!isNaN(value) || value.length > 20) {
+        return;
+      }
+      
       breadcrumbs.push({ label, path });
     });
 
@@ -278,6 +296,8 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
         color: 'text.primary',
         borderBottom: '1px solid',
         borderColor: 'divider',
+        backdropFilter: 'blur(12px)',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
       }}
       elevation={0}
     >
@@ -299,16 +319,20 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
           </IconButton>
 
           <Breadcrumbs
-            separator={<NavigateNext fontSize="small" />}
+            separator={<NavigateNext fontSize="small" sx={{ mx: 0.5, opacity: 0.6 }} />}
             aria-label="breadcrumb"
             sx={{ 
               display: { xs: 'none', sm: 'flex' },
               '& .MuiBreadcrumbs-ol': {
                 flexWrap: 'nowrap',
               },
+              '& .MuiBreadcrumbs-li': {
+                display: 'flex',
+                alignItems: 'center',
+              },
             }}
           >
-            {breadcrumbs.map((crumb, index) => {
+            {breadcrumbs.length > 0 && breadcrumbs.map((crumb, index) => {
               const isLast = index === breadcrumbs.length - 1;
               return isLast ? (
                 <Typography
@@ -319,9 +343,12 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
                     alignItems: 'center',
                     fontWeight: 600,
                     fontSize: '0.95rem',
+                    px: 0.75,
+                    py: 0.5,
+                    borderRadius: 1,
+                    backgroundColor: 'action.selected',
                   }}
                 >
-                  {crumb.icon}
                   {crumb.label}
                 </Typography>
               ) : (
@@ -339,12 +366,18 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
                     alignItems: 'center',
                     cursor: 'pointer',
                     fontSize: '0.9rem',
+                    fontWeight: 500,
+                    transition: 'all 0.2s ease',
+                    borderRadius: 1,
+                    px: 0.75,
+                    py: 0.5,
                     '&:hover': {
                       color: 'primary.main',
+                      backgroundColor: 'action.hover',
+                      textDecoration: 'none',
                     },
                   }}
                 >
-                  {crumb.icon}
                   {crumb.label}
                 </Link>
               );
@@ -366,11 +399,15 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
               transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               '& .MuiOutlinedInput-root': {
                 backgroundColor: 'background.default',
+                borderRadius: 2,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
                   backgroundColor: 'background.paper',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                 },
                 '&.Mui-focused': {
                   backgroundColor: 'background.paper',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
                 },
               },
             }}
@@ -402,6 +439,8 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
                 mt: 1,
                 maxHeight: 400,
                 overflow: 'auto',
+                borderRadius: 2,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
               },
             }}
             disableAutoFocus
@@ -412,7 +451,17 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
                 <ListItemButton
                   key={`${result.type}-${result.id}`}
                   onClick={() => handleSearchResultClick(result.path)}
-                  sx={{ py: 1.5 }}
+                  sx={{ 
+                    py: 1.5,
+                    mx: 1,
+                    mb: 0.5,
+                    borderRadius: 1.5,
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      backgroundColor: 'action.hover',
+                      transform: 'translateX(4px)',
+                    },
+                  }}
                 >
                   <ListItemIcon>
                     {result.type === 'course' ? (
@@ -452,12 +501,24 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
             onClick={handleNotificationsOpen}
             sx={{
               color: 'text.secondary',
+              transition: 'all 0.2s ease',
               '&:hover': {
                 color: 'primary.main',
+                backgroundColor: 'action.hover',
+                transform: 'scale(1.05)',
               },
             }}
           >
-            <Badge badgeContent={unreadCount} color="error">
+            <Badge 
+              badgeContent={unreadCount} 
+              color="error"
+              sx={{
+                '& .MuiBadge-badge': {
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                  fontWeight: 600,
+                },
+              }}
+            >
               <NotificationsIcon />
             </Badge>
           </IconButton>
@@ -468,8 +529,11 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
             onClick={handleSettings}
             sx={{
               color: 'text.secondary',
+              transition: 'all 0.2s ease',
               '&:hover': {
                 color: 'primary.main',
+                backgroundColor: 'action.hover',
+                transform: 'rotate(30deg)',
               },
               display: { xs: 'none', sm: 'inline-flex' },
             }}
@@ -483,8 +547,11 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
             onClick={toggleTheme}
             sx={{
               color: 'text.secondary',
+              transition: 'all 0.3s ease',
               '&:hover': {
                 color: 'primary.main',
+                backgroundColor: 'action.hover',
+                transform: 'rotate(180deg)',
               },
             }}
             title={mode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
@@ -493,11 +560,26 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
           </IconButton>
 
           {/* User Avatar */}
-          <IconButton onClick={handleUserMenuOpen} sx={{ ml: 1 }}>
+          <IconButton 
+            onClick={handleUserMenuOpen} 
+            sx={{ 
+              ml: 1,
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                transform: 'scale(1.05)',
+              },
+            }}
+          >
             <Avatar
               src={currentUser.photoUrl}
               alt={currentUser.name}
-              sx={{ width: 40, height: 40 }}
+              sx={{ 
+                width: 40, 
+                height: 40,
+                border: '2px solid',
+                borderColor: 'divider',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              }}
             />
           </IconButton>
         </Box>
@@ -520,15 +602,22 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
               width: 380,
               mt: 1.5,
               maxHeight: 500,
+              borderRadius: 2,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
             },
           }}
         >
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+          <Box sx={{ 
+            p: 2, 
+            borderBottom: 1, 
+            borderColor: 'divider',
+            background: 'linear-gradient(135deg, rgba(25,118,210,0.05) 0%, rgba(0,150,136,0.05) 100%)',
+          }}>
             <Typography variant="h6" fontWeight={600}>
               Notifications
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              You have {unreadCount} unread notifications
+            <Typography variant="caption" color="text.secondary" fontWeight={500}>
+              You have {unreadCount} unread {unreadCount === 1 ? 'notification' : 'notifications'}
             </Typography>
           </Box>
           
@@ -541,17 +630,35 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
                     sx={{
                       backgroundColor: notification.read ? 'transparent' : 'action.hover',
                       py: 2,
+                      px: 2.5,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
                       '&:hover': {
-                        backgroundColor: 'action.hover',
+                        backgroundColor: 'action.selected',
+                        transform: 'translateX(4px)',
                       },
                     }}
                   >
-                    <ListItemIcon>
-                      <Icon color={notification.color} />
+                    <ListItemIcon sx={{ minWidth: 40 }}>
+                      <Box
+                        sx={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          bgcolor: `${notification.color}.main`,
+                          color: 'white',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        }}
+                      >
+                        <Icon sx={{ fontSize: 20 }} />
+                      </Box>
                     </ListItemIcon>
                     <ListItemText
                       primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                           <Typography variant="body2" fontWeight={notification.read ? 400 : 600}>
                             {notification.title}
                           </Typography>
@@ -565,7 +672,7 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
                           <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                             {notification.subtitle}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography variant="caption" color="text.secondary" fontWeight={500}>
                             {notification.time}
                           </Typography>
                         </>
@@ -622,54 +729,145 @@ const TopBar = ({ onMenuClick, drawerWidth }) => {
           PaperProps={{
             sx: {
               mt: 1.5,
-              minWidth: 240,
+              minWidth: 260,
               borderRadius: 2,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
             },
           }}
         >
-          <Box sx={{ px: 2, py: 2, borderBottom: 1, borderColor: 'divider' }}>
-            <Typography variant="subtitle1" fontWeight={600}>
-              {currentUser.name}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {currentUser.email}
-            </Typography>
+          <Box sx={{ 
+            px: 2.5, 
+            py: 2.5, 
+            borderBottom: 1, 
+            borderColor: 'divider',
+            background: 'linear-gradient(135deg, rgba(25,118,210,0.05) 0%, rgba(0,150,136,0.05) 100%)',
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+              <Avatar
+                src={currentUser.photoUrl}
+                alt={currentUser.name}
+                sx={{ 
+                  width: 48, 
+                  height: 48, 
+                  mr: 1.5,
+                  border: '2px solid',
+                  borderColor: 'primary.main',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                }}
+              />
+              <Box>
+                <Typography variant="subtitle1" fontWeight={600} noWrap>
+                  {currentUser.name}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {currentUser.email}
+                </Typography>
+              </Box>
+            </Box>
             <Chip
               label={`Semester ${currentUser.semester}`}
               size="small"
               color="primary"
-              sx={{ mt: 1 }}
+              sx={{ 
+                fontWeight: 600,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+              }}
             />
           </Box>
           
-          <MenuItem onClick={handleProfile} sx={{ py: 1.5 }}>
+          <MenuItem 
+            onClick={handleProfile} 
+            sx={{ 
+              py: 1.5,
+              px: 2.5,
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                backgroundColor: 'action.selected',
+                transform: 'translateX(4px)',
+              },
+            }}
+          >
             <ListItemIcon>
-              <PersonIcon fontSize="small" />
+              <PersonIcon fontSize="small" color="primary" />
             </ListItemIcon>
-            <ListItemText>Profile</ListItemText>
+            <ListItemText 
+              primary="Profile"
+              primaryTypographyProps={{
+                fontWeight: 500,
+              }}
+            />
           </MenuItem>
           
-          <MenuItem onClick={handleSettings} sx={{ py: 1.5 }}>
+          <MenuItem 
+            onClick={handleSettings} 
+            sx={{ 
+              py: 1.5,
+              px: 2.5,
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                backgroundColor: 'action.selected',
+                transform: 'translateX(4px)',
+              },
+            }}
+          >
             <ListItemIcon>
-              <SettingsIcon fontSize="small" />
+              <SettingsIcon fontSize="small" color="action" />
             </ListItemIcon>
-            <ListItemText>Settings</ListItemText>
+            <ListItemText 
+              primary="Settings"
+              primaryTypographyProps={{
+                fontWeight: 500,
+              }}
+            />
           </MenuItem>
           
-          <MenuItem onClick={handleHelp} sx={{ py: 1.5 }}>
+          <MenuItem 
+            onClick={handleHelp} 
+            sx={{ 
+              py: 1.5,
+              px: 2.5,
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                backgroundColor: 'action.selected',
+                transform: 'translateX(4px)',
+              },
+            }}
+          >
             <ListItemIcon>
-              <HelpIcon fontSize="small" />
+              <HelpIcon fontSize="small" color="info" />
             </ListItemIcon>
-            <ListItemText>Help & Support</ListItemText>
+            <ListItemText 
+              primary="Help & Support"
+              primaryTypographyProps={{
+                fontWeight: 500,
+              }}
+            />
           </MenuItem>
           
           <Divider sx={{ my: 1 }} />
           
-          <MenuItem onClick={handleLogout} sx={{ py: 1.5, color: 'error.main' }}>
+          <MenuItem 
+            onClick={handleLogout} 
+            sx={{ 
+              py: 1.5,
+              px: 2.5,
+              color: 'error.main',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                backgroundColor: 'error.lighter',
+                transform: 'translateX(4px)',
+              },
+            }}
+          >
             <ListItemIcon>
               <LogoutIcon fontSize="small" color="error" />
             </ListItemIcon>
-            <ListItemText>Logout</ListItemText>
+            <ListItemText 
+              primary="Logout"
+              primaryTypographyProps={{
+                fontWeight: 600,
+              }}
+            />
           </MenuItem>
         </Menu>
       </Toolbar>

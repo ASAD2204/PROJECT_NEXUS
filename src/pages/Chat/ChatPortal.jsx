@@ -40,8 +40,6 @@ import {
   Group as GroupIcon,
   Close,
   Check,
-  VideoCall,
-  Call,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -289,9 +287,9 @@ const ChatPortal = () => {
   const ChatList = () => (
     <Box
       sx={{
-        width: isMobile ? '100%' : 380,
+        width: { xs: '100%', md: 360, lg: 400 },
         height: '100%',
-        borderRight: isMobile ? 'none' : `1px solid ${theme.palette.divider}`,
+        borderRight: { xs: 'none', md: `1px solid ${theme.palette.divider}` },
         display: 'flex',
         flexDirection: 'column',
         backgroundColor: theme.palette.mode === 'dark' ? '#111B21' : '#FFFFFF',
@@ -661,21 +659,9 @@ const ChatPortal = () => {
                 </Typography>
               </Box>
             </Stack>
-            <Stack direction="row" spacing={1}>
-              {mode === 'human' && !selectedChat.members && (
-                <>
-                  <IconButton sx={{ color: 'white' }}>
-                    <VideoCall />
-                  </IconButton>
-                  <IconButton sx={{ color: 'white' }}>
-                    <Call />
-                  </IconButton>
-                </>
-              )}
-              <IconButton sx={{ color: 'white' }}>
-                <MoreVert />
-              </IconButton>
-            </Stack>
+            <IconButton sx={{ color: 'white' }}>
+              <MoreVert />
+            </IconButton>
           </Box>
 
           {/* Messages Area */}
@@ -935,9 +921,10 @@ const ChatPortal = () => {
   return (
     <Box
       sx={{
-        height: 'calc(100vh - 64px)',
+        height: { xs: 'calc(100vh - 56px)', sm: 'calc(100vh - 64px)' },
         display: 'flex',
         overflow: 'hidden',
+        backgroundColor: theme.palette.background.default,
       }}
     >
       {(!isMobile || !selectedChat) && <ChatList />}

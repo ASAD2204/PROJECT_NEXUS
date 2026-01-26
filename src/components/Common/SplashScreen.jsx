@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Box, Typography, LinearProgress } from '@mui/material';
+import { Box, Typography, LinearProgress, alpha } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { School, MenuBook, People, TrendingUp } from '@mui/icons-material';
 
 const SplashScreen = ({ onComplete }) => {
   const theme = useTheme();
@@ -12,15 +13,22 @@ const SplashScreen = ({ onComplete }) => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(timer);
-          setTimeout(() => onComplete(), 800);
+          setTimeout(() => onComplete(), 500);
           return 100;
         }
-        return prev + 1;
+        return prev + 2;
       });
-    }, 40);
+    }, 30);
 
     return () => clearInterval(timer);
   }, [onComplete]);
+
+  const bgGradient = theme.palette.mode === 'dark'
+    ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)'
+    : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%)';
+
+  const primaryColor = theme.palette.mode === 'dark' ? '#60a5fa' : '#3b82f6';
+  const secondaryColor = theme.palette.mode === 'dark' ? '#a78bfa' : '#8b5cf6';
 
   return (
     <AnimatePresence>
@@ -28,7 +36,7 @@ const SplashScreen = ({ onComplete }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.8 }}
+        transition={{ duration: 0.5 }}
         style={{
           position: 'fixed',
           top: 0,
@@ -39,50 +47,54 @@ const SplashScreen = ({ onComplete }) => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: theme.palette.mode === 'dark'
-            ? 'linear-gradient(135deg, #1e3c72 0%, #2a5298 25%, #7e22ce 50%, #2a5298 75%, #1e3c72 100%)'
-            : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 25%, #667eea 50%, #00f2fe 75%, #4facfe 100%)',
+          background: bgGradient,
           overflow: 'hidden',
         }}
       >
-        {/* Animated Background Circles */}
+        {/* Animated Background Grid */}
         <Box
           sx={{
             position: 'absolute',
             width: '100%',
             height: '100%',
-            overflow: 'hidden',
+            opacity: 0.1,
+            backgroundImage: theme.palette.mode === 'dark'
+              ? 'linear-gradient(rgba(96,165,250,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(96,165,250,0.3) 1px, transparent 1px)'
+              : 'linear-gradient(rgba(59,130,246,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.2) 1px, transparent 1px)',
+            backgroundSize: '50px 50px',
           }}
-        >
-          {[...Array(6)].map((_, i) => (
-            <motion.div
-              key={i}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{
-                scale: [0, 1.2, 1],
-                opacity: [0, 0.3, 0],
-                x: ['-50%', `${(i - 3) * 15}%`],
-                y: ['-50%', `${(i - 3) * 10}%`],
-              }}
-              transition={{
-                duration: 4,
-                delay: i * 0.3,
-                repeat: Infinity,
-                repeatType: 'loop',
-              }}
-              style={{
-                position: 'absolute',
-                left: '50%',
-                top: '50%',
-                width: `${300 + i * 50}px`,
-                height: `${300 + i * 50}px`,
-                borderRadius: '50%',
-                border: '3px solid rgba(255,255,255,0.2)',
-                transform: 'translate(-50%, -50%)',
+        />
+
+        {/* Floating Icons */}
+        {[School, MenuBook, People, TrendingUp].map((Icon, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 0 }}
+            animate={{
+              opacity: [0.2, 0.5, 0.2],
+              y: [0, -30, 0],
+              x: [0, Math.sin(i) * 20, 0],
+            }}
+            transition={{
+              duration: 4,
+              delay: i * 0.5,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+            style={{
+              position: 'absolute',
+              left: `${20 + i * 20}%`,
+              top: `${15 + (i % 2) * 60}%`,
+            }}
+          >
+            <Icon
+              sx={{
+                fontSize: { xs: 40, md: 60 },
+                color: i % 2 === 0 ? primaryColor : secondaryColor,
               }}
             />
-          ))}
-        </Box>
+          </motion.div>
+        ))}
 
         <Box
           sx={{
@@ -90,200 +102,167 @@ const SplashScreen = ({ onComplete }) => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: 6,
+            gap: 4,
             position: 'relative',
             zIndex: 1,
+            maxWidth: '90%',
           }}
         >
-          {/* Animated Logo/Text */}
+          {/* Company Logo/Icon */}
           <motion.div
-            initial={{ scale: 0.3, opacity: 0, rotateY: -180 }}
-            animate={{ 
-              scale: [0.3, 1.1, 1], 
-              opacity: 1, 
-              rotateY: 0,
-            }}
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
             transition={{
-              duration: 1.5,
-              ease: [0.43, 0.13, 0.23, 0.96],
+              type: 'spring',
+              stiffness: 200,
+              damping: 15,
+              duration: 1,
             }}
           >
-            <Box sx={{ position: 'relative' }}>
-              {/* Glow effect behind text */}
-              <Box
-                sx={{
+            <Box
+              sx={{
+                width: { xs: 80, sm: 100, md: 120 },
+                height: { xs: 80, sm: 100, md: 120 },
+                borderRadius: '24px',
+                background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: theme.palette.mode === 'dark'
+                  ? `0 20px 60px ${alpha(primaryColor, 0.4)}`
+                  : `0 20px 60px ${alpha(primaryColor, 0.3)}`,
+                position: 'relative',
+                overflow: 'hidden',
+                '&::before': {
+                  content: '""',
                   position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  width: '120%',
-                  height: '120%',
-                  background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)',
-                  filter: 'blur(40px)',
-                  animation: 'pulse 3s ease-in-out infinite',
-                  '@keyframes pulse': {
-                    '0%, 100%': {
-                      opacity: 0.5,
-                      transform: 'translate(-50%, -50%) scale(1)',
-                    },
-                    '50%': {
-                      opacity: 1,
-                      transform: 'translate(-50%, -50%) scale(1.1)',
-                    },
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%)',
+                  animation: 'shine 2s infinite',
+                  '@keyframes shine': {
+                    '0%': { transform: 'translateX(-100%)' },
+                    '100%': { transform: 'translateX(100%)' },
                   },
-                }}
-              />
-              <Typography
-                variant="h1"
-                sx={{
-                  fontSize: { xs: '3.5rem', sm: '5rem', md: '6.5rem' },
-                  fontWeight: 800,
-                  background: 'linear-gradient(45deg, #ffffff 0%, #e3f2fd 50%, #ffffff 100%)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  textShadow: '0 0 60px rgba(255,255,255,0.5)',
-                  letterSpacing: '0.05em',
-                  fontFamily: '"Rajdhani", "Roboto", sans-serif',
-                  position: 'relative',
-                }}
-              >
-                Project Nexus
-              </Typography>
+                },
+              }}
+            >
+              <School sx={{ fontSize: { xs: 40, sm: 50, md: 60 }, color: 'white' }} />
             </Box>
           </motion.div>
 
-          {/* Animated Subtitle */}
+          {/* Brand Name */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 1 }}
+            transition={{ delay: 0.3, duration: 0.8 }}
           >
             <Typography
-              variant="h6"
+              variant="h2"
               sx={{
-                color: 'rgba(255,255,255,0.9)',
-                fontWeight: 400,
-                letterSpacing: '0.25em',
-                fontSize: { xs: '0.7rem', sm: '0.85rem', md: '1rem' },
-                textTransform: 'uppercase',
+                fontSize: { xs: '2rem', sm: '2.5rem', md: '3.5rem' },
+                fontWeight: 700,
+                color: theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a',
+                letterSpacing: '-0.02em',
+                mb: 1,
               }}
             >
-              The Unified Campus Management System
+              Project Nexus
+            </Typography>
+            <Typography
+              variant="subtitle1"
+              sx={{
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                color: theme.palette.mode === 'dark' ? '#cbd5e1' : '#475569',
+                letterSpacing: '0.05em',
+                fontWeight: 500,
+              }}
+            >
+              Campus Management System
             </Typography>
           </motion.div>
 
-          {/* Animated Floating Elements */}
-          <Box sx={{ position: 'relative', width: '100%', height: 80 }}>
-            {[...Array(7)].map((_, i) => (
-              <motion.div
-                key={i}
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{
-                  scale: [0, 1.2, 1, 1.2, 0],
-                  opacity: [0, 0.8, 1, 0.8, 0],
-                  x: [(i - 3) * 60, (i - 3) * 80, (i - 3) * 100],
-                }}
-                transition={{
-                  duration: 3.5,
-                  delay: 1.2 + i * 0.15,
-                  repeat: Infinity,
-                  repeatDelay: 0.5,
-                }}
-                style={{
-                  position: 'absolute',
-                  left: '50%',
-                  top: '50%',
-                  width: 10,
-                  height: 10,
-                  borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.9)',
-                  boxShadow: '0 0 25px rgba(255,255,255,0.8)',
+          {/* Progress Section */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.6, duration: 0.6 }}
+            style={{ width: '100%', maxWidth: 400 }}
+          >
+            <Box sx={{ mb: 2 }}>
+              <LinearProgress
+                variant="determinate"
+                value={progress}
+                sx={{
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: theme.palette.mode === 'dark'
+                    ? alpha('#1e293b', 0.6)
+                    : alpha('#cbd5e1', 0.6),
+                  '& .MuiLinearProgress-bar': {
+                    borderRadius: 4,
+                    background: `linear-gradient(90deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
+                    boxShadow: theme.palette.mode === 'dark'
+                      ? `0 0 10px ${alpha(primaryColor, 0.5)}`
+                      : `0 0 10px ${alpha(primaryColor, 0.3)}`,
+                  },
                 }}
               />
-            ))}
-          </Box>
-
-          {/* Progress Bar */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1.2, duration: 0.8 }}
-            style={{ width: '100%', maxWidth: 400, padding: '0 20px' }}
-          >
-            <LinearProgress
-              variant="determinate"
-              value={progress}
-              sx={{
-                height: 6,
-                borderRadius: 3,
-                backgroundColor: 'rgba(255,255,255,0.25)',
-                '& .MuiLinearProgress-bar': {
-                  borderRadius: 3,
-                  background: 'linear-gradient(90deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,0.8) 100%)',
-                  boxShadow: '0 0 15px rgba(255,255,255,0.6)',
-                },
-              }}
-            />
+            </Box>
             <Typography
-              variant="caption"
+              variant="body2"
               sx={{
-                color: 'rgba(255,255,255,0.9)',
-                mt: 2,
-                display: 'block',
+                color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                fontWeight: 600,
                 fontSize: '0.875rem',
-                fontWeight: 500,
-                letterSpacing: '0.1em',
               }}
             >
-              Loading {progress}%
+              Loading... {progress}%
             </Typography>
           </motion.div>
 
-          {/* Outer Rings */}
-          {[1, 2, 3].map((ring) => (
-            <Box
-              key={ring}
-              sx={{
-                position: 'absolute',
-                width: { xs: 300 + ring * 80, sm: 400 + ring * 100, md: 500 + ring * 120 },
-                height: { xs: 300 + ring * 80, sm: 400 + ring * 100, md: 500 + ring * 120 },
-                borderRadius: '50%',
-                border: '2px solid rgba(255,255,255,0.1)',
-                animation: `pulse-ring-${ring} ${3 + ring}s ease-in-out infinite`,
-                '@keyframes pulse-ring-1': {
-                  '0%, 100%': {
-                    transform: 'scale(0.95)',
-                    opacity: 0.3,
-                  },
-                  '50%': {
-                    transform: 'scale(1.05)',
-                    opacity: 0.15,
-                  },
-                },
-                '@keyframes pulse-ring-2': {
-                  '0%, 100%': {
-                    transform: 'scale(0.9)',
-                    opacity: 0.25,
-                  },
-                  '50%': {
-                    transform: 'scale(1.1)',
-                    opacity: 0.1,
-                  },
-                },
-                '@keyframes pulse-ring-3': {
-                  '0%, 100%': {
-                    transform: 'scale(0.85)',
-                    opacity: 0.2,
-                  },
-                  '50%': {
-                    transform: 'scale(1.15)',
-                    opacity: 0.05,
-                  },
-                },
-              }}
-            />
-          ))}
+          {/* Feature Pills */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.9, duration: 0.6 }}
+          >
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'center' }}>
+              {['Smart', 'Secure', 'Efficient'].map((text, i) => (
+                <motion.div
+                  key={text}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 1 + i * 0.1, duration: 0.4 }}
+                >
+                  <Box
+                    sx={{
+                      px: 2,
+                      py: 0.5,
+                      borderRadius: 10,
+                      backgroundColor: theme.palette.mode === 'dark'
+                        ? alpha(primaryColor, 0.15)
+                        : alpha(primaryColor, 0.1),
+                      border: `1px solid ${alpha(primaryColor, 0.3)}`,
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: theme.palette.mode === 'dark' ? '#93c5fd' : primaryColor,
+                        fontWeight: 600,
+                        fontSize: '0.75rem',
+                      }}
+                    >
+                      {text}
+                    </Typography>
+                  </Box>
+                </motion.div>
+              ))}
+            </Box>
+          </motion.div>
         </Box>
       </motion.div>
     </AnimatePresence>
