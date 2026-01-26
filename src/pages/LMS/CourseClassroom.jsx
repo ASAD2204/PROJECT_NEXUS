@@ -53,7 +53,6 @@ import {
   CloudDownload,
   Campaign,
   ArrowBack,
-  Settings,
   ExitToApp,
   Search,
   ViewList,
@@ -405,41 +404,53 @@ const CourseClassroom = () => {
               flexDirection: { xs: 'column', sm: 'row' },
               justifyContent: 'space-between', 
               alignItems: { xs: 'stretch', sm: 'center' }, 
-              px: { xs: 1, sm: 2 }, 
-              py: 1, 
+              px: { xs: 0, sm: 2 }, 
+              py: { xs: 0, sm: 1 }, 
               borderBottom: 1, 
               borderColor: 'divider',
-              gap: { xs: 1, sm: 0 }
+              gap: { xs: 0, sm: 1 }
             }}>
               <Tabs
                 value={activeTab}
                 onChange={(e, newValue) => setActiveTab(newValue)}
                 variant="scrollable"
                 scrollButtons="auto"
-                sx={{ minHeight: { xs: 40, sm: 48 } }}
+                allowScrollButtonsMobile
+                sx={{ 
+                  minHeight: { xs: 48, sm: 48 },
+                  flex: 1,
+                  '& .MuiTabs-scrollButtons': {
+                    display: { xs: 'flex', sm: 'flex' }
+                  }
+                }}
               >
-                <Tab label="Stream" sx={{ minHeight: { xs: 40, sm: 48 }, px: { xs: 1, sm: 2 } }} />
-                <Tab label="Assignments" sx={{ minHeight: { xs: 40, sm: 48 }, px: { xs: 1, sm: 2 } }} />
-                <Tab label="Quizzes" sx={{ minHeight: { xs: 40, sm: 48 }, px: { xs: 1, sm: 2 } }} />
-                <Tab label="Content" sx={{ minHeight: { xs: 40, sm: 48 }, px: { xs: 1, sm: 2 } }} />
-                <Tab label="Grades" sx={{ minHeight: { xs: 40, sm: 48 }, px: { xs: 1, sm: 2 } }} />
-                <Tab label="People" sx={{ minHeight: { xs: 40, sm: 48 }, px: { xs: 1, sm: 2 } }} />
+                <Tab label="Stream" sx={{ minHeight: { xs: 48, sm: 48 }, px: { xs: 2, sm: 2 }, fontSize: { xs: '0.875rem', sm: '0.875rem' } }} />
+                <Tab label="Assignments" sx={{ minHeight: { xs: 48, sm: 48 }, px: { xs: 2, sm: 2 }, fontSize: { xs: '0.875rem', sm: '0.875rem' } }} />
+                <Tab label="Quizzes" sx={{ minHeight: { xs: 48, sm: 48 }, px: { xs: 2, sm: 2 }, fontSize: { xs: '0.875rem', sm: '0.875rem' } }} />
+                <Tab label="Content" sx={{ minHeight: { xs: 48, sm: 48 }, px: { xs: 2, sm: 2 }, fontSize: { xs: '0.875rem', sm: '0.875rem' } }} />
+                <Tab label="Grades" sx={{ minHeight: { xs: 48, sm: 48 }, px: { xs: 2, sm: 2 }, fontSize: { xs: '0.875rem', sm: '0.875rem' } }} />
+                <Tab label="People" sx={{ minHeight: { xs: 48, sm: 48 }, px: { xs: 2, sm: 2 }, fontSize: { xs: '0.875rem', sm: '0.875rem' } }} />
               </Tabs>
-              <Box sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'center', sm: 'flex-end' } }}>
-                <IconButton size="small">
-                  <Settings />
-                </IconButton>
+              <Box sx={{ 
+                display: 'flex', 
+                gap: 1, 
+                justifyContent: { xs: 'center', sm: 'flex-end' },
+                p: { xs: 1, sm: 0 },
+                borderTop: { xs: 1, sm: 0 },
+                borderColor: { xs: 'divider', sm: 'transparent' }
+              }}>
                 <Button 
                   variant="outlined" 
                   size="small" 
                   startIcon={<ExitToApp />}
                   color="error"
                   sx={{ 
-                    display: { xs: 'none', sm: 'inline-flex' },
-                    minWidth: { sm: 120 }
+                    minWidth: { xs: 'auto', sm: 120 },
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' }
                   }}
                 >
-                  Leave Course
+                  <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Leave Course</Box>
+                  <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>Leave</Box>
                 </Button>
               </Box>
             </Box>
@@ -770,68 +781,168 @@ const CourseClassroom = () => {
 
             {/* QUIZZES TAB */}
             {activeTab === 2 && (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {courseQuizzes.map((quiz) => (
-                  <Card key={quiz.id}>
-                    <CardContent>
-                      <Grid container spacing={2} alignItems="center">
-                        <Grid size={{ xs: 12, md: 5 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'start', gap: 2 }}>
-                            <Quiz color="secondary" sx={{ mt: 0.5 }} />
-                            <Box>
-                              <Typography variant="h6" fontWeight="bold">
+              <Box>
+                <Grid container spacing={2}>
+                  {courseQuizzes.map((quiz) => (
+                    <Grid size={{ xs: 12, md: 6, lg: 4 }} key={quiz.id}>
+                      <Card 
+                        sx={{ 
+                          height: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            transform: 'translateY(-4px)',
+                            boxShadow: 4
+                          }
+                        }}
+                      >
+                        <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, p: 2.5 }}>
+                          {/* Header with Icon and Title */}
+                          <Box sx={{ display: 'flex', alignItems: 'start', gap: 1.5 }}>
+                            <Box
+                              sx={{
+                                p: 1,
+                                borderRadius: 2,
+                                backgroundColor: quiz.status === 'Completed' ? 'success.light' : 
+                                                 quiz.status === 'In Progress' ? 'warning.light' : 'secondary.light',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              <Quiz 
+                                sx={{ 
+                                  color: quiz.status === 'Completed' ? 'success.dark' : 
+                                         quiz.status === 'In Progress' ? 'warning.dark' : 'secondary.dark',
+                                  fontSize: 28
+                                }} 
+                              />
+                            </Box>
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography variant="h6" fontWeight="bold" sx={{ 
+                                fontSize: { xs: '1rem', sm: '1.1rem' },
+                                lineHeight: 1.3,
+                                mb: 0.5
+                              }}>
                                 {quiz.title}
                               </Typography>
-                              <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-                                <Chip icon={<AccessTime />} label={`${quiz.duration} mins`} size="small" />
-                                <Chip icon={<Assignment />} label={`${quiz.questions} questions`} size="small" />
-                                <Chip label={`${quiz.attempts || 2} attempts`} size="small" />
-                              </Box>
+                              <Chip
+                                label={quiz.status}
+                                size="small"
+                                color={quiz.status === 'Completed' ? 'success' : 
+                                       quiz.status === 'In Progress' ? 'warning' : 'default'}
+                                sx={{ fontWeight: 600 }}
+                              />
                             </Box>
                           </Box>
-                        </Grid>
-                        <Grid size={{ xs: 6, md: 2 }}>
-                          <Box sx={{ textAlign: 'center' }}>
-                            <Typography variant="caption" color="text.secondary" display="block">
-                              Due Date
-                            </Typography>
-                            <Typography variant="body2" fontWeight="bold">
-                              {quiz.dueDate}
-                            </Typography>
-                          </Box>
-                        </Grid>
-                        <Grid size={{ xs: 6, md: 2 }}>
-                          <Box sx={{ textAlign: 'center' }}>
-                            <Typography variant="caption" color="text.secondary" display="block">
-                              Score
-                            </Typography>
-                            <Typography variant="h6" fontWeight="bold">
-                              {quiz.score ? `${quiz.score}/20` : '--/20'}
-                            </Typography>
-                          </Box>
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 3 }}>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center' }}>
-                            <Chip
-                              label={quiz.status}
-                              color={quiz.status === 'Completed' ? 'success' : quiz.status === 'In Progress' ? 'warning' : 'default'}
-                              sx={{ width: '100%' }}
-                            />
-                            <Button 
-                              variant="contained" 
-                              size="small"
-                              fullWidth
-                              color={quiz.status === 'Not Started' ? 'primary' : 'secondary'}
-                            >
-                              {quiz.status === 'Not Started' ? 'Start Quiz' : 
-                               quiz.status === 'In Progress' ? 'Continue' : 'View Results'}
-                            </Button>
-                          </Box>
-                        </Grid>
-                      </Grid>
+
+                          <Divider />
+
+                          {/* Quiz Details */}
+                          <Stack spacing={1.5}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <AccessTime sx={{ fontSize: 20, color: 'text.secondary' }} />
+                              <Typography variant="body2" color="text.secondary">
+                                Duration:
+                              </Typography>
+                              <Typography variant="body2" fontWeight="600">
+                                {quiz.duration} minutes
+                              </Typography>
+                            </Box>
+                            
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Help sx={{ fontSize: 20, color: 'text.secondary' }} />
+                              <Typography variant="body2" color="text.secondary">
+                                Questions:
+                              </Typography>
+                              <Typography variant="body2" fontWeight="600">
+                                {quiz.questions}
+                              </Typography>
+                            </Box>
+
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Schedule sx={{ fontSize: 20, color: 'text.secondary' }} />
+                              <Typography variant="body2" color="text.secondary">
+                                Due Date:
+                              </Typography>
+                              <Typography variant="body2" fontWeight="600" color="error.main">
+                                {quiz.dueDate}
+                              </Typography>
+                            </Box>
+
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <EmojiEvents sx={{ fontSize: 20, color: 'text.secondary' }} />
+                              <Typography variant="body2" color="text.secondary">
+                                Score:
+                              </Typography>
+                              <Typography variant="h6" fontWeight="bold" color="primary.main">
+                                {quiz.score ? `${quiz.score}/20` : '--/20'}
+                              </Typography>
+                            </Box>
+                          </Stack>
+
+                          {/* Progress bar for in-progress quizzes */}
+                          {quiz.status === 'In Progress' && (
+                            <Box>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                <Typography variant="caption" color="text.secondary">
+                                  Progress
+                                </Typography>
+                                <Typography variant="caption" fontWeight="600">
+                                  {quiz.progress || 50}%
+                                </Typography>
+                              </Box>
+                              <LinearProgress 
+                                variant="determinate" 
+                                value={quiz.progress || 50} 
+                                sx={{ height: 6, borderRadius: 1 }}
+                              />
+                            </Box>
+                          )}
+                        </CardContent>
+
+                        {/* Action Button */}
+                        <CardActions sx={{ p: 2.5, pt: 0 }}>
+                          <Button 
+                            variant="contained" 
+                            fullWidth
+                            size="large"
+                            color={quiz.status === 'Not Started' ? 'primary' : 
+                                   quiz.status === 'In Progress' ? 'warning' : 'success'}
+                            startIcon={
+                              quiz.status === 'Not Started' ? <Quiz /> : 
+                              quiz.status === 'In Progress' ? <TrendingUp /> : <BarChart />
+                            }
+                            sx={{
+                              py: 1.2,
+                              fontWeight: 600,
+                              fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+                            }}
+                          >
+                            {quiz.status === 'Not Started' ? 'Start Quiz' : 
+                             quiz.status === 'In Progress' ? 'Continue Quiz' : 'View Results'}
+                          </Button>
+                        </CardActions>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+
+                {/* Empty State */}
+                {courseQuizzes.length === 0 && (
+                  <Card>
+                    <CardContent sx={{ py: 8, textAlign: 'center' }}>
+                      <Quiz sx={{ fontSize: 64, color: 'text.secondary', mb: 2, opacity: 0.5 }} />
+                      <Typography variant="h6" color="text.secondary" gutterBottom>
+                        No Quizzes Available
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Your instructor hasn't posted any quizzes yet.
+                      </Typography>
                     </CardContent>
                   </Card>
-                ))}
+                )}
               </Box>
             )}
 

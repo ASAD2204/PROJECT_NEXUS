@@ -295,7 +295,15 @@ const MyAssignments = () => {
                       variant={assignment.status === 'pending' || assignment.status === 'overdue' ? 'contained' : 'outlined'}
                       fullWidth
                       endIcon={<ArrowForward />}
-                      onClick={() => navigate(`/lms/assignment/${assignment.id}`)}
+                      onClick={() => {
+                        if (assignment.status === 'pending' || assignment.status === 'overdue') {
+                          navigate(`/lms/assignment/${assignment.id}`);
+                        } else if (assignment.status === 'submitted') {
+                          navigate(`/lms/assignment/${assignment.id}`);
+                        } else {
+                          navigate(`/lms/assignment/${assignment.id}`);
+                        }
+                      }}
                       sx={{
                         py: 1.2,
                         borderRadius: 2,
