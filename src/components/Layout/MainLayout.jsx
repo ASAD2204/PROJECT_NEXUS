@@ -15,12 +15,30 @@ import ChatWidget from '../Chat/ChatWidget';
 
 const DRAWER_WIDTH = 260;
 
+/**
+ * MainLayout
+ *
+ * Top-level application layout used by the main route. Composes the persistent
+ * `TopBar` and `Sidebar`, renders nested routes via `Outlet`, and provides a
+ * small floating `ChatWidget` with contextual greeting messages.
+ *
+ * Responsibilities:
+ * - Handle mobile drawer toggle state and chat widget open state.
+ * - Compute a context-aware greeting for the chat widget based on current route.
+ * - Provide the main content container where page routes mount (`<Outlet/>`).
+ *
+ * Notes:
+ * - `DRAWER_WIDTH` controls the desktop sidebar width and is passed to `TopBar`/`Sidebar`.
+ * - Chat widget is hidden when the user navigates to the full chat portal (`/chat`).
+ */
+
 const MainLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(1);
   const location = useLocation();
 
+  // Compute a short, contextual greeting for the ChatWidget based on current route
   const contextGreeting = useMemo(() => {
     const path = location.pathname;
     if (path.startsWith('/finance')) return 'Do you have questions about your fee voucher?';
@@ -65,6 +83,7 @@ const MainLayout = () => {
           overflowY: 'auto',
         }}
       >
+        {/* Primary route outlet: each page component mounts here via react-router */}
         <Outlet />
       </Box>
 
@@ -78,6 +97,7 @@ const MainLayout = () => {
             zIndex: 1300,
           }}
         >
+          {/* Compact FAB shown when chat widget is closed; badge indicates unread messages */}
           {!chatOpen && (
             <Badge color="error" badgeContent={unreadCount}>
               <Fab

@@ -2,6 +2,15 @@ import React from 'react';
 import { Box, Card, CardContent, Skeleton, Stack } from '@mui/material';
 import Grid from '@mui/material/Grid';
 
+/**
+ * LoadingSkeleton
+ *
+ * Collection of lightweight skeleton components used across the app to show
+ * loading states for cards, tables, lists, dashboards and forms. These are
+ * intentionally simple presentational components — keep them dependency-free
+ * and stateless so they can be rendered anywhere while data is loading.
+ */
+
 // Card Skeleton - for single card loading
 export const CardSkeleton = ({ count = 1 }) => {
   return (
@@ -93,6 +102,7 @@ export const DashboardSkeleton = () => {
 
       {/* Stat Cards Grid */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
+        {/* Four placeholder stat cards (responsive grid) */}
         {[...Array(4)].map((_, index) => (
           <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
             <Card>

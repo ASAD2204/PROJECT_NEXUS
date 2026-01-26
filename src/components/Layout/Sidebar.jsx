@@ -52,6 +52,21 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { currentUser, assignments, feeInvoices, attendance } from '../../data/dummyData';
 
+/**
+ * Sidebar
+ *
+ * Role-aware navigation drawer used across the application. Key points:
+ * - Renders different menu sets depending on `userType` from `AuthContext`.
+ * - Supports collapsed (compact) and expanded modes for desktop, and a
+ *   temporary drawer for mobile devices.
+ * - Footer contains current user info and the logout action.
+ *
+ * Props:
+ * - `drawerWidth` (number): preferred expanded width for the desktop drawer.
+ * - `mobileOpen` (bool): controls temporary drawer visibility on mobile.
+ * - `onDrawerToggle` (func): callback to open/close the mobile drawer.
+ */
+
 // Helper function to check if attendance marked today
 const isAttendanceMarkedToday = () => {
   const today = new Date().toISOString().split('T')[0];
@@ -108,6 +123,10 @@ const studentMenuItems = [
   { text: 'My Tickets', icon: SupportAgentIcon, path: '/support' },
   { text: 'Notifications', icon: AssessmentIcon, path: '/notifications' },
 ];
+
+// NOTE: `*_menuItems` are plain arrays describing nav items. Keep these
+// lightweight (text, icon, path, optional badge) so they can be consumed by
+// unit tests or moved to a config source later without changing rendering logic.
 
 // Admin menu items
 const adminMenuItems = [
@@ -184,6 +203,8 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+  // Determine which set of menu items to render for the active user role.
+  // Keeps navigation logic centralized and easy to reason about.
   // Get menu items based on user type
   const getMenuItems = () => {
     switch (userType) {
@@ -222,6 +243,8 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
     setCollapsed(!collapsed);
   };
 
+  // Build the drawer content once and reuse it for both mobile and desktop
+  // Drawer instances below. This keeps markup consistent across variants.
   const drawer = (
     <Box 
       sx={{ 
@@ -248,6 +271,11 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
       }}
     >
       {/* Logo Area */}
+      {/*
+        Top portion of the drawer containing the app logo/title. When the
+        sidebar is collapsed we show a compact icon; otherwise we show the
+        full branded block with title and subtitle.
+      */}
       <Box
         sx={{
           p: collapsed ? 1 : 2.5,
@@ -334,6 +362,13 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
       <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.12)' }} />
 
       {/* Navigation Items */}
+      {/*
+        The navigation list renders `menuItems` produced by `getMenuItems()`.
+        Each `ListItemButton` handles navigation via `navigate(item.path)` and
+        will automatically close the mobile drawer when used on small screens.
+        The `isActive` flag highlights the current route using gradients and
+        subtle motion while preserving accessibility (no pointer-events disabled).
+      */}
       <Box
         sx={{
           flex: '1 1 auto',
@@ -415,6 +450,7 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
                     : 'none',
                 }}
               >
+                {/* Icon area: center icons when collapsed, otherwise provide spacing */}
                 <ListItemIcon
                   sx={{
                     color: 'white',
@@ -441,6 +477,7 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
                   )}
                 </ListItemIcon>
 
+                {/* Render text and optional badge when not collapsed */}
                 {!collapsed && (
                   <>
                     <ListItemText
@@ -507,6 +544,10 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
       </Box>
 
       {/* Footer (always sits at the bottom; never overlaps nav) */}
+      {/*
+        Footer contains user info, role chip and the logout action. The
+        logout button opens a confirmation dialog to avoid accidental sign-outs.
+      */}
       <Box sx={{ mt: 'auto', flexShrink: 0 }}>
         <Divider sx={{ borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)' }} />
 

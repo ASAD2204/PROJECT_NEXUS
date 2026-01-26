@@ -2,10 +2,23 @@ import React, { useState } from 'react';
 import { Box, Typography, Paper } from '@mui/material';
 import { CloudUpload, InsertDriveFile } from '@mui/icons-material';
 
+/**
+ * FileDropzone
+ *
+ * Simple drag-and-drop file picker used in forms. Keeps state minimal and
+ * reports the selected file through `onFileSelect`. Validation performed is
+ * limited to file size (MB) so callers can implement additional checks.
+ *
+ * Props:
+ * - `onFileSelect(file)` callback when a file is chosen
+ * - `acceptedTypes` string for the input `accept` attribute (defaults to '*')
+ * - `maxSize` in MB (defaults to 10)
+ */
 const FileDropzone = ({ onFileSelect, acceptedTypes = '*', maxSize = 10 }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
 
+  // Handle drag enter/over/leave to provide visual feedback
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -16,6 +29,7 @@ const FileDropzone = ({ onFileSelect, acceptedTypes = '*', maxSize = 10 }) => {
     }
   };
 
+  // Drop handler reads the first file and delegates to handleFile
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -26,6 +40,7 @@ const FileDropzone = ({ onFileSelect, acceptedTypes = '*', maxSize = 10 }) => {
     }
   };
 
+  // File input change handler (click-to-browse)
   const handleChange = (e) => {
     e.preventDefault();
     if (e.target.files && e.target.files[0]) {
@@ -33,9 +48,11 @@ const FileDropzone = ({ onFileSelect, acceptedTypes = '*', maxSize = 10 }) => {
     }
   };
 
+  // Central file validation and callback
   const handleFile = (file) => {
     // Check file size (convert maxSize from MB to bytes)
     if (file.size > maxSize * 1024 * 1024) {
+      // Keep UI simple; callers may prefer a custom error UX
       alert(`File size exceeds ${maxSize}MB limit`);
       return;
     }
@@ -66,6 +83,7 @@ const FileDropzone = ({ onFileSelect, acceptedTypes = '*', maxSize = 10 }) => {
         },
       }}
     >
+      {/* Hidden native file input paired with the label below */}
       <input
         type="file"
         id="file-upload"

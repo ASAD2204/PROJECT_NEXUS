@@ -1,7 +1,17 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 
+/**
+ * StatusBadge
+ *
+ * Small helper that normalizes various status strings into labelled chips
+ * with consistent colors. Supports different `type` contexts (risk, payment,
+ * assignment, attendance) so callers can pass raw status values and get a
+ * presentable badge back.
+ */
 const StatusBadge = ({ status, type = 'default' }) => {
+  // Map incoming status to label & color. Keep logic centralized so any
+  // change to status wording only needs to be updated here.
   const getStatusConfig = () => {
     // Risk status
     if (type === 'risk') {

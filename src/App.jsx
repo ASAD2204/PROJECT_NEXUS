@@ -1,3 +1,21 @@
+/**
+ * App Component - Main Application Router
+ * 
+ * This is the root component that defines all application routes.
+ * Manages route protection, splash screen, and role-based navigation.
+ * 
+ * Route Structure:
+ * - Public routes: Login, ForgotPassword, OTP
+ * - Protected routes: All authenticated user routes
+ * - Role-specific routes: Student, Teacher, Admin, Alumni, Librarian
+ * 
+ * Features:
+ * - Route protection with authentication check
+ * - Splash screen on first load
+ * - Role-based default dashboard redirection
+ * - Nested routing with MainLayout wrapper
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
@@ -88,7 +106,11 @@ import SuccessStories from './pages/Alumni/SuccessStories';
 import TeacherGrievanceManagement from './pages/Teacher/GrievanceManagement';
 import HelpSupport from './pages/Support/HelpSupport';
 
-// Protected Route Component
+/**
+ * Protected Route Component
+ * Ensures only authenticated users can access protected routes
+ * Redirects to login if user is not authenticated
+ */
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
   return isAuthenticated ? children : <Navigate to="/login" />;
@@ -97,11 +119,16 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   const navigate = useNavigate();
   const { userType, isAuthenticated } = useAuth();
+  
+  // State for splash screen management
   const [showSplash, setShowSplash] = useState(true);
   const [splashComplete, setSplashComplete] = useState(false);
 
+  /**
+   * Check if splash screen has been shown in current session
+   * Uses sessionStorage to show splash only once per browser session
+   */
   useEffect(() => {
-    // Check if splash has been shown in this session
     const splashShown = sessionStorage.getItem('splashShown');
     if (splashShown) {
       setShowSplash(false);
@@ -109,6 +136,10 @@ function App() {
     }
   }, []);
 
+  /**
+   * Handle splash screen completion
+   * Marks splash as shown and navigates to appropriate page
+   */
   const handleSplashComplete = () => {
     sessionStorage.setItem('splashShown', 'true');
     setShowSplash(false);
@@ -121,7 +152,12 @@ function App() {
     }, 500);
   };
 
-  // Default dashboard based on user type
+  /**
+   * Get Default Dashboard Route
+   * Returns appropriate dashboard based on user role
+   * 
+   * @returns {string} - Dashboard route path
+   */
   const getDefaultDashboard = () => {
     switch (userType) {
       case 'admin':
@@ -133,7 +169,7 @@ function App() {
       case 'alumni':
         return '/alumni/network';
       default:
-        return '/dashboard';
+        return '/dashboard'; // Student dashboard
     }
   };
 
@@ -149,12 +185,17 @@ function App() {
 
   return (
     <Routes>
-      {/* Public Routes */}
+      {/* ============================================
+          PUBLIC ROUTES - No authentication required
+          ============================================ */}
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/otp" element={<OTP />} />
 
-      {/* Protected Routes */}
+      {/* ============================================
+          PROTECTED ROUTES - Authentication required
+          Wrapped in MainLayout for consistent UI
+          ============================================ */}
       <Route
         path="/"
         element={
@@ -163,17 +204,21 @@ function App() {
           </ProtectedRoute>
         }
       >
+        {/* Root redirect to role-based dashboard */}
         <Route index element={<Navigate to={getDefaultDashboard()} />} />
         
-        {/* Student Routes */}
+        {/* =====================================
+            STUDENT ROUTES
+            ===================================== */}
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="profile" element={<StudentProfile />} />
         <Route path="student/profile" element={<StudentProfile />} />
         <Route path="transcript" element={<Transcript />} />
         <Route path="notifications" element={<Notifications />} />
-        <Route path="notifications" element={<Notifications />} />
         
-        {/* Admin Routes */}
+        {/* =====================================
+            ADMIN ROUTES
+            ===================================== */}
         <Route path="admin/dashboard" element={<AdminDashboard />} />
         <Route path="admin/profile" element={<AdminProfile />} />
         <Route path="admin/users" element={<UserManagement />} />
@@ -186,7 +231,9 @@ function App() {
         <Route path="admin/announcements" element={<AnnouncementManagement />} />
         <Route path="admin/settings" element={<AdminSettings />} />
         
-        {/* Teacher Routes */}
+        {/* =====================================
+            TEACHER ROUTES
+            ===================================== */}
         <Route path="teacher/dashboard" element={<TeacherDashboard />} />
         <Route path="teacher/profile" element={<TeacherProfile />} />
         <Route path="teacher/courses" element={<TeacherCourses />} />
@@ -203,8 +250,12 @@ function App() {
         <Route path="teacher/quiz/:id/results" element={<ViewSubmissions />} />
         <Route path="teacher/attendance" element={<TeacherAttendance />} />
         <Route path="teacher/reports" element={<TeacherReports />} />
+        <Route path="teacher/grievances" element={<TeacherGrievanceManagement />} />
         
-        {/* Attendance Routes */}
+        {/* =====================================
+            ATTENDANCE ROUTES
+            Multi-step attendance marking flow
+            ===================================== */}
         <Route path="attendance" element={<Navigate to="/attendance/smart-attendance" replace />} />
         <Route path="attendance/smart-attendance" element={<SmartAttendance />} />
         <Route path="attendance/gps-verification" element={<GPSVerification />} />
@@ -214,26 +265,42 @@ function App() {
         <Route path="attendance/success" element={<AttendanceSuccess />} />
         <Route path="attendance/history" element={<AttendanceHistory />} />
         
-        {/* LMS Routes */}
+        {/* =====================================
+            LMS ROUTES
+            Learning Management System
+            ===================================== */}
         <Route path="lms" element={<CourseList />} />
         <Route path="lms/course/:id" element={<CourseClassroom />} />
         <Route path="lms/assignment/:id" element={<AssignmentSubmit />} />
         <Route path="lms/submit/:id" element={<AssignmentSubmit />} />
         <Route path="assignments" element={<MyAssignments />} />
         
-        {/* Support Routes */}
+        {/* =====================================
+            SUPPORT & HELP ROUTES
+            ===================================== */}
         <Route path="student/support" element={<MyTickets />} />
         <Route path="support" element={<MyTickets />} />
         <Route path="help-support" element={<HelpSupport />} />
         
-        {/* Finance Routes */}
+        {/* =====================================
+            FINANCE ROUTES
+            ===================================== */}
         <Route path="finance" element={<FeeVouchers />} />
-                {/* Student Alumni Interaction Routes */}
+        
+        {/* =====================================
+            STUDENT ALUMNI INTERACTION
+            ===================================== */}
         <Route path="student/alumni-directory" element={<AlumniDirectory />} />
-                {/* Chat Routes */}
+        
+        {/* =====================================
+            CHAT ROUTES
+            ===================================== */}
         <Route path="chat" element={<ChatPortal />} />
         
-        {/* Library Routes */}
+        {/* =====================================
+            LIBRARY ROUTES
+            Student and Librarian access
+            ===================================== */}
         <Route path="library" element={<Library />} />
         <Route path="librarian/dashboard" element={<LibrarianDashboard />} />
         <Route path="librarian/profile" element={<LibrarianProfile />} />
@@ -243,7 +310,10 @@ function App() {
         <Route path="librarian/reports" element={<LibrarianReports />} />
         <Route path="librarian/grievances" element={<LibrarianGrievances />} />
         
-        {/* Alumni Routes */}
+        {/* =====================================
+            ALUMNI ROUTES
+            Alumni portal features
+            ===================================== */}
         <Route path="alumni/network" element={<AlumniNetwork />} />
         <Route path="alumni/profile" element={<AlumniProfile />} />
         <Route path="alumni/events" element={<AlumniEvents />} />
@@ -252,12 +322,16 @@ function App() {
         <Route path="alumni/stories" element={<SuccessStories />} />
         <Route path="alumni/grievances" element={<Grievances />} />
         
-        {/* Grievances */}
+        {/* =====================================
+            GRIEVANCE ROUTES
+            ===================================== */}
         <Route path="grievances" element={<Grievances />} />
-        <Route path="teacher/grievances" element={<TeacherGrievanceManagement />} />
       </Route>
 
-      {/* Fallback */}
+      {/* ============================================
+          FALLBACK ROUTE
+          Redirect any unknown routes to login
+          ============================================ */}
       <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   );

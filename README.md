@@ -1,7 +1,9 @@
 <div align="center">
 
 # 🎓 Project Nexus
-### Unified Intelligent Campus Management Platform
+###The Unified Intelligent Campus Management Platform
+
+**Project ID:** `FYDP-BSIT-2504`
 
 [![React](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://react.dev/)
 [![Material-UI](https://img.shields.io/badge/Material--UI-7.3.6-007FFF?style=for-the-badge&logo=mui&logoColor=white)](https://mui.com/)
@@ -19,6 +21,7 @@
 ## 📖 Table of Contents
 
 - [About The Project](#-about-the-project)
+- [Project Team](#-project-team)
 - [Key Features](#-key-features)
 - [Tech Stack](#-tech-stack)
 - [Project Architecture](#-project-architecture)
@@ -26,8 +29,7 @@
 - [Installation & Setup](#-installation--setup)
 - [Usage Guide](#-usage-guide)
 - [Project Structure](#-project-structure)
-- [Screenshots](#-screenshots)
-- [Contributing](#-contributing)
+- [Contributing](#-Feedback & Contact)
 - [License](#-license)
 - [Contact](#-contact)
 
@@ -57,6 +59,22 @@ Traditional university systems are often fragmented across multiple platforms. P
 - ✅ **Scalable Architecture** - Component-based design ready for future expansion
 
 ---
+## 👥 Project Team
+
+This project is developed by the Final Year Students of BS Information Technology (Session 2022-2026).
+
+| Name | Roll Number | 
+| :--- | :--- | 
+| **Muhammad Asad** | BIT22031 |
+| **Muhammad Saad** | BIT22034 | 
+| **Muhammad Hanzla** | BIT22002 | 
+
+### 🎓 Supervisor
+**Dr. Ghulam Mustafa** Department of Information Technology  
+University of the Punjab, Gujranwala Campus
+
+---
+
 
 ## ✨ Key Features
 
@@ -65,7 +83,7 @@ Traditional university systems are often fragmented across multiple platforms. P
 - **Role-based access control** (Student, Teacher, Admin, Alumni, Librarian)
 - **Password recovery** with OTP verification
 - **Secure session management** with context-based authentication
-
+- 
 ### 📊 Student Portal
 - **Interactive Dashboard** with CGPA tracking, attendance overview, and pending tasks
 - **Profile Management** with editable fields and document uploads
@@ -658,50 +676,29 @@ Email verification → OTP input → Password reset
 
 ---
 
-## 🤝 Contributing
+## 📢 Feedback & Contact
 
-Contributions are welcome! This is a prototype for educational purposes.
+This project is **Proprietary** to the University of the Punjab. It is closed for public contributions (Pull Requests are not accepted).
 
-### How to Contribute
+However, we welcome feedback, bug reports, and suggestions. Please contact the project team:
 
-1. **Fork the repository**
-2. **Create a feature branch**
-   ```bash
-   git checkout -b feature/AmazingFeature
-   ```
-3. **Commit your changes**
-   ```bash
-   git commit -m 'Add some AmazingFeature'
-   ```
-4. **Push to the branch**
-   ```bash
-   git push origin feature/AmazingFeature
-   ```
-5. **Open a Pull Request**
-
-### Coding Standards
-- Follow ESLint rules configured in the project
-- Use Material-UI components for consistency
-- Write descriptive commit messages
-- Comment complex logic
-- Test on multiple screen sizes
+**Email:** bit22031@.pugc.edu.pk (Muhammad Asad)  
+**Department:** Information Technology, University of the Punjab, Gujranwala Campus
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+**© 2025-2026 Department of Information Technology, University of the Punjab, Gujranwala Campus.**
 
----
+This project is the intellectual property of the University and the student developers. It is developed as part of the Final Year Design Project (FYDP).
 
-## 👨‍💻 Contact
+**Usage Restrictions:**
+1. This software is **Proprietary** and **Not Open Source**.
+2. Unauthorized copying, modification, distribution, or commercial use is strictly prohibited.
+3. Access to the source code is granted for academic evaluation purposes only.
 
-**Project Developer**  
-Final Year Project - BS Information Technology
-
-**GitHub**: [@ASAD2204](https://github.com/ASAD2204)  
-**Project Link**: [https://github.com/ASAD2204/PROJECT_NEXUS](https://github.com/ASAD2204/PROJECT_NEXUS)  
-**Live Demo**: [https://ASAD2204.github.io/PROJECT_NEXUS](https://ASAD2204.github.io/PROJECT_NEXUS)
+See the [LICENSE](LICENSE) file for more details.
 
 ---
 

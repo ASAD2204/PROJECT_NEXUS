@@ -36,6 +36,9 @@ const StatCard = ({
     setMounted(true);
   }, []);
 
+  // displayValue: central formatting helper used to keep number rendering
+  // predictable across various inputs (strings vs numbers).
+
   // Format the displayed value
   const displayValue = () => {
     if (typeof value === 'number') {
