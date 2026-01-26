@@ -29,7 +29,7 @@
 - [Installation & Setup](#-installation--setup)
 - [Usage Guide](#-usage-guide)
 - [Project Structure](#-project-structure)
-- [Contributing](#-Feedback & Contact)
+- [Contributing](#-feedback)
 - [License](#-license)
 - [Contact](#-contact)
 
