@@ -1,4 +1,90 @@
-# GitHub Pages Deployment Guide
+# 🚀 Project Nexus - Deployment Guide
+
+This guide covers multiple deployment options for Project Nexus.
+
+---
+
+## 📋 Table of Contents
+1. [Docker Deployment (Recommended)](#-docker-deployment-recommended)
+2. [GitHub Pages Deployment](#-github-pages-deployment)
+3. [Manual Deployment](#-manual-deployment)
+
+---
+
+## 🐳 Docker Deployment (Recommended)
+
+### Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) installed
+- Docker Compose (included with Docker Desktop)
+
+### Quick Start
+
+```bash
+# Navigate to project directory
+cd "f:\BS IT\Project_Nexus"
+
+# Start with Docker Compose
+docker-compose -f docker/docker-compose.yml up -d
+
+# Access application
+# Open browser: http://localhost:3000
+```
+
+### Docker Commands
+
+| Command | Description |
+|---------|-------------|
+| `docker-compose -f docker/docker-compose.yml up -d` | Start containers in background |
+| `docker-compose -f docker/docker-compose.yml down` | Stop and remove containers |
+| `docker-compose -f docker/docker-compose.yml logs -f` | View container logs |
+| `docker-compose -f docker/docker-compose.yml build` | Rebuild images |
+| `docker-compose -f docker/docker-compose.yml ps` | List running containers |
+
+### Configuration
+
+**Port Configuration** (in `docker/docker-compose.yml`):
+```yaml
+services:
+  frontend:
+    ports:
+      - "3000:80"  # Change 3000 to any available port
+```
+
+### Troubleshooting
+
+**Port Already in Use:**
+```bash
+# Check what's using the port
+netstat -ano | findstr :3000
+
+# Change port in docker-compose.yml
+ports:
+  - "3001:80"  # Use different port
+```
+
+**Container Won't Start:**
+```bash
+# View logs
+docker logs project-nexus-frontend
+
+# Restart container
+docker-compose -f docker/docker-compose.yml restart
+```
+
+**Clean Rebuild:**
+```bash
+# Remove everything and rebuild
+docker-compose -f docker/docker-compose.yml down -v
+docker system prune -a
+docker-compose -f docker/docker-compose.yml build --no-cache
+docker-compose -f docker/docker-compose.yml up -d
+```
+
+📖 **For detailed Docker documentation**, see [docker/README.md](docker/README.md)
+
+---
+
+## 🌐 GitHub Pages Deployment
 
 ## Setup Instructions
 
@@ -89,7 +175,46 @@ https://YOUR_GITHUB_USERNAME.github.io/Project_Nexus
 
 ## Development vs Production
 
-- **Development**: `npm run dev` (runs on http://localhost:5173)
-- **Build**: `npm run build` (creates production build in `dist/`)
-- **Preview**: `npm run preview` (preview production build locally)
-- **Deploy**: `npm run deploy` (deploy to GitHub Pages)
+| Environment | Command | URL | Purpose |
+|-------------|---------|-----|---------|
+| **Development** | `npm run dev` | http://localhost:5173 | Hot reload for development |
+| **Docker (Local)** | `docker-compose up -d` | http://localhost:3000 | Production-like environment |
+| **Preview Build** | `npm run preview` | http://localhost:4173 | Test production build |
+| **GitHub Pages** | `npm run deploy` | https://ASAD2204.github.io/PROJECT_NEXUS | Public deployment |
+
+---
+
+## 🐛 Common Issues
+
+### Issue 1: Docker Build Fails
+**Solution:**
+```bash
+# Clear npm cache and rebuild
+npm cache clean --force
+docker-compose -f docker/docker-compose.yml build --no-cache
+```
+
+### Issue 2: GitHub Pages 404 Errors
+**Solution:**
+- Verify `base` in `vite.config.js` matches repository name
+- Check `homepage` in `package.json` is correct
+- Ensure GitHub Pages is enabled in repository settings
+
+### Issue 3: Assets Not Loading
+**Solution:**
+- Check browser console for path errors
+- Verify base URL configuration
+- Clear browser cache
+
+---
+
+## 📞 Support
+
+For deployment issues, contact:
+- **Muhammad Saad (BIT22034)** Muhammad Saad (BIT22034)
+- **Muhammad Asad (BIT22031)** Muhammad Asad (BIT22031)
+- **Email:** bit22031@pugc.edu.pk
+
+---
+
+**Last Updated:** January 27, 2026
