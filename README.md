@@ -46,11 +46,14 @@ The central innovation is a tightly integrated **intelligence layer** that creat
 
 **Project Supervisor:** Dr. Ghulam Mustafa  
 **Department:** Information Technology, University of the Punjab, Gujranwala Campus
-**Project Coordinator:** Mr. Muhammad Younas
+
+**Project Coordinator:** Mr. Muhammad Younas  
 **Department:** Information Technology, University of the Punjab, Gujranwala Campus
+
 **Faculty Advisory Committee** 
 - Dr. Naveed Ahamd Jhamat
 - Ms. Fizza
+  
 **Department:** Information Technology, University of the Punjab, Gujranwala Campus
 
 ---
