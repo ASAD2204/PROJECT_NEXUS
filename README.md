@@ -39,8 +39,8 @@ The central innovation is a tightly integrated **intelligence layer** that creat
 | Name | Roll Number | GitHub |
 |------|-------------|--------|
 | **Muhammad Asad** | BIT22031 | [@ASAD2204](https://github.com/ASAD2204) |
-| **Muhammad Saad** | BIT22034 | - |
-| **Muhammad Hanzla** | BIT22002 | - |
+| **Muhammad Saad** | BIT22034 | [@saadi-js](https://github.com/saadi-js) |
+| **Muhammad Hanzla** | BIT22002 | [@Hanzla56-H](https://github.com/Hanzla56-H) |
 
 **Project Advisor:** Dr. Ghulam Mustafa  
 **Department:** Information Technology, University of the Punjab, Gujranwala Campus
@@ -537,7 +537,9 @@ npm run deploy       # Deploy to GitHub Pages
 
 ##  Contact
 
-**Email:** bit22031@pugc.edu.pk (Muhammad Asad)  
+**Email:** bit22031@pugc.edu.pk (Muhammad Asad)
+**Email**  bit22034@pugc.edu.pk (Muhammad Saad)
+**Email**  hanzlaabubakar56@gmail.com (Muahmmad Hanzla)
 **Institution:** University of the Punjab, Gujranwala Campus  
 **Department:** Information Technology
 
