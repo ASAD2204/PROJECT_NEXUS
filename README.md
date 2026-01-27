@@ -43,6 +43,8 @@ The central innovation is a tightly integrated **intelligence layer** that creat
 | **Muhammad Asad** | BIT22031 | [@ASAD2204](https://github.com/ASAD2204) |
 | **Muhammad Saad** | BIT22034 | [@saadi-js](https://github.com/saadi-js) |
 | **Muhammad Hanzla** | BIT22002 | [@Hanzla56-H](https://github.com/Hanzla56-H) |
+| **Muhammad Saad** | BIT22034 | [@saadi-js](https://github.com/saadi-js) |
+| **Muhammad Hanzla** | BIT22002 | [@Hanzla56-H](https://github.com/Hanzla56-H) |
 
 **Project Advisor:** Dr. Ghulam Mustafa  
 **Department:** Information Technology, University of the Punjab, Gujranwala Campus
