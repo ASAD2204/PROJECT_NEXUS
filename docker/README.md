@@ -123,5 +123,4 @@ netstat -ano | findstr :3000
 
 ---
 
-**Maintained by:** Muhammad Saad (BIT22034)  
-**Last Updated:** January 2026
+**Last Updated:** 27 January 2026

@@ -357,8 +357,19 @@ const Assignments = () => {
               size="small"
               startIcon={<Visibility />}
               onClick={() => navigate(`/teacher/assignment/${assignment.id}/submissions`)}
+              disabled={assignment.status === 'draft'}
+              sx={{ 
+                py: 1,
+                minWidth: 0,
+                '& .MuiButton-startIcon': { mr: { xs: 0, sm: 0.5 } },
+              }}
             >
-              View Submissions
+              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                Submissions
+              </Box>
+              <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                View
+              </Box>
             </Button>
             <Button
               fullWidth
@@ -366,6 +377,7 @@ const Assignments = () => {
               size="small"
               startIcon={<Edit />}
               onClick={() => navigate(`/teacher/assignment/${assignment.id}/edit`)}
+              sx={{ py: 1 }}
             >
               Edit
             </Button>

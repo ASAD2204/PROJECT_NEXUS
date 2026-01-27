@@ -294,6 +294,11 @@ const Quizzes = () => {
             size="small"
             startIcon={<Visibility />}
             onClick={() => navigate(`/teacher/quiz/${quiz.id}/results`)}
+            disabled={quiz.status === 'draft' || quiz.attempts === 0}
+            sx={{ 
+              py: 1,
+              minWidth: 0,
+            }}
           >
             Results
           </Button>
@@ -303,6 +308,7 @@ const Quizzes = () => {
             size="small"
             startIcon={<Edit />}
             onClick={() => navigate(`/teacher/quiz/${quiz.id}/edit`)}
+            sx={{ py: 1 }}
           >
             Edit
           </Button>

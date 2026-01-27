@@ -38,7 +38,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import PageHeader from '../../components/Common/PageHeader';
-import { pageTransition } from '../../utils/animations';
+import StatCard from '../../components/Common/StatCard';
+import { pageTransition, fadeInUp, staggerContainer } from '../../utils/animations';
 
 const TeacherCourses = () => {
   const theme = useTheme();
@@ -48,13 +49,13 @@ const TeacherCourses = () => {
 
   const courses = [
     {
-      id: 1,
-      code: 'CS-301',
+      id: 'CS101',
+      code: 'CS101',
       name: 'Data Structures & Algorithms',
       semester: 'Fall 2025',
       students: 85,
-      schedule: 'Mon, Wed 9:00 AM',
-      room: 'Lab 3',
+      schedule: 'Mon, Wed, Fri - 9:00 AM',
+      room: 'Lab 301',
       creditHours: 3,
       attendance: 88,
       assignments: 12,
@@ -63,13 +64,13 @@ const TeacherCourses = () => {
       status: 'ongoing',
     },
     {
-      id: 2,
-      code: 'CS-201',
-      name: 'Object Oriented Programming',
+      id: 'CS202',
+      code: 'CS202',
+      name: 'Database Management Systems',
       semester: 'Fall 2025',
       students: 92,
-      schedule: 'Tue, Thu 11:00 AM',
-      room: 'Lab 2',
+      schedule: 'Tue, Thu - 11:00 AM',
+      room: 'Room 205',
       creditHours: 4,
       attendance: 92,
       assignments: 8,
@@ -78,13 +79,13 @@ const TeacherCourses = () => {
       status: 'ongoing',
     },
     {
-      id: 3,
-      code: 'CS-101',
-      name: 'Introduction to Computing',
+      id: 'CS303',
+      code: 'CS303',
+      name: 'Web Engineering',
       semester: 'Fall 2025',
       students: 135,
-      schedule: 'Mon, Wed, Fri 2:00 PM',
-      room: 'Room 201',
+      schedule: 'Mon, Wed - 2:00 PM',
+      room: 'Lab 102',
       creditHours: 3,
       attendance: 85,
       assignments: 6,
@@ -93,13 +94,13 @@ const TeacherCourses = () => {
       status: 'ongoing',
     },
     {
-      id: 4,
-      code: 'CS-401',
-      name: 'Machine Learning',
+      id: 'CS404',
+      code: 'CS404',
+      name: 'Artificial Intelligence',
       semester: 'Fall 2025',
       students: 65,
-      schedule: 'Tue, Thu 2:00 PM',
-      room: 'Lab 4',
+      schedule: 'Tue, Thu - 3:30 PM',
+      room: 'Room 401',
       creditHours: 3,
       attendance: 90,
       assignments: 10,
@@ -107,28 +108,13 @@ const TeacherCourses = () => {
       avgGrade: 'A',
       status: 'ongoing',
     },
-    {
-      id: 5,
-      code: 'CS-501',
-      name: 'Artificial Intelligence',
-      semester: 'Fall 2025',
-      students: 45,
-      schedule: 'Mon, Wed 11:00 AM',
-      room: 'Lab 5',
-      creditHours: 3,
-      attendance: 91,
-      assignments: 9,
-      quizzes: 4,
-      avgGrade: 'A-',
-      status: 'ongoing',
-    },
   ];
 
   const archivedCourses = [
     {
-      id: 6,
-      code: 'CS-201',
-      name: 'Object Oriented Programming',
+      id: 'CS202-SPRING',
+      code: 'CS202',
+      name: 'Database Management Systems',
       semester: 'Spring 2025',
       students: 88,
       avgGrade: 'B+',
@@ -267,21 +253,12 @@ const TeacherCourses = () => {
       <Stack direction="row" spacing={1}>
         <Button
           fullWidth
-          variant="outlined"
-          size="small"
-          startIcon={<Visibility />}
-          onClick={() => navigate(`/teacher/course/${course.id}`)}
-        >
-          View Details
-        </Button>
-        <Button
-          fullWidth
           variant="contained"
-          size="small"
           startIcon={<Edit />}
           onClick={() => navigate(`/teacher/course/${course.id}/manage`)}
+          sx={{ py: 1 }}
         >
-          Manage
+          Manage Course
         </Button>
       </Stack>
     </Paper>
@@ -291,64 +268,57 @@ const TeacherCourses = () => {
     <motion.div {...pageTransition}>
       <Box className="page-container">
         <PageHeader
+          icon={School}
           title="My Courses"
           subtitle="Manage your courses, assignments, and student performance"
-          action={
-            <Button startIcon={<Add />} variant="contained" onClick={() => setOpenDialog(true)}>
-              Add Content
-            </Button>
-          }
+          gradient="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
         />
 
         {/* Stats */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="caption" color="text.secondary">
-                  Active Courses
-                </Typography>
-                <Typography variant="h4" fontWeight="bold">
-                  {courses.length}
-                </Typography>
-              </CardContent>
-            </Card>
+        <Grid 
+          container 
+          spacing={3} 
+          sx={{ mb: 3 }}
+          component={motion.div}
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+        >
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
+            <StatCard
+              title="Active Courses"
+              value={courses.length}
+              icon={School}
+              color="primary"
+              tooltip="Total number of courses you are teaching this semester"
+            />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="caption" color="text.secondary">
-                  Total Students
-                </Typography>
-                <Typography variant="h4" fontWeight="bold">
-                  {courses.reduce((sum, c) => sum + c.students, 0)}
-                </Typography>
-              </CardContent>
-            </Card>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
+            <StatCard
+              title="Total Students"
+              value={courses.reduce((sum, c) => sum + c.students, 0)}
+              icon={People}
+              color="success"
+              tooltip="Total number of students enrolled across all your courses"
+            />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="caption" color="text.secondary">
-                  Pending Assignments
-                </Typography>
-                <Typography variant="h4" fontWeight="bold">
-                  23
-                </Typography>
-              </CardContent>
-            </Card>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
+            <StatCard
+              title="Pending Assignments"
+              value="23"
+              icon={Assignment}
+              color="warning"
+              tooltip="Assignments awaiting your review and grading"
+            />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="caption" color="text.secondary">
-                  Avg Attendance
-                </Typography>
-                <Typography variant="h4" fontWeight="bold">
-                  89%
-                </Typography>
-              </CardContent>
-            </Card>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
+            <StatCard
+              title="Avg Attendance"
+              value="89%"
+              icon={CheckCircle}
+              color="info"
+              tooltip="Average attendance rate across all your courses"
+            />
           </Grid>
         </Grid>
 

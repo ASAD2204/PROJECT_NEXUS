@@ -346,19 +346,20 @@ const AssignmentSubmit = () => {
                     mb: 3, 
                     background: `linear-gradient(135deg, ${
                       countdown.color === 'error' ? '#DC2626' : 
-                      countdown.color === 'warning' ? '#D97706' : '#059669'
+                      countdown.color === 'warning' ? '#F59E0B' : '#10B981'
                     } 0%, ${
                       countdown.color === 'error' ? '#B91C1C' : 
-                      countdown.color === 'warning' ? '#B45309' : '#047857'
+                      countdown.color === 'warning' ? '#D97706' : '#059669'
                     } 100%)`,
+                    boxShadow: 3,
                   }}
                 >
                   <CardContent sx={{ textAlign: 'center', py: 3 }}>
                     <Schedule sx={{ fontSize: 40, color: 'white', mb: 1 }} />
-                    <Typography variant="h3" fontWeight="bold" color="white">
+                    <Typography variant="h3" fontWeight="bold" sx={{ color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
                       {countdown.text}
                     </Typography>
-                    <Typography variant="body1" color="rgba(255,255,255,0.9)" sx={{ mt: 1 }}>
+                    <Typography variant="body1" sx={{ color: 'white', mt: 1, textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
                       Due: {new Date(assignment.dueDate).toLocaleDateString('en-US', {
                         weekday: 'long',
                         month: 'long',
@@ -438,32 +439,40 @@ const AssignmentSubmit = () => {
             </Card>
 
             {/* Submission Guidelines Card */}
-            <Card sx={{ backgroundColor: 'warning.light' }}>
+            <Card sx={{ 
+              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.15)' : '#FEF3C7',
+              border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.3)' : '#FCD34D'}`,
+            }}>
               <CardContent>
-                <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Warning color="warning" />
+                <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1,
+                  color: (theme) => theme.palette.mode === 'dark' ? '#FCD34D' : '#92400E',
+                }}>
+                  <Warning sx={{ color: (theme) => theme.palette.mode === 'dark' ? '#FCD34D' : '#D97706' }} />
                   Submission Guidelines
                 </Typography>
-                <Divider sx={{ my: 2 }} />
+                <Divider sx={{ my: 2, borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.3)' : '#FCD34D' }} />
                 
-                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                <Typography variant="subtitle2" fontWeight="bold" gutterBottom sx={{ color: 'text.primary' }}>
                   File Types Allowed
                 </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
+                <Typography variant="body2" sx={{ color: 'text.primary', mb: 2 }}>
                   PDF, DOCX, ZIP (Maximum 10MB per file)
                 </Typography>
 
-                <Typography variant="subtitle2" fontWeight="bold" gutterBottom sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" fontWeight="bold" gutterBottom sx={{ color: 'text.primary' }}>
                   Submission Deadline
                 </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
+                <Typography variant="body2" sx={{ color: 'text.primary', mb: 2 }}>
                   {new Date(assignment.dueDate).toLocaleString()}
                 </Typography>
 
-                <Typography variant="subtitle2" fontWeight="bold" gutterBottom sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" fontWeight="bold" gutterBottom sx={{ color: 'text.primary' }}>
                   Late Submission Policy
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{ color: 'text.primary', mb: 2 }}>
                   Late submissions will incur a 10% penalty per day after the deadline.
                 </Typography>
 
@@ -633,15 +642,22 @@ const AssignmentSubmit = () => {
               {/* SUBMITTED STATE */}
               {assignment.status === 'Submitted' && (
                 <Box>
-                  <Card sx={{ backgroundColor: 'info.light', mb: 3 }}>
+                  <Card sx={{ 
+                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(59, 130, 246, 0.15)' : '#DBEAFE',
+                    border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(59, 130, 246, 0.3)' : '#93C5FD'}`,
+                    mb: 3,
+                  }}>
                     <CardContent>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                        <CheckCircle color="info" sx={{ fontSize: 40 }} />
+                        <CheckCircle sx={{ 
+                          fontSize: 40,
+                          color: (theme) => theme.palette.mode === 'dark' ? '#60A5FA' : '#1D4ED8',
+                        }} />
                         <Box>
-                          <Typography variant="h6" fontWeight="bold">
+                          <Typography variant="h6" fontWeight="bold" sx={{ color: 'text.primary' }}>
                             Assignment Submitted
                           </Typography>
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography variant="body2" sx={{ color: 'text.primary' }}>
                             Your submission is being reviewed by the instructor
                           </Typography>
                         </Box>
@@ -735,8 +751,9 @@ const AssignmentSubmit = () => {
                   {/* Grade Card */}
                   <Card 
                     sx={{ 
-                      background: 'linear-gradient(135deg, #2563EB 0%, #059669 100%)',
+                      background: 'linear-gradient(135deg, #3B82F6 0%, #10B981 100%)',
                       mb: 3,
+                      boxShadow: 4,
                       animation: 'fadeIn 1s ease',
                       '@keyframes fadeIn': {
                         from: { opacity: 0, transform: 'scale(0.95)' },
@@ -745,11 +762,11 @@ const AssignmentSubmit = () => {
                     }}
                   >
                     <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                      <EmojiEvents sx={{ fontSize: 60, color: 'white', mb: 2 }} />
-                      <Typography variant="h2" fontWeight="bold" color="white">
+                      <EmojiEvents sx={{ fontSize: 60, color: 'white', mb: 2, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
+                      <Typography variant="h2" fontWeight="bold" sx={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
                         {animatedGrade}/{assignment.totalMarks}
                       </Typography>
-                      <Typography variant="h4" color="rgba(255,255,255,0.9)" sx={{ mt: 1 }}>
+                      <Typography variant="h4" sx={{ color: 'white', mt: 1, textShadow: '0 1px 4px rgba(0,0,0,0.2)' }}>
                         {Math.round((animatedGrade / assignment.totalMarks) * 100)}%
                       </Typography>
                       <Chip
@@ -763,32 +780,33 @@ const AssignmentSubmit = () => {
                           mt: 2,
                           fontSize: '1.5rem',
                           fontWeight: 'bold',
-                          backgroundColor: 'rgba(255,255,255,0.2)',
-                          color: 'white',
+                          backgroundColor: 'rgba(255,255,255,0.95)',
+                          color: '#1F2937',
                           px: 3,
                           py: 2,
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
                         }}
                       />
                     </CardContent>
                   </Card>
 
                   {/* Feedback Section */}
-                  <Card sx={{ mb: 3 }}>
+                  <Card sx={{ mb: 3, boxShadow: 2 }}>
                     <CardContent>
-                      <Typography variant="h6" fontWeight="bold" gutterBottom>
+                      <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ color: 'text.primary' }}>
                         Instructor Feedback
                       </Typography>
                       <Divider sx={{ mb: 2 }} />
-                      <Typography variant="body1" sx={{ lineHeight: 1.8 }}>
+                      <Typography variant="body1" sx={{ lineHeight: 1.8, color: 'text.primary' }}>
                         {assignment.feedback || 'Excellent work! Your code is well-structured and documented. The implementation meets all requirements. Minor improvements can be made in error handling. Keep up the good work!'}
                       </Typography>
                     </CardContent>
                   </Card>
 
                   {/* Rubric Breakdown */}
-                  <Card sx={{ mb: 3 }}>
+                  <Card sx={{ mb: 3, boxShadow: 2 }}>
                     <CardContent>
-                      <Typography variant="h6" fontWeight="bold" gutterBottom>
+                      <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ color: 'text.primary' }}>
                         Rubric Breakdown
                       </Typography>
                       <Divider sx={{ mb: 2 }} />

@@ -25,62 +25,30 @@ import {
 import PageHeader from '../../components/Common/PageHeader';
 import StatCard from '../../components/Common/StatCard';
 import { fadeInUp, staggerContainer } from '../../utils/animations';
+import { assignments as assignmentsData, courses } from '../../data/dummyData';
 
 const MyAssignments = () => {
   const theme = useTheme();
   const navigate = useNavigate();
 
-  // Mock data - would come from API
-  const [assignments] = useState([
-    {
-      id: 1,
-      title: 'Database Design Assignment',
-      course: 'Database Systems',
-      courseCode: 'CS-401',
-      dueDate: '2026-01-30',
-      submittedDate: null,
-      status: 'pending',
-      totalMarks: 100,
-      obtainedMarks: null,
-      description: 'Design a normalized database schema for an e-commerce system',
-    },
-    {
-      id: 2,
-      title: 'Algorithm Analysis Report',
-      course: 'Data Structures & Algorithms',
-      courseCode: 'CS-302',
-      dueDate: '2026-01-28',
-      submittedDate: null,
-      status: 'overdue',
-      totalMarks: 50,
-      obtainedMarks: null,
-      description: 'Analyze time complexity of sorting algorithms',
-    },
-    {
-      id: 3,
-      title: 'React Component Development',
-      course: 'Web Development',
-      courseCode: 'CS-501',
-      dueDate: '2026-01-25',
-      submittedDate: '2026-01-24',
-      status: 'submitted',
-      totalMarks: 100,
-      obtainedMarks: null,
-      description: 'Create reusable React components with proper props',
-    },
-    {
-      id: 4,
-      title: 'Network Security Analysis',
-      course: 'Computer Networks',
-      courseCode: 'CS-403',
-      dueDate: '2026-01-20',
-      submittedDate: '2026-01-19',
-      status: 'graded',
-      totalMarks: 100,
-      obtainedMarks: 85,
-      description: 'Analyze security vulnerabilities in network protocols',
-    },
-  ]);
+  // Get assignments from dummyData with course info
+  const [assignments] = useState(
+    assignmentsData.map((assignment) => {
+      const course = courses.find((c) => c.id === assignment.courseId);
+      return {
+        id: assignment.id,
+        title: assignment.title,
+        course: course?.title || 'Unknown Course',
+        courseCode: course?.code || 'N/A',
+        dueDate: assignment.dueDate,
+        submittedDate: assignment.submittedOn,
+        status: assignment.status.toLowerCase(),
+        totalMarks: assignment.totalMarks,
+        obtainedMarks: assignment.obtainedMarks,
+        description: assignment.description,
+      };
+    })
+  );
 
   const stats = {
     total: assignments.length,

@@ -37,6 +37,8 @@ import {
   Grade,
   ArrowBack,
   Send,
+  Schedule,
+  Cancel,
 } from '@mui/icons-material';
 import PageHeader from '../../components/Common/PageHeader';
 import StatCard from '../../components/Common/StatCard';
@@ -45,22 +47,36 @@ import { fadeInUp, staggerContainer } from '../../utils/animations';
 const ViewSubmissions = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { assignmentId } = useParams();
+  const { id } = useParams();
   const [tabValue, setTabValue] = useState(0);
   const [gradeDialog, setGradeDialog] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [marks, setMarks] = useState('');
   const [feedback, setFeedback] = useState('');
 
-  // Mock assignment data
-  const assignment = {
-    id: 1,
-    title: 'Database Design Assignment',
-    course: 'Database Systems',
-    courseCode: 'CS-401',
-    dueDate: '2026-01-30',
+  // Detect if this is assignment or quiz based on URL
+  const isQuiz = window.location.pathname.includes('/quiz/');
+  const type = isQuiz ? 'quiz' : 'assignment';
+
+  // Mock data
+  const content = isQuiz ? {
+    id: id,
+    title: 'Data Structures Fundamentals Quiz',
+    course: 'Data Structures & Algorithms',
+    courseCode: 'CS-301',
+    dueDate: '2026-01-25',
+    totalMarks: 20,
+    duration: 30,
+    questions: 20,
+    description: 'MCQ quiz covering fundamental concepts of data structures',
+  } : {
+    id: id,
+    title: 'Binary Search Tree Implementation',
+    course: 'Data Structures & Algorithms',
+    courseCode: 'CS-301',
+    dueDate: '2026-01-28',
     totalMarks: 100,
-    description: 'Design a normalized database schema for an e-commerce system',
+    description: 'Implement a complete BST with insert, delete, and search operations',
   };
 
   // Mock submissions data
@@ -151,15 +167,15 @@ const ViewSubmissions = () => {
       <Box sx={{ mb: 3 }}>
         <Button
           startIcon={<ArrowBack />}
-          onClick={() => navigate('/teacher/courses')}
+          onClick={() => navigate(isQuiz ? '/teacher/quizzes' : '/teacher/assignments')}
           sx={{ mb: 2 }}
         >
-          Back to Courses
+          Back to {isQuiz ? 'Quizzes' : 'Assignments'}
         </Button>
         <PageHeader
           icon={Assignment}
-          title={assignment.title}
-          subtitle={`${assignment.courseCode} - ${assignment.course} | Due: ${new Date(assignment.dueDate).toLocaleDateString()}`}
+          title={content.title}
+          subtitle={`${content.courseCode} - ${content.course} | ${isQuiz ? `${content.questions} Questions, ${content.duration} mins` : `Due: ${new Date(content.dueDate).toLocaleDateString()}`}`}
           gradient="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
         />
       </Box>
@@ -176,11 +192,11 @@ const ViewSubmissions = () => {
       >
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
           <StatCard
-            title="Submissions"
+            title={isQuiz ? "Attempts" : "Submissions"}
             value={stats.total}
             icon={Assignment}
             color="primary"
-            tooltip="Total submissions received. Students who submitted their assignment before or on the due date"
+            tooltip={isQuiz ? "Total quiz attempts by students" : "Total submissions received"}
           />
         </Grid>
 
@@ -190,7 +206,7 @@ const ViewSubmissions = () => {
             value={stats.pending}
             icon={Schedule}
             color="warning"
-            tooltip="Submissions awaiting your review and grading. These need to be graded and given feedback"
+            tooltip={isQuiz ? "Quiz attempts awaiting grading" : "Submissions awaiting your review and grading"}
           />
         </Grid>
 
@@ -200,17 +216,17 @@ const ViewSubmissions = () => {
             value={stats.graded}
             icon={CheckCircle}
             color="success"
-            tooltip="Submissions that have been graded with marks and feedback. Students can view their results"
+            tooltip={isQuiz ? "Quiz attempts that have been graded" : "Submissions that have been graded with marks and feedback"}
           />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
           <StatCard
-            title="Not Submitted"
+            title={isQuiz ? "No Attempt" : "Not Submitted"}
             value={stats.notSubmitted}
             icon={Cancel}
             color="error"
-            tooltip="Students who did not submit the assignment. May need follow-up or extension consideration"
+            tooltip={isQuiz ? "Students who did not attempt the quiz" : "Students who did not submit the assignment"}
           />
         </Grid>
       </Grid>
@@ -281,11 +297,11 @@ const ViewSubmissions = () => {
                     {submission.status === 'graded' ? (
                       <Stack spacing={0.5}>
                         <Typography variant="body2" fontWeight="bold">
-                          {submission.marksObtained}/{assignment.totalMarks}
+                          {submission.marksObtained}/{content.totalMarks}
                         </Typography>
                         <LinearProgress 
                           variant="determinate" 
-                          value={(submission.marksObtained / assignment.totalMarks) * 100}
+                          value={(submission.marksObtained / content.totalMarks) * 100}
                           sx={{ height: 6, borderRadius: 1 }}
                         />
                       </Stack>
@@ -334,7 +350,7 @@ const ViewSubmissions = () => {
       >
         <DialogTitle>
           <Typography variant="h6" fontWeight="bold">
-            Grade Assignment - {selectedSubmission?.studentName}
+            {isQuiz ? 'Grade Quiz' : 'Grade Assignment'} - {selectedSubmission?.studentName}
           </Typography>
         </DialogTitle>
         <DialogContent>
@@ -346,7 +362,7 @@ const ViewSubmissions = () => {
               value={marks}
               onChange={(e) => setMarks(e.target.value)}
               InputProps={{
-                endAdornment: <Typography>/ {assignment.totalMarks}</Typography>,
+                endAdornment: <Typography>/ {content.totalMarks}</Typography>,
               }}
             />
             <TextField

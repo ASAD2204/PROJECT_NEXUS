@@ -479,32 +479,44 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
 
                 {/* Render text and optional badge when not collapsed */}
                 {!collapsed && (
-                  <>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1, minWidth: 0, ml: 0.5 }}>
                     <ListItemText
                       primary={item.text}
                       primaryTypographyProps={{
                         fontWeight: isActive ? 700 : 600,
-                        fontSize: '0.95rem',
+                        fontSize: '0.92rem',
                         letterSpacing: 0.3,
-                        noWrap: true,
                       }}
                       sx={{
-                        pr: item.badge ? 0.5 : 0,
+                        flex: '1 1 auto',
+                        minWidth: 0,
+                        pr: 0,
+                        whiteSpace: 'normal',
+                        overflow: 'visible',
                       }}
                     />
+
                     {item.badge && (
                       <Chip
-                        label={item.badge === 'Mark Attendance' ? 'Mark' : item.badge}
+                        label={
+                          (() => {
+                            const b = String(item.badge);
+                            if (/mark/i.test(b)) return 'Mark';
+                            if (b.length > 8) return b.slice(0, 7) + '…';
+                            return b;
+                          })()
+                        }
                         size="small"
                         variant="filled"
                         sx={{
-                          height: 22,
-                          fontSize: '0.65rem',
+                          height: 18,
+                          fontSize: '0.6rem',
                           fontWeight: 700,
                           px: 0.5,
                           minWidth: 'auto',
                           color: 'white',
                           flexShrink: 0,
+                          ml: 0.5,
                           backgroundColor: alpha(
                             theme.palette[item.badgeColor || 'error'].main,
                             theme.palette.mode === 'dark' ? 0.3 : 0.9
@@ -514,11 +526,11 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
                             theme.palette[item.badgeColor || 'error'].main,
                             theme.palette.mode === 'dark' ? 0.5 : 1
                           ),
-                          boxShadow: `0 2px 8px ${alpha(theme.palette[item.badgeColor || 'error'].main, 0.3)}`,
+                          boxShadow: `0 2px 6px ${alpha(theme.palette[item.badgeColor || 'error'].main, 0.22)}`,
                         }}
                       />
                     )}
-                  </>
+                  </Box>
                 )}
               </ListItemButton>
             );
