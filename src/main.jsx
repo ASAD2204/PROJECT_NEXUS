@@ -39,7 +39,7 @@ const ThemedApp = () => {
       {/* Snackbar for notifications */}
       <SnackbarProvider>
         {/* Router for navigation */}
-        <BrowserRouter>
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
           {/* Authentication context */}
           <AuthProvider>
             <App />
