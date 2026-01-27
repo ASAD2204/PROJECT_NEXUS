@@ -10,6 +10,8 @@
 [![Material-UI](https://img.shields.io/badge/Material--UI-7.3.6-007FFF?style=for-the-badge&logo=mui&logoColor=white)](https://mui.com/)
 [![Vite](https://img.shields.io/badge/Vite-7.2-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 
+### 🌐 [Live Demo](https://ASAD2204.github.io/PROJECT_NEXUS)
+
 </div>
 
 ---
@@ -39,8 +41,8 @@ The central innovation is a tightly integrated **intelligence layer** that creat
 | Name | Roll Number | GitHub |
 |------|-------------|--------|
 | **Muhammad Asad** | BIT22031 | [@ASAD2204](https://github.com/ASAD2204) |
-| **Muhammad Saad** | BIT22034 | - |
-| **Muhammad Hanzla** | BIT22002 | - |
+| **Muhammad Saad** | BIT22034 | [@saadi-js](https://github.com/saadi-js) |
+| **Muhammad Hanzla** | BIT22002 | [@Hanzla56-H](https://github.com/Hanzla56-H) |
 
 **Project Advisor:** Dr. Ghulam Mustafa  
 **Department:** Information Technology, University of the Punjab, Gujranwala Campus
@@ -537,7 +539,10 @@ npm run deploy       # Deploy to GitHub Pages
 
 ##  Contact
 
-**Email:** bit22031@pugc.edu.pk (Muhammad Asad)  
+**Muhammad Asad:** bit22031@pugc.edu.pk  
+**Muhammad Saad:** bit22034@pugc.edu.pk  
+**Muhammad Hanzla:** hanzlaabubakar56@gmail.com
+
 **Institution:** University of the Punjab, Gujranwala Campus  
 **Department:** Information Technology
 
