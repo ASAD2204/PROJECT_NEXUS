@@ -10,9 +10,11 @@
 [![Material-UI](https://img.shields.io/badge/Material--UI-7.3.6-007FFF?style=for-the-badge&logo=mui&logoColor=white)](https://mui.com/)
 [![Vite](https://img.shields.io/badge/Vite-7.2-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 
+</div>
+
 ---
 
-### 📚 About
+## 📚 About
 
 **Project Nexus** is a comprehensive, AI-powered university management ecosystem designed to solve the fundamental "data silo" problem in educational technology. Built as a unified digital platform, it integrates Student Information Systems (SIS), Learning Management Systems (LMS), Financial Management, HR Operations, and AI-powered intelligent services into a single cohesive interface.
 
@@ -23,7 +25,7 @@ This project transcends traditional Campus Management Systems by implementing:
 - **Multi-Factor Biometric Attendance** with CV-based spoof detection
 - **Predictive Analytics** for at-risk student identification
 
-### 🎯 Core Innovation
+## 🎯 Core Innovation
 
 The central innovation is a tightly integrated **intelligence layer** that creates a continuous "data flywheel" where:
 - Operational data (attendance, fees) enhances the academic experience
