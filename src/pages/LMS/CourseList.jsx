@@ -1,3 +1,21 @@
+/**
+ * Course List Page
+ * 
+ * Displays all available courses for students with enrollment information.
+ * Provides search, filter, and sorting capabilities.
+ * 
+ * Features:
+ * - Grid/list view of courses
+ * - Course statistics (enrolled students, credits, instructor)
+ * - Search and filter functionality
+ * - Course progress indicators
+ * - Quick navigation to course classroom
+ * - Semester and department filters
+ * - Responsive card layout
+ * 
+ * @component
+ */
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {

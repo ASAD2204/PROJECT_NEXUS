@@ -1,3 +1,23 @@
+/**
+ * Grievances Management Page
+ * 
+ * Allows students to submit, track, and manage their grievances/complaints.
+ * Provides a comprehensive ticketing system for student concerns.
+ * 
+ * Features:
+ * - Statistics cards (total, pending, resolved, rejected)
+ * - Grievance submission form with file uploads
+ * - Status tracking with color-coded badges
+ * - Priority levels (Low, Medium, High, Urgent)
+ * - Category-based organization
+ * - Timeline view of grievance history
+ * - Search and filter functionality
+ * - Admin response viewing
+ * - File attachment support
+ * 
+ * @component
+ */
+
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {

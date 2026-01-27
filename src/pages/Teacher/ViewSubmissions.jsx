@@ -1,3 +1,22 @@
+/**
+ * View Submissions/Results Page - Teacher View
+ * 
+ * Unified page for viewing and grading both assignment submissions and quiz results.
+ * Dynamically adapts based on the route (assignment or quiz).
+ * 
+ * Features:
+ * - Auto-detection of content type (assignment vs quiz) from URL
+ * - Statistics cards (submissions/attempts, pending, graded, not submitted)
+ * - Tabbed interface (All, Pending, Graded, Not Submitted)
+ * - Submission table with student details and status
+ * - Grade dialog for entering marks and feedback
+ * - File download and preview options
+ * - Progress indicators for individual submissions
+ * - Different labels and behavior for assignments vs quizzes
+ * 
+ * @component
+ */
+
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';

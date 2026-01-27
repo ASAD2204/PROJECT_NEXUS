@@ -1,3 +1,27 @@
+/**
+ * PageHeader Component
+ * 
+ * Reusable page header with gradient background, icon, title, and optional action button.
+ * Displays breadcrumbs for navigation context.
+ * 
+ * Features:
+ * - Gradient background with customizable colors
+ * - Icon display with animation
+ * - Title and subtitle text
+ * - Optional action button (e.g., "Create New", "Add")
+ * - Breadcrumb navigation
+ * - Responsive design
+ * 
+ * @component
+ * @param {Object} props
+ * @param {React.Component} props.icon - Icon component to display
+ * @param {string} props.title - Page title
+ * @param {string} props.subtitle - Page subtitle/description
+ * @param {string} props.gradient - CSS gradient background
+ * @param {React.Node} props.action - Action button or element
+ * @param {Array} props.breadcrumbs - Breadcrumb navigation items
+ */
+
 import React from 'react';
 import { Box, Typography, Breadcrumbs, Link as MuiLink } from '@mui/material';
 import { NavigateNext } from '@mui/icons-material';

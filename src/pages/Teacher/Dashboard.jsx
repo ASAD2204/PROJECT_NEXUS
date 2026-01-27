@@ -1,3 +1,20 @@
+/**
+ * Teacher Dashboard
+ * 
+ * Main dashboard for teachers showing course statistics, recent activities, and quick actions.
+ * Provides an overview of all teaching responsibilities and student performance.
+ * 
+ * Features:
+ * - Course statistics (active courses, total students, assignments, avg attendance)
+ * - Recent assignment submissions requiring grading
+ * - Upcoming classes schedule
+ * - Student performance overview
+ * - Quick action buttons for common tasks
+ * - Interactive charts and progress indicators
+ * 
+ * @component
+ */
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {

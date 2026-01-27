@@ -1,3 +1,21 @@
+/**
+ * Quiz Management Page - Teacher View
+ * 
+ * Allows teachers to manage quizzes for their courses.
+ * Displays quiz statistics and student performance metrics.
+ * 
+ * Features:
+ * - Statistics cards (total quizzes, active, attempts, avg score)
+ * - Tabbed interface (Active, Completed, Drafts)
+ * - Quiz cards with question count, duration, and attempt statistics
+ * - Average score indicators
+ * - Quick navigation to view results and edit quizzes
+ * - Context menu for additional actions
+ * - Responsive card layout
+ * 
+ * @component
+ */
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';

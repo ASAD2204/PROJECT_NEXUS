@@ -1,3 +1,19 @@
+/**
+ * Sidebar Component
+ * 
+ * Responsive navigation sidebar for the application with role-based menu items.
+ * Features:
+ * - Collapsible sidebar with toggle functionality
+ * - Mobile drawer for responsive design
+ * - Role-based menu items (Student, Teacher, Admin, etc.)
+ * - Badge/notification support for menu items
+ * - Active route highlighting
+ * - User profile section with logout functionality
+ * - Smooth animations and transitions
+ * 
+ * @component
+ */
+
 import React, { useState } from 'react';
 import {
   Drawer,

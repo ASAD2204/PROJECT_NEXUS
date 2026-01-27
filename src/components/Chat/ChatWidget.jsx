@@ -1,3 +1,26 @@
+/**
+ * ChatWidget Component
+ * 
+ * Floating chat widget providing real-time communication support.
+ * Includes AI assistant and support ticket functionality.
+ * 
+ * Features:
+ * - Floating button with notification badge
+ * - Expandable chat window
+ * - Message history with timestamps
+ * - Typing indicators
+ * - File attachment support
+ * - Quick action buttons
+ * - AI-powered responses
+ * - Support ticket creation
+ * - Unread message counter
+ * - Smooth animations
+ * - Minimizable/expandable interface
+ * - Persistent chat history
+ * 
+ * @component
+ */
+
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,

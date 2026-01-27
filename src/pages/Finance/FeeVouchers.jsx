@@ -1,3 +1,24 @@
+/**
+ * Fee Vouchers Page
+ * 
+ * Manages student fee payments, vouchers, and payment history.
+ * Provides payment gateway integration and receipt generation.
+ * 
+ * Features:
+ * - Fee summary dashboard with total, paid, and pending amounts
+ * - Voucher generation for different fee categories
+ * - Payment history with transaction details
+ * - Online payment integration
+ * - Receipt download (PDF)
+ * - Payment deadline tracking
+ * - Installment payment support
+ * - Late fee calculation
+ * - Payment status tracking
+ * - Multiple payment methods (Credit Card, Bank Transfer, etc.)
+ * 
+ * @component
+ */
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {

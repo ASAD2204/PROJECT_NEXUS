@@ -1,3 +1,20 @@
+/**
+ * My Assignments Page - Student View
+ * 
+ * Displays all assignments for the student across all enrolled courses.
+ * Shows assignment status, due dates, grades, and submission progress.
+ * 
+ * Features:
+ * - Statistics cards showing total, pending, submitted, and graded assignments
+ * - Assignment cards with course info, due dates, and status badges
+ * - Days remaining countdown for pending assignments
+ * - Progress bars for graded assignments
+ * - Quick navigation to assignment submission pages
+ * - Responsive grid layout
+ * 
+ * @component
+ */
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';

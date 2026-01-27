@@ -1,3 +1,24 @@
+/**
+ * Admin Dashboard
+ * 
+ * Comprehensive administrative dashboard providing system-wide overview and analytics.
+ * Central command center for administrators to monitor and manage the entire platform.
+ * 
+ * Features:
+ * - Key metrics cards (students, teachers, courses, revenue)
+ * - Student enrollment trends chart
+ * - Department-wise distribution
+ * - Recent registrations list
+ * - Course enrollment statistics
+ * - Financial overview
+ * - Quick action buttons
+ * - System health indicators
+ * - Interactive data visualizations
+ * - Real-time updates
+ * 
+ * @component
+ */
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {

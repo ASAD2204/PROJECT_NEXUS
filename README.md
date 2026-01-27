@@ -410,7 +410,7 @@ Project_Nexus/
 | **Output Directory** | `dist/` | Build artifacts |
 | **Base Path** | `/Project_Nexus/` | Repository-based routing |
 | **CI/CD** | GitHub Actions | Automated deployment |
-| **Branch** | `Asad_node` | Deployment source |
+| **Branch** | `main` | Deployment source |
 
 ### Available Scripts
 

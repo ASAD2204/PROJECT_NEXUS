@@ -1,3 +1,21 @@
+/**
+ * Login Page
+ * 
+ * Authentication page for user login with role selection.
+ * Supports multiple user roles and redirects based on role.
+ * 
+ * Features:
+ * - Email/password authentication
+ * - Role selection dropdown (Student, Teacher, Admin, Alumni, Librarian)
+ * - Remember me functionality
+ * - Forgot password link
+ * - Input validation and error handling
+ * - Animated gradient background
+ * - Responsive design
+ * 
+ * @component
+ */
+
 import React, { useState } from 'react';
 import {
   Box,

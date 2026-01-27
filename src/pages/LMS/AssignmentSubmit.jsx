@@ -1,3 +1,24 @@
+/**
+ * Assignment Submission and Details Page
+ * 
+ * Displays assignment details and handles student submissions.
+ * Features three states:
+ * 1. Pending - File upload interface with drag-and-drop
+ * 2. Submitted - Shows submission confirmation and files
+ * 3. Graded - Displays grade, feedback, and rubric breakdown
+ * 
+ * Features:
+ * - File validation (PDF, DOCX, ZIP, max 10MB)
+ * - Drag-and-drop file upload
+ * - Upload progress indicator
+ * - Countdown timer for due dates
+ * - Grade animation for graded assignments
+ * - Submission guidelines and policies
+ * - Previous submission history
+ * 
+ * @component
+ */
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {

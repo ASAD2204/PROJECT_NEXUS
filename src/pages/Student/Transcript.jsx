@@ -1,3 +1,21 @@
+/**
+ * Student Transcript Page
+ * 
+ * Displays academic transcript with semester-wise course grades.
+ * Provides GPA calculations and transcript download functionality.
+ * 
+ * Features:
+ * - Semester-wise grade display
+ * - Course details with grades and credit hours
+ * - GPA calculation (semester and cumulative)
+ * - Transcript download (PDF)
+ * - Grade statistics and analytics
+ * - Academic performance charts
+ * - Honor roll and dean's list indicators
+ * 
+ * @component
+ */
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {

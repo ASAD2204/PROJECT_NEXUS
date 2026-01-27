@@ -1,3 +1,21 @@
+/**
+ * Assignment Management Page - Teacher View
+ * 
+ * Allows teachers to manage all their assignments across courses.
+ * Displays submission statistics and grading progress.
+ * 
+ * Features:
+ * - Statistics cards (total, active, pending review, graded)
+ * - Tabbed interface (Active, Completed, Drafts)
+ * - Assignment cards with submission and grading metrics
+ * - Progress bars for submissions and grading status
+ * - Quick navigation to view submissions and edit assignments
+ * - Context menu for additional actions
+ * - Responsive card layout
+ * 
+ * @component
+ */
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';

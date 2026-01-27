@@ -1,3 +1,20 @@
+/**
+ * My Courses Page - Teacher View
+ * 
+ * Displays all courses taught by the teacher with detailed statistics.
+ * Allows teachers to manage course content and view course details.
+ * 
+ * Features:
+ * - Statistics cards (active courses, total students, pending assignments, avg attendance)
+ * - Tabbed interface for active and archived courses
+ * - Course cards with enrollment, schedule, and performance data
+ * - Attendance progress indicators
+ * - Quick access to course management interface
+ * - Responsive grid layout
+ * 
+ * @component
+ */
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {

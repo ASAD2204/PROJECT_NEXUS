@@ -1,3 +1,30 @@
+/**
+ * StatCard Component
+ * 
+ * Reusable statistics card component displaying key metrics with optional trends.
+ * Features smooth animations and interactive tooltips.
+ * 
+ * Features:
+ * - Animated number counting on mount
+ * - Optional trend indicators (up/down arrows with percentages)
+ * - Customizable colors and icons
+ * - Tooltip support for additional information
+ * - Loading skeleton state
+ * - Responsive design
+ * - Hover effects and smooth transitions
+ * 
+ * @component
+ * @param {Object} props
+ * @param {string} props.title - Card title/label
+ * @param {string|number} props.value - Main statistic value
+ * @param {React.Component} props.icon - Icon component to display
+ * @param {string} props.color - Color theme (primary, success, warning, error, info)
+ * @param {string} props.trend - Trend direction ('up' or 'down')
+ * @param {string|number} props.trendValue - Percentage change value
+ * @param {string} props.tooltip - Tooltip text for additional info
+ * @param {boolean} props.loading - Loading state
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, Typography, Box, Skeleton, Tooltip, IconButton } from '@mui/material';
 import { TrendingUp as TrendingUpIcon, TrendingDown as TrendingDownIcon, InfoOutlined } from '@mui/icons-material';

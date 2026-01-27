@@ -1,3 +1,21 @@
+/**
+ * MainLayout Component
+ * 
+ * Primary layout wrapper for the application providing consistent structure.
+ * Includes sidebar navigation, top bar, and scroll-to-top functionality.
+ * 
+ * Features:
+ * - Responsive sidebar with collapse/expand
+ * - Top navigation bar with user profile
+ * - Mobile drawer navigation
+ * - Scroll-to-top floating action button
+ * - Smooth page transitions
+ * - Theme-aware styling
+ * - Adaptive padding and spacing
+ * 
+ * @component
+ */
+
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,

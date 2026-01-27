@@ -1,3 +1,21 @@
+/**
+ * Course Classroom Page
+ * 
+ * Detailed view of a specific course with all course materials and activities.
+ * Central hub for course content, assignments, announcements, and resources.
+ * 
+ * Features:
+ * - Course overview with instructor info
+ * - Tabbed interface (Overview, Assignments, Materials, Announcements)
+ * - Assignment list with due dates and submission status
+ * - Course materials and resources
+ * - Announcements and updates
+ * - Progress tracking
+ * - Quick actions (mark attendance, submit assignments)
+ * 
+ * @component
+ */
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {

@@ -1,3 +1,30 @@
+/**
+ * Smart Attendance Page
+ * 
+ * Multi-step attendance marking system with GPS verification, liveness detection, and face capture.
+ * Ensures secure and accurate attendance marking.
+ * 
+ * Features:
+ * - Course selection with current class detection
+ * - GPS location verification
+ * - Liveness detection (blink, smile)
+ * - Face capture and verification
+ * - Attendance confirmation
+ * - Success animation and summary
+ * - Step-by-step progress indicator
+ * - Security measures to prevent proxy attendance
+ * 
+ * Workflow:
+ * 1. Select course
+ * 2. Verify GPS location
+ * 3. Perform liveness detection
+ * 4. Capture face photo
+ * 5. Confirm details
+ * 6. Mark attendance
+ * 
+ * @component
+ */
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {

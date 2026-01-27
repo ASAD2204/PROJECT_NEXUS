@@ -1,3 +1,20 @@
+/**
+ * Student Dashboard
+ * 
+ * Main dashboard view for students showing key academic information and quick actions.
+ * 
+ * Features:
+ * - Academic statistics (CGPA, attendance, risk status, semester progress)
+ * - Quick action cards (attendance, assignments, courses, schedule)
+ * - Academic alerts and notifications
+ * - Recent assignments with due dates
+ * - Course list with progress indicators
+ * - Upcoming deadlines and events
+ * - Performance charts and analytics
+ * 
+ * @component
+ */
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {

@@ -1,3 +1,22 @@
+/**
+ * Student Profile Page
+ * 
+ * Displays and allows editing of student profile information.
+ * Shows academic details, personal information, and performance metrics.
+ * 
+ * Features:
+ * - Personal information display and editing
+ * - Academic details (program, semester, CGPA)
+ * - Contact information
+ * - Guardian details
+ * - Profile photo upload
+ * - Password change
+ * - Emergency contact information
+ * - Responsive layout with tabbed sections
+ * 
+ * @component
+ */
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {

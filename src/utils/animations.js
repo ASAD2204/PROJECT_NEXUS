@@ -1,3 +1,21 @@
+/**
+ * Animation Utilities
+ * 
+ * Collection of reusable Framer Motion animation variants for consistent animations across the app.
+ * Provides smooth transitions, fade effects, stagger animations, and more.
+ * 
+ * Available animations:
+ * - pageTransition: Fade and slide up for page content
+ * - fadeInUp: Fade in with upward movement
+ * - fadeIn: Simple fade in
+ * - slideInLeft/Right: Slide in from sides
+ * - staggerContainer: Container for staggered children animations
+ * - scaleIn: Scale up animation
+ * - cardHover: Interactive hover effects
+ * 
+ * @module animations
+ */
+
 // Reusable animation variants for framer-motion
 
 // Page transition - for main page content
