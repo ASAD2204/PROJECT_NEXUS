@@ -1,0 +1,509 @@
+version: "3.8"
+
+# ==========================================================================
+# Project Nexus — Docker Swarm Stack
+# ==========================================================================
+# Deploy:  docker stack deploy -c docker-compose.yml nexus
+# Remove:  docker stack rm nexus
+# ==========================================================================
+
+networks:
+  nexus-network:
+    driver: overlay
+    attachable: true
+
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:
+  chroma_data:
+  backup_data:
+  prometheus_data:
+  grafana_data:
+
+# ---------- SHARED ANCHORS ----------
+x-common-env: &common-env
+  JWT_SECRET: ${JWT_SECRET:-change-me-in-production-min-32-chars}
+
+x-postgres-env: &postgres-env
+  <<: *common-env
+  DATABASE_URL: postgresql://nexus_user:nexus_pass@postgres:5432/nexus_db
+
+x-deploy-default: &deploy-default
+  replicas: 1
+  restart_policy:
+    condition: on-failure
+    delay: 5s
+    max_attempts: 3
+    window: 60s
+  update_config:
+    parallelism: 1
+    delay: 10s
+    order: start-first
+  rollback_config:
+    parallelism: 1
+    order: stop-first
+
+x-deploy-infra: &deploy-infra
+  replicas: 1
+  restart_policy:
+    condition: on-failure
+    delay: 10s
+    max_attempts: 5
+    window: 120s
+  placement:
+    constraints:
+      - node.role == manager
+
+services:
+
+  # ======================================================================
+  #  INFRASTRUCTURE
+  # ======================================================================
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: nexus_db
+      POSTGRES_USER: nexus_user
+      POSTGRES_PASSWORD: nexus_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks: [nexus-network]
+    ports: ["5432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexus_user -d nexus_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      <<: *deploy-infra
+
+  mongodb:
+    image: mongo:6-jammy
+    volumes:
+      - mongo_data:/data/db
+      - ./infrastructure/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks: [nexus-network]
+    ports: ["27017:27017"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      <<: *deploy-infra
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks: [nexus-network]
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    deploy:
+      <<: *deploy-infra
+
+  chromadb:
+    image: chromadb/chroma:latest
+    volumes:
+      - chroma_data:/chroma/chroma
+    networks: [nexus-network]
+    ports: ["8000:8000"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/api/v1/heartbeat || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      <<: *deploy-infra
+
+  zookeeper:
+    image: bitnami/zookeeper:latest
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+    networks: [nexus-network]
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc -w 2 localhost 2181 | grep imok"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      <<: *deploy-infra
+
+  kafka:
+    image: bitnami/kafka:latest
+    environment:
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+    networks: [nexus-network]
+    ports: ["9092:9092"]
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      <<: *deploy-infra
+
+  backup-service:
+    image: nexus/backup-service:latest
+    build: ./infrastructure/backup
+    entrypoint: ["/bin/sh", "/backup/scripts/backup-loop.sh"]
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: nexus_db
+      POSTGRES_USER: nexus_user
+      POSTGRES_PASSWORD: nexus_pass
+      MONGO_HOST: mongodb
+      MONGO_PORT: "27017"
+      BACKUP_INTERVAL_HOURS: "24"
+      RETENTION_DAYS: "30"
+    volumes:
+      - backup_data:/backup/data
+      - ./infrastructure/backup/scripts:/backup/scripts:ro
+    networks: [nexus-network]
+    depends_on:
+      - postgres
+      - mongodb
+    deploy:
+      <<: *deploy-infra
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    volumes:
+      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks: [nexus-network]
+    ports: ["9090:9090"]
+    depends_on:
+      - blackbox-exporter
+    deploy:
+      <<: *deploy-infra
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.25.0
+    command:
+      - --config.file=/etc/blackbox_exporter/config.yml
+    volumes:
+      - ./infrastructure/monitoring/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    networks: [nexus-network]
+    ports: ["9115:9115"]
+    deploy:
+      <<: *deploy-infra
+
+  grafana:
+    image: grafana/grafana:11.1.4
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-change-me-grafana-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infrastructure/monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./infrastructure/monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+    networks: [nexus-network]
+    ports: ["3000:3000"]
+    depends_on:
+      - prometheus
+    deploy:
+      <<: *deploy-infra
+
+  # ======================================================================
+  #  API GATEWAY
+  # ======================================================================
+
+  api-gateway:
+    image: nexus/api-gateway:latest
+    build: ./backend/api-gateway
+    ports:
+      - target: 80
+        published: 80
+        mode: ingress
+    networks: [nexus-network]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    deploy:
+      <<: *deploy-default
+      replicas: 2
+
+  # ======================================================================
+  #  MICROSERVICES
+  # ======================================================================
+
+  auth-service:
+    image: nexus/auth-service:latest
+    build: ./backend/services/auth-service
+    environment:
+      <<: *postgres-env
+      REDIS_URL: redis://redis:6379
+    networks: [nexus-network]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      <<: *deploy-default
+
+  sis-service:
+    image: nexus/sis-service:latest
+    build: ./backend/services/sis-service
+    environment:
+      <<: *postgres-env
+      KAFKA_BROKER: kafka:9092
+    networks: [nexus-network]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      <<: *deploy-default
+
+  lms-service:
+    image: nexus/lms-service:latest
+    build: ./backend/services/lms-service
+    environment:
+      <<: *postgres-env
+      KAFKA_BROKER: kafka:9092
+      MONGO_URL: mongodb://mongodb:27017/nexus_lms
+      CHROMA_HOST: chromadb
+      REDIS_URL: redis://redis:6379
+    networks: [nexus-network]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      <<: *deploy-default
+
+  finance-service:
+    image: nexus/finance-service:latest
+    build: ./backend/services/finance-service
+    environment:
+      <<: *postgres-env
+      KAFKA_BROKER: kafka:9092
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+    networks: [nexus-network]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      <<: *deploy-default
+
+  attendance-service:
+    image: nexus/attendance-service:latest
+    build: ./backend/services/attendance-service
+    environment:
+      <<: *postgres-env
+      CHROMA_HOST: chromadb
+      REDIS_URL: redis://redis:6379
+    networks: [nexus-network]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    deploy:
+      <<: *deploy-default
+
+  ai-service:
+    image: nexus/ai-service:latest
+    build: ./backend/services/ai-service
+    environment:
+      <<: *postgres-env
+      GEMINI_API_KEYS: ${GEMINI_API_KEYS:-}
+      GROQ_API_KEYS: ${GROQ_API_KEYS:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      CHROMA_HOST: chromadb
+      REDIS_URL: redis://redis:6379
+      MONGO_URL: mongodb://mongodb:27017/nexus_chat
+    networks: [nexus-network]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    deploy:
+      <<: *deploy-default
+
+  chat-service:
+    image: nexus/chat-service:latest
+    build: ./backend/services/chat-service
+    environment:
+      <<: *common-env
+      MONGO_URL: mongodb://mongodb:27017/nexus_chat
+      REDIS_URL: redis://redis:6379
+    networks: [nexus-network]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      <<: *deploy-default
+
+  analytics-service:
+    image: nexus/analytics-service:latest
+    build: ./backend/services/analytics-service
+    environment:
+      <<: *postgres-env
+      KAFKA_BROKER: kafka:9092
+      MONGO_URL: mongodb://mongodb:27017/nexus_analytics
+    networks: [nexus-network]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      <<: *deploy-default
+
+  hr-service:
+    image: nexus/hr-service:latest
+    build: ./backend/services/hr-service
+    environment:
+      <<: *postgres-env
+      NOTIFICATION_SERVICE_URL: http://notification-service:8000
+      INTERNAL_API_KEY: ${NEXUS_INTERNAL_API_KEY:-change-me-internal-key}
+    networks: [nexus-network]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      <<: *deploy-default
+
+  library-service:
+    image: nexus/library-service:latest
+    build: ./backend/services/library-service
+    environment:
+      <<: *postgres-env
+    networks: [nexus-network]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      <<: *deploy-default
+
+  operations-service:
+    image: nexus/operations-service:latest
+    build: ./backend/services/operations-service
+    environment:
+      <<: *postgres-env
+      MONGO_URL: mongodb://mongodb:27017/nexus_ops
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    networks: [nexus-network]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      <<: *deploy-default
+
+  notification-service:
+    image: nexus/notification-service:latest
+    build: ./backend/services/notification-service
+    environment:
+      <<: *common-env
+      MONGO_URL: mongodb://mongodb:27017/nexus_notify
+      REDIS_URL: redis://redis:6379
+      KAFKA_BROKER: kafka:9092
+      INTERNAL_API_KEY: ${NEXUS_INTERNAL_API_KEY:-change-me-internal-key}
+    networks: [nexus-network]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      <<: *deploy-default
+
+  scheduler-service:
+    image: nexus/scheduler-service:latest
+    build: ./backend/services/scheduler-service
+    environment:
+      <<: *postgres-env
+    networks: [nexus-network]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      <<: *deploy-default
+
+  alumni-service:
+    image: nexus/alumni-service:latest
+    build: ./backend/services/alumni-service
+    environment:
+      <<: *postgres-env
+    networks: [nexus-network]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      <<: *deploy-default
+
+  # ======================================================================
+  #  FRONTEND
+  # ======================================================================
+
+  frontend:
+    image: nexus/frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: docker/Dockerfile
+    ports:
+      - target: 80
+        published: 3000
+        mode: ingress
+    networks: [nexus-network]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/health || wget -qO- http://localhost/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      <<: *deploy-default
+      replicas: 2

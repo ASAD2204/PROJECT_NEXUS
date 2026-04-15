@@ -1,0 +1,21 @@
+fastapi
+uvicorn[standard]
+pydantic-settings
+python-jose[cryptography]
+# --- LLM Providers ---
+google-generativeai
+groq
+# --- Vector DB & Retrieval ---
+chromadb
+rank-bm25
+flashrank
+# --- Embeddings & NLP ---
+sentence-transformers
+nltk
+# --- Cache & DB ---
+redis[hiredis]
+motor
+asyncpg
+# --- Numerical ---
+numpy
+scikit-learn

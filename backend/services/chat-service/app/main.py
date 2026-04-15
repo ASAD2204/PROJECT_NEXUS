@@ -1,0 +1,117 @@
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query
+from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
+from bson import ObjectId
+import logging
+
+from app.routes import router
+from app.websocket_manager import manager
+from app.database import chat_messages, chat_sessions, redis_client
+from app.dependencies import verify_ws_token
+
+logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Application
+# ---------------------------------------------------------------------------
+app = FastAPI(
+    title="Chat Service - Project Nexus",
+    version="1.0.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Mount the REST router
+app.include_router(router, prefix="/api/v1")
+
+
+# ---------------------------------------------------------------------------
+# Startup — create MongoDB indexes
+# ---------------------------------------------------------------------------
+@app.on_event("startup")
+async def create_indexes():
+    """Ensure MongoDB indexes exist per FYP spec."""
+    try:
+        # chat_messages indexes
+        await chat_messages.create_index("conversation_id")
+        await chat_messages.create_index("sender_id")
+        await chat_messages.create_index("timestamp")
+        await chat_messages.create_index(
+            [("conversation_id", 1), ("timestamp", 1)],
+            name="conversation_timestamp_compound",
+        )
+        # chat_sessions indexes
+        await chat_sessions.create_index("participants")
+        logger.info("MongoDB indexes created for chat-service")
+    except Exception as exc:
+        logger.error("Failed to create MongoDB indexes: %s", exc)
+
+
+# ---------------------------------------------------------------------------
+# Health check
+# ---------------------------------------------------------------------------
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "service": "chat-service"}
+
+
+# ---------------------------------------------------------------------------
+# WebSocket endpoint  -  real-time messaging within a session
+# ---------------------------------------------------------------------------
+@app.websocket("/api/v1/chat/ws/{session_id}")
+async def websocket_endpoint(
+    websocket: WebSocket,
+    session_id: str,
+    token: str = Query(...),
+):
+    # Authenticate via the JWT token supplied as a query parameter
+    user = verify_ws_token(token)
+    if not user:
+        await websocket.close(code=4001)
+        return
+
+    await manager.connect(websocket, session_id)
+    user_id = user["user_id"]
+
+    # Mark the user as online in Redis (FYP Table 150 — 2-minute heartbeat TTL)
+    await redis_client.set(f"chat:online:{user_id}", "online", ex=120)
+
+    try:
+        while True:
+            data = await websocket.receive_json()
+
+            # Parse optional attachments [{file_url, file_type, file_size}]
+            attachments = data.get("attachments", [])
+            message_type = data.get("message_type", "text")
+            if attachments and message_type == "text":
+                message_type = "file"
+
+            # Persist the message in MongoDB (FYP spec fields)
+            message_doc = {
+                "conversation_id": session_id,
+                "sender_id": user_id,
+                "content": data.get("content", ""),
+                "attachments": attachments,
+                "timestamp": datetime.utcnow().isoformat(),
+                "is_read": False,
+                "message_type": message_type,
+            }
+            result = await chat_messages.insert_one(message_doc)
+
+            # Prepare the payload for broadcast (replace Mongo _id with a string)
+            broadcast_doc = {**message_doc}
+            broadcast_doc["message_id"] = str(result.inserted_id)
+            broadcast_doc["session_id"] = session_id
+            broadcast_doc.pop("_id", None)
+
+            # Broadcast the message to every connection in this session
+            await manager.broadcast(broadcast_doc, session_id)
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, session_id)
+        await redis_client.delete(f"chat:online:{user_id}")

@@ -1,566 +1,354 @@
 <div align="center">
 
-# 🎓 Project Nexus
-### The Unified Intelligent Campus Platform
+# Project Nexus
+### Unified Intelligent Campus Platform
 
-**Final Year Design Project (FYDP) - BS Information Technology**  
-**Project ID:** `FYDP-BSIT-2504`
+Final Year Design Project (FYDP) for BS Information Technology  
+Project ID: FYDP-BSIT-2504
 
-[![React](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://react.dev/)
-[![Material-UI](https://img.shields.io/badge/Material--UI-7.3.6-007FFF?style=for-the-badge&logo=mui&logoColor=white)](https://mui.com/)
-[![Vite](https://img.shields.io/badge/Vite-7.2-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
-
-### 🌐 [Live Demo](https://ASAD2204.github.io/PROJECT_NEXUS)
+[![Frontend](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61DAFB?style=for-the-badge&logo=react&logoColor=white)](frontend/README.md)
+[![Backend](https://img.shields.io/badge/Backend-FastAPI%20Microservices-009688?style=for-the-badge&logo=fastapi&logoColor=white)](backend/services)
+[![Database](https://img.shields.io/badge/Data-PostgreSQL%20%2B%20MongoDB-336791?style=for-the-badge&logo=postgresql&logoColor=white)](infrastructure/postgres/init.sql)
+[![Messaging](https://img.shields.io/badge/Messaging-Apache%20Kafka-231F20?style=for-the-badge&logo=apachekafka&logoColor=white)](infrastructure/kafka/README.md)
+[![Infra](https://img.shields.io/badge/Infra-Docker%20%2B%20Observability-2496ED?style=for-the-badge&logo=docker&logoColor=white)](docker-compose.yml)
+[![License](https://img.shields.io/badge/License-Proprietary-important?style=for-the-badge)](LICENSE)
 
 </div>
 
 ---
 
-## 📚 About
+## Table of Contents
 
-**Project Nexus** is a comprehensive, AI-powered university management ecosystem designed to solve the fundamental "data silo" problem in educational technology. Built as a unified digital platform, it integrates Student Information Systems (SIS), Learning Management Systems (LMS), Financial Management, HR Operations, and AI-powered intelligent services into a single cohesive interface.
+- [Project Nexus](#project-nexus)
+    - [Unified Intelligent Campus Platform](#unified-intelligent-campus-platform)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [What Makes It Special](#what-makes-it-special)
+  - [Architecture](#architecture)
+    - [High-Level Design](#high-level-design)
+    - [Principles](#principles)
+  - [Microservices](#microservices)
+  - [Project Structure](#project-structure)
+  - [Getting Started](#getting-started)
+    - [1) Prerequisites](#1-prerequisites)
+    - [2) Clone project](#2-clone-project)
+    - [3) Configure environment](#3-configure-environment)
+    - [4) Start full stack](#4-start-full-stack)
+    - [5) Access endpoints](#5-access-endpoints)
+    - [6) Frontend-only development](#6-frontend-only-development)
+  - [Configuration and Environment](#configuration-and-environment)
+  - [Operations and Observability](#operations-and-observability)
+    - [Data Stores and Bootstrap Scripts](#data-stores-and-bootstrap-scripts)
+    - [Event Streaming](#event-streaming)
+    - [Monitoring](#monitoring)
+    - [Backups](#backups)
+  - [Documentation Map](#documentation-map)
+    - [Frontend](#frontend)
+    - [Service Docs](#service-docs)
+    - [Project-Level](#project-level)
+  - [Roadmap](#roadmap)
+  - [Team](#team)
+  - [License](#license)
+  - [Acknowledgments](#acknowledgments)
 
-This project transcends traditional Campus Management Systems by implementing:
-- **Polyglot Microservices Architecture** for fault isolation and scalability
-- **Event-Driven Communication** via Apache Kafka for zero data loss
-- **Hybrid AI Pipeline** (CAG + RAG) with Google Gemini for intelligent assistance
-- **Multi-Factor Biometric Attendance** with CV-based spoof detection
-- **Predictive Analytics** for at-risk student identification
+## Overview
 
-## 🎯 Core Innovation
+Project Nexus is a complete, AI-assisted university ecosystem built as a polyglot microservices platform. It combines academics, administration, finance, operations, attendance intelligence, and communication into one cohesive system.
 
-The central innovation is a tightly integrated **intelligence layer** that creates a continuous "data flywheel" where:
-- Operational data (attendance, fees) enhances the academic experience
-- Academic engagement data informs administrative strategy
-- AI-powered insights enable proactive intervention
+The platform is designed around a practical campus objective:
+
+- Remove disconnected systems and duplicate data entry
+- Enable event-driven automation across departments
+- Provide role-specific experiences for students, faculty, admin, alumni, HR, and library operations
+- Deliver predictive and assistive intelligence through analytics and AI services
 
 ---
 
-## 👥 Project Team
+## What Makes It Special
+
+- End-to-end campus operating system instead of isolated modules
+- Event-driven backbone with Kafka for reliable async workflows
+- Hybrid AI assistant pipeline with retrieval and semantic context
+- Cross-domain analytics for intervention and planning
+- Operationally ready stack with gateway, monitoring, and backups
+
+---
+
+## Architecture
+
+### High-Level Design
+
+- Frontend: React + Vite + Material UI
+- API Access: Nginx API Gateway
+- Backend: Domain-based FastAPI microservices
+- Relational Data: PostgreSQL
+- Document/Event Data: MongoDB
+- Cache and Session Layer: Redis
+- Vector Retrieval: ChromaDB
+- Async Backbone: Apache Kafka
+- Monitoring: Prometheus + Grafana + Blackbox Exporter
+- Backup: Scheduled backup service for PostgreSQL and MongoDB
+
+### Principles
+
+- Service isolation by domain
+- Event-first integration over tight service coupling
+- Stateless API services with externalized state
+- Role-based access control and JWT security
+- Infrastructure-as-code via Docker orchestration
+
+---
+
+## Microservices
+
+Project Nexus currently includes the following backend services:
+
+| Service | Domain Responsibility | Docs |
+|---|---|---|
+| Auth Service | Identity, role mapping, authorization primitives | [backend/services/auth-service/README.md](backend/services/auth-service/README.md) |
+| SIS Service | Departments, programs, semesters, enrollment intelligence | [backend/services/sis-service/README.md](backend/services/sis-service/README.md) |
+| LMS Service | Courses, sections, assignments, quizzes, classroom workflows | [backend/services/lms-service/README.md](backend/services/lms-service/README.md) |
+| Finance Service | Invoices, transactions, fee heads, fines | [backend/services/finance-service/README.md](backend/services/finance-service/README.md) |
+| Attendance Service | GPS + liveness + biometric attendance flow | [backend/services/attendance-service/README.md](backend/services/attendance-service/README.md) |
+| AI Service | Hybrid CAG/RAG assistant, retrieval pipeline, status and chat | [backend/services/ai-service/README.md](backend/services/ai-service/README.md) |
+| Chat Service | User-to-user and session-based communication | [backend/services/chat-service/README.md](backend/services/chat-service/README.md) |
+| Analytics Service | Dashboards, risk scoring, analytics event processing | [backend/services/analytics-service/README.md](backend/services/analytics-service/README.md) |
+| HR Service | Leave workflows, notifications, employee controls | [backend/services/hr-service/README.md](backend/services/hr-service/README.md) |
+| Library Service | Catalog, issue/return, reservations, fine linkage | [backend/services/library-service/README.md](backend/services/library-service/README.md) |
+| Operations Service | Grievances, service workflows, ops records | [backend/services/operations-service/README.md](backend/services/operations-service/README.md) |
+| Alumni Service | Alumni registry, events, jobs, mentorship, stories | [backend/services/alumni-service/README.md](backend/services/alumni-service/README.md) |
+| Scheduler Service | Timetable constraints and generation workflows | [backend/services/scheduler-service](backend/services/scheduler-service) |
+
+Gateway and shared layers:
+
+- API Gateway: [backend/api-gateway](backend/api-gateway)
+- Shared modules: [backend/shared](backend/shared)
+
+---
+
+## Project Structure
+
+```text
+Project_Nexus/
+├── .github/                       # CI/CD workflows
+├── backend/
+│   ├── api-gateway/
+│   ├── services/
+│   │   ├── ai-service/
+│   │   ├── alumni-service/
+│   │   ├── analytics-service/
+│   │   ├── attendance-service/
+│   │   ├── auth-service/
+│   │   ├── chat-service/
+│   │   ├── finance-service/
+│   │   ├── hr-service/
+│   │   ├── library-service/
+│   │   ├── lms-service/
+│   │   ├── operations-service/
+│   │   ├── scheduler-service/
+│   │   └── sis-service/
+│   └── shared/
+├── frontend/
+├── infrastructure/
+├── frontend/
+├── .env.example
+│   ├── backup/
+├── Instructions.md
+└── README.md
+```
+
+---
+
+## Getting Started
+
+### 1) Prerequisites
+
+- Docker Desktop
+- Git
+- Optional for frontend-only development: Node.js 18+
+
+### 2) Clone project
+
+```bash
+git clone https://github.com/ASAD2204/PROJECT_NEXUS.git
+cd PROJECT_NEXUS
+```
+
+### 3) Configure environment
+
+```bash
+cp .env.example .env
+```
+
+If your local setup does not include a root .env.example, provide required environment variables through your shell, Compose overrides, or deployment platform.
+
+### 4) Start full stack
+
+Option A: Docker Compose
+
+```bash
+docker compose up -d --build
+```
+
+Option B: Docker Swarm
+
+```bash
+docker swarm init
+docker stack deploy -c docker-compose.yml nexus
+```
+
+### 5) Access endpoints
+
+- API Gateway: http://localhost/
+- Grafana: http://localhost:3000
+- Prometheus: http://localhost:9090
+- PostgreSQL: localhost:5432
+- MongoDB: localhost:27017
+- Redis: localhost:6379
+- Kafka: localhost:9092
+
+### 6) Frontend-only development
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+## Configuration and Environment
+
+Main environment values used across services:
+
+- JWT secret and token settings
+- PostgreSQL connection string
+- MongoDB connection string
+- Redis URL
+- Kafka broker URL
+- ChromaDB host and port
+- Grafana admin credentials
+
+Production recommendations:
+
+- Use strong secret values and rotate regularly
+- Restrict public ports where possible
+- Use managed volumes and secure backups
+- Replace permissive CORS settings with allowlists
+
+---
+
+## Operations and Observability
+
+### Data Stores and Bootstrap Scripts
+
+- PostgreSQL schema bootstrap: [infrastructure/postgres/init.sql](infrastructure/postgres/init.sql)
+- Mongo collections and indexes: [infrastructure/mongo/init-mongo.js](infrastructure/mongo/init-mongo.js)
+
+### Event Streaming
+
+- Kafka guide and topic references: [infrastructure/kafka/README.md](infrastructure/kafka/README.md)
+
+### Monitoring
+
+- Prometheus config: [infrastructure/monitoring/prometheus.yml](infrastructure/monitoring/prometheus.yml)
+- Blackbox probes: [infrastructure/monitoring/blackbox.yml](infrastructure/monitoring/blackbox.yml)
+- Grafana provisioning: [infrastructure/monitoring/grafana](infrastructure/monitoring/grafana)
+
+### Backups
+
+- Backup container and scripts: [infrastructure/backup](infrastructure/backup)
+
+---
+
+## Documentation Map
+
+### Frontend
+
+- Main frontend guide: [frontend/README.md](frontend/README.md)
+- Frontend deployment notes: [frontend/DEPLOYMENT.md](frontend/DEPLOYMENT.md)
+- Frontend Docker guide: [frontend/docker/README.md](frontend/docker/README.md)
+
+### Service Docs
+
+- [backend/services/auth-service/README.md](backend/services/auth-service/README.md)
+- [backend/services/sis-service/README.md](backend/services/sis-service/README.md)
+- [backend/services/lms-service/README.md](backend/services/lms-service/README.md)
+- [backend/services/finance-service/README.md](backend/services/finance-service/README.md)
+- [backend/services/attendance-service/README.md](backend/services/attendance-service/README.md)
+- [backend/services/ai-service/README.md](backend/services/ai-service/README.md)
+- [backend/services/chat-service/README.md](backend/services/chat-service/README.md)
+- [backend/services/analytics-service/README.md](backend/services/analytics-service/README.md)
+- [backend/services/hr-service/README.md](backend/services/hr-service/README.md)
+- [backend/services/library-service/README.md](backend/services/library-service/README.md)
+- [backend/services/operations-service/README.md](backend/services/operations-service/README.md)
+- [backend/services/alumni-service/README.md](backend/services/alumni-service/README.md)
+
+### Project-Level
+
+- Architecture and build notes: [Instructions.md](Instructions.md)
+- Deployment playbook: [deployment/README.md](deployment/README.md)
+- Runtime stack: [docker-compose.yml](docker-compose.yml)
+- Frontend to backend API mapping: [API_CONNECTIVITY_README.md](API_CONNECTIVITY_README.md)
+
+---
+
+## Roadmap
+
+- Harden production security defaults and environment profiles
+- Complete integration and contract tests across all API domains
+- Expand analytics and alerting dashboards for operational SLOs
+- Add migration tooling for zero-downtime schema updates
+- Publish release notes and versioned deployment bundles
+
+---
+
+## Team
 
 | Name | Roll Number | GitHub |
-|------|-------------|--------|
-| **Muhammad Asad** | BIT22031 | [@ASAD2204](https://github.com/ASAD2204) |
-| **Muhammad Saad** | BIT22034 | [@saadi-js](https://github.com/saadi-js) |
-| **Muhammad Hanzla** | BIT22002 | [@Hanzla56-H](https://github.com/Hanzla56-H) |
+|---|---|---|
+| Muhammad Asad | BIT22031 | [@ASAD2204](https://github.com/ASAD2204) |
+| Muhammad Saad | BIT22034 | [@saadi-js](https://github.com/saadi-js) |
+| Muhammad Hanzla | BIT22002 | [@Hanzla56-H](https://github.com/Hanzla56-H) |
 
-**Project Supervisor:** Dr. Ghulam Mustafa  
-**Department:** Information Technology, University of the Punjab, Gujranwala Campus
-
-**Project Coordinator:** Mr. Muhammad Younas  
-**Department:** Information Technology, University of the Punjab, Gujranwala Campus
-
-**Faculty Advisory Committee** 
-- Dr. Naveed Ahamd Jhamat
-- Ms. Fizza
-  
-**Department:** Information Technology, University of the Punjab, Gujranwala Campus
+Supervisor: Dr. Ghulam Mustafa  
+Coordinator: Mr. Muhammad Younas  
+Department of Information Technology, University of the Punjab, Gujranwala Campus
 
 ---
 
-## 📜 License
+## License
 
-**© 2025-2026 Department of Information Technology, University of the Punjab, Gujranwala Campus**
+This repository is proprietary academic work.
 
-This project is **proprietary** and developed as part of the Final Year Design Project (FYDP). Unauthorized copying, modification, or distribution is prohibited.
+- Full license text: [LICENSE](LICENSE)
+- Frontend license notice: [frontend/LICENSE](frontend/LICENSE)
 
-**Usage Restrictions:**
-- Access granted for academic evaluation only
-- Not open source or available for commercial use
-- All rights reserved by the university and student developers
+Key points:
 
----
-
-## ✨ Key Features
-
-### 🎓 Student Portal
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| **📊 Smart Dashboard** | CGPA tracking, attendance monitoring, pending tasks, upcoming classes with interactive charts | ✅ Complete |
-| **🔒 Biometric Attendance** | Multi-factor verification with GPS geofencing + facial recognition + liveness detection | ✅ Complete |
-| **📜 Digital Transcript** | Semester-wise grades, CGPA calculation, instant PDF generation | ✅ Complete |
-| **📝 Assignment Portal** | Drag-drop file submission, status tracking, deadline management | ✅ Complete |
-| **🤖 AI Chatbot** | 24/7 RAG-powered assistance with context-aware responses and citations | ✅ Complete |
-| **💰 Fee Management** | View vouchers, online payment gateway, payment history | ✅ Complete |
-| **📚 Library Access** | Browse catalog, reserve books, track issued books | ✅ Complete |
-| **📢 Grievances** | Submit and track complaints with AI-powered routing | ✅ Complete |
-
-### 👨‍🏫 Faculty Portal
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| **📊 Course Analytics** | Student success dashboard with at-risk prediction and performance trends | ✅ Complete |
-| **✍️ Assignment Management** | Create assignments, track submissions, grade with rubrics | ✅ Complete |
-| **📝 Quiz Creator** | Multiple question types (MCQ, True/False, Short Answer), auto-grading | ✅ Complete |
-| **✅ Attendance System** | Class-wise marking, bulk operations, attendance reports | ✅ Complete |
-| **🎓 Student Management** | Performance monitoring, grade management, intervention alerts | ✅ Complete |
-| **📈 Reports & Analytics** | Class performance, at-risk students, assignment statistics | ✅ Complete |
-| **🎯 Course Management** | Content creation, resource uploads, announcement broadcasting | ✅ Complete |
-
-### 👔 Administrator Portal
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| **📊 Executive Dashboard** | Real-time KPIs, enrollment analytics, revenue tracking, attendance overview | ✅ Complete |
-| **👥 User Management** | CRUD operations for students, faculty, admins with RBAC | ✅ Complete |
-| **📚 Course Management** | Program setup, course creation, conflict-free timetabling | ✅ Complete |
-| **💰 Financial Management** | Fee collection monitoring, payment tracking, financial reports | ✅ Complete |
-| **📢 Announcement System** | Campus-wide broadcasting with role-based targeting | ✅ Complete |
-| **🎓 Department Management** | Department creation, faculty assignment, resource allocation | ✅ Complete |
-| **📋 Comprehensive Reports** | Enrollment, financial, performance reports with PDF/Excel export | ✅ Complete |
-
-### 🎓 Alumni Portal
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| **🌐 Alumni Network** | Directory with search, professional profiles, company affiliations | ✅ Complete |
-| **🎉 Event Management** | Reunions, networking events, seminars with registration | ✅ Complete |
-| **🤝 Mentorship Programs** | Connect alumni with current students for career guidance | ✅ Complete |
-| **💼 Job Board** | Career opportunities from alumni companies | ✅ Complete |
-
-### 📚 Library Portal
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| **📖 Digital Catalog** | Advanced search, filtering by genre/author/ISBN | ✅ Complete |
-| **📤 Book Management** | Issue, return, reserve operations with QR code support | ✅ Complete |
-| **📊 Librarian Dashboard** | Circulation statistics, overdue tracking, member management | ✅ Complete |
-| **⏰ Automated Fines** | Calculate overdue fines, payment integration | ✅ Complete |
+- Not open source
+- No unauthorized redistribution or commercial use
+- Academic and evaluation usage only unless explicitly permitted in writing
 
 ---
 
-## 🏗️ Technology Stack
+## Acknowledgments
 
-### Frontend Technologies
-
-| Category | Technology | Version | Purpose |
-|----------|-----------|---------|---------|
-| **Framework** | React | 19.2 | UI library with concurrent features |
-| **Build Tool** | Vite | 7.x | Fast build tool with HMR |
-| **Routing** | React Router DOM | 7.x | Client-side routing |
-| **UI Library** | Material-UI | 7.3.6 | Material Design 3 components |
-| **Styling** | Emotion | 11.x | CSS-in-JS |
-| **Animation** | Framer Motion | 12.x | Smooth page transitions |
-| **Charts** | Recharts | 3.x | Data visualization |
-| **State Management** | Context API | - | Global state management |
-
-### Backend Architecture (Planned)
-
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| **API Framework** | FastAPI (Python) | High-performance REST APIs |
-| **Authentication** | JWT + OAuth2 | Secure token-based auth |
-| **Database (Relational)** | PostgreSQL | Transactional data (SIS, Finance) |
-| **Database (Document)** | MongoDB | Flexible schema (LMS, Chat logs) |
-| **Cache Layer** | Redis | Session management, caching |
-| **Vector Database** | ChromaDB | AI embeddings for RAG pipeline |
-| **Message Queue** | Apache Kafka | Event-driven automation |
-| **File Storage** | AWS S3 | Document and media storage |
-
-### AI & Intelligence Layer
-
-| Component | Technology | Use Case |
-|-----------|-----------|----------|
-| **LLM** | Google Gemini API | Generative AI for chatbot |
-| **RAG Orchestration** | LangChain | Context-aware responses |
-| **ML Framework** | Scikit-learn | Predictive analytics |
-| **Computer Vision** | OpenCV + dlib | Facial recognition |
-| **NLP** | NLTK / spaCy | Text analysis for grievances |
-| **Vector Search** | ChromaDB | Semantic document search |
-
----
-
-## 🚀 Quick Start
-
-### Option 1: Docker Deployment (Recommended) 🐳
-
-```bash
-# Prerequisites: Install Docker Desktop
-# Download from: https://www.docker.com/products/docker-desktop
-
-# Clone repository
-git clone https://github.com/ASAD2204/PROJECT_NEXUS.git
-cd PROJECT_NEXUS
-
-# Run with Docker Compose
-docker-compose -f docker/docker-compose.yml up -d
-
-# Access application at http://localhost:3000
-```
-
-### Option 2: Local Development
-
-```bash
-# Clone repository
-git clone https://github.com/ASAD2204/PROJECT_NEXUS.git
-cd PROJECT_NEXUS
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Access application at http://localhost:5173
-```
-
-### Demo Credentials
-
-| Role | Email | Password |
-|------|-------|----------|
-| **Student** | student@nexus.edu | student123 |
-| **Teacher** | teacher@nexus.edu | teacher123 |
-| **Admin** | admin@nexus.edu | admin123 |
-
-📖 **For detailed Docker instructions**, see [docker/README.md](docker/README.md)
-
----
-
-## 📁 Project Structure
-
-```
-Project_Nexus/
-├── 📂 docker/                       # Docker configuration files
-│   ├── Dockerfile                 # Frontend container image
-│   ├── docker-compose.yml         # Multi-container orchestration
-│   ├── .dockerignore              # Docker build exclusions
-│   └── README.md                  # Docker setup guide
-│
-├── 📂 public/                       # Static assets
-│   └── favicon.ico
-│
-├── 📂 src/                         # Application source code
-│   │
-│   ├── 📂 assets/                  # Images, logos, media
-│   │   └── react.svg
-│   │
-│   ├── 📂 components/              # Reusable React components
-│   │   ├── 📂 Layout/             # Application layout
-│   │   │   ├── MainLayout.jsx    # Main container with sidebar
-│   │   │   ├── Sidebar.jsx       # Role-based navigation
-│   │   │   └── TopBar.jsx        # Header with notifications
-│   │   ├── 📂 Common/             # Shared UI components
-│   │   │   ├── StatCard.jsx      # Dashboard statistics cards
-│   │   │   ├── PageHeader.jsx    # Page title with breadcrumbs
-│   │   │   ├── StatusBadge.jsx   # Status indicators
-│   │   │   ├── EmptyState.jsx    # Empty state placeholders
-│   │   │   ├── LoadingSkeleton.jsx  # Loading animations
-│   │   │   ├── PageTransition.jsx   # Page transitions
-│   │   │   └── SplashScreen.jsx  # Initial loading screen
-│   │   ├── 📂 Forms/              # Form components
-│   │   │   └── FileDropzone.jsx  # Drag-drop file upload
-│   │   └── 📂 Chat/               # Chat components
-│   │       └── ChatWidget.jsx    # Chat interface
-│   │
-│   ├── 📂 contexts/                # React Context providers
-│   │   ├── AuthContext.jsx       # Authentication state
-│   │   ├── ThemeContext.jsx      # Theme management
-│   │   └── SnackbarContext.jsx   # Notification system
-│   │
-│   ├── 📂 pages/                   # Page components by module
-│   │   ├── 📂 Auth/               # Authentication
-│   │   │   ├── Login.jsx         # Split-screen login
-│   │   │   ├── ForgotPassword.jsx
-│   │   │   └── OTP.jsx
-│   │   │
-│   │   ├── 📂 Student/            # Student portal (8 pages)
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── Profile.jsx
-│   │   │   ├── Transcript.jsx
-│   │   │   ├── MyAssignments.jsx
-│   │   │   ├── MyTickets.jsx
-│   │   │   ├── Notifications.jsx
-│   │   │   └── AlumniDirectory.jsx
-│   │   │
-│   │   ├── 📂 Teacher/            # Faculty portal (11 pages)
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── MyCourses.jsx
-│   │   │   ├── CourseManagement.jsx
-│   │   │   ├── StudentManagement.jsx
-│   │   │   ├── Assignments.jsx
-│   │   │   ├── CreateAssignment.jsx
-│   │   │   ├── CreateQuiz.jsx
-│   │   │   ├── Quizzes.jsx
-│   │   │   ├── ViewSubmissions.jsx
-│   │   │   ├── GrievanceManagement.jsx
-│   │   │   └── Profile.jsx
-│   │   │
-│   │   ├── 📂 Admin/              # Admin portal (12 pages)
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── UserManagement.jsx
-│   │   │   ├── AlumniManagement.jsx
-│   │   │   ├── CourseManagement.jsx
-│   │   │   ├── DepartmentManagement.jsx
-│   │   │   ├── FinanceManagement.jsx
-│   │   │   ├── GrievanceManagement.jsx
-│   │   │   ├── AnnouncementManagement.jsx
-│   │   │   ├── Reports.jsx
-│   │   │   ├── Settings.jsx
-│   │   │   └── Profile.jsx
-│   │   │
-│   │   ├── 📂 Alumni/             # Alumni portal (6 pages)
-│   │   │   ├── AlumniNetwork.jsx
-│   │   │   ├── AlumniEvents.jsx
-│   │   │   ├── JobBoard.jsx
-│   │   │   ├── Mentorship.jsx
-│   │   │   ├── SuccessStories.jsx
-│   │   │   └── Profile.jsx
-│   │   │
-│   │   ├── 📂 Library/            # Library module (9 pages)
-│   │   │   ├── Library.jsx
-│   │   │   ├── LibraryCatalog.jsx
-│   │   │   ├── IssuedBooks.jsx
-│   │   │   ├── Reservations.jsx
-│   │   │   ├── LibrarianDashboard.jsx
-│   │   │   ├── BookManagement.jsx
-│   │   │   ├── LibrarianGrievances.jsx
-│   │   │   ├── LibrarianReports.jsx
-│   │   │   └── Profile.jsx
-│   │   │
-│   │   ├── 📂 Attendance/         # Attendance module (8 pages)
-│   │   │   ├── SmartAttendance.jsx
-│   │   │   ├── FaceCapture.jsx
-│   │   │   ├── LivenessDetection.jsx
-│   │   │   ├── GPSVerification.jsx
-│   │   │   ├── CourseSelection.jsx
-│   │   │   ├── Confirmation.jsx
-│   │   │   ├── AttendanceSuccess.jsx
-│   │   │   └── History.jsx
-│   │   │
-│   │   ├── 📂 LMS/                # Learning Management
-│   │   │   ├── CourseList.jsx
-│   │   │   ├── CourseClassroom.jsx
-│   │   │   └── AssignmentSubmit.jsx
-│   │   │
-│   │   ├── 📂 Finance/            # Financial management
-│   │   │   └── FeeVouchers.jsx
-│   │   │
-│   │   ├── 📂 Chat/               # Communication
-│   │   │   └── ChatPortal.jsx
-│   │   │
-│   │   ├── 📂 Grievances/         # Grievance system
-│   │   │   ├── Grievances.jsx
-│   │   │   └── EnhancedGrievances.jsx
-│   │   │
-│   │   ├── 📂 Support/            # Help & support
-│   │   │   └── HelpSupport.jsx
-│   │   │
-│   │   └── 📂 Operations/         # Operations module
-│   │       └── Grievances.jsx
-│   │
-│   ├── 📂 data/                    # Mock data
-│   │   └── dummyData.js           # Centralized test data (500+ lines)
-│   │
-│   ├── 📂 styles/                  # Global styles
-│   │   └── globalStyles.js
-│   │
-│   ├── 📂 utils/                   # Utility functions
-│   │   └── animations.js          # Framer Motion configs
-│   │
-│   ├── 📄 App.jsx                  # Route configuration
-│   ├── 📄 main.jsx                 # App entry point
-│   └── 📄 theme.js                 # MUI theme customization
-│
-├── 📄 package.json                 # Dependencies & scripts
-├── 📄 vite.config.js               # Vite build configuration
-├── 📄 eslint.config.js             # Code linting rules
-├── 📄 index.html                   # HTML entry point
-└── 📄 README.md                    # This file
-```
-
-### 📊 Project Statistics
-
-| Metric | Count | Description |
-|--------|-------|-------------|
-| **Total Pages** | 60+ | Complete role-based pages |
-| **Reusable Components** | 20+ | Shared UI components |
-| **User Roles** | 5 | Student, Teacher, Admin, Alumni, Librarian |
-| **Lines of Code** | ~10,000+ | Frontend implementation |
-| **Mock Data Entries** | 500+ | Realistic test data |
-| **Routes** | 40+ | Protected and public routes |
-
----
-
-##  Project Status
-
-| Phase | Status | Description |
-|-------|--------|-------------|
-| **Phase 1** | ✅ Complete | Frontend prototype with full UI/UX |
-| **Phase 2** | 🔄 In Progress | Backend API development |
-| **Phase 3** | 📅 Planned | AI integration and biometric systems |
-| **Phase 4** | 📅 Planned | Deployment and testing |
-
-**Current Version:** 1.0.0 (Frontend Prototype)  
-**Expected Completion:** April 2026
-
----
-
-## 🚀 Deployment
-
-### Live Demo
-🌐 **Deployed on GitHub Pages:** [https://ASAD2204.github.io/PROJECT_NEXUS](https://ASAD2204.github.io/PROJECT_NEXUS)
-
-### Deployment Configuration
-
-| Setting | Value | Description |
-|---------|-------|-------------|
-| **Platform** | GitHub Pages | Free static hosting |
-| **Build Command** | `npm run build` | Vite production build |
-| **Output Directory** | `dist/` | Build artifacts |
-| **Base Path** | `/Project_Nexus/` | Repository-based routing |
-| **CI/CD** | GitHub Actions | Automated deployment |
-| **Branch** | `main` | Deployment source |
-
-### Available Scripts
-
-```bash
-# Development
-npm run dev          # Start dev server (http://localhost:5173)
-npm run build        # Create production build
-npm run preview      # Preview production build locally
-
-# Deployment
-npm run deploy       # Deploy to GitHub Pages
-```
-
-### Build Information
-
-| Metric | Value |
-|--------|-------|
-| **Build Time** | ~15 seconds |
-| **Bundle Size** | ~2.5 MB (gzipped) |
-| **Load Time** | < 2 seconds |
-| **Lighthouse Score** | 95+ |
-
----
-
-## 🎨 Design System
-
-### Color Palette
-
-| Color | Hex Code | Usage |
-|-------|----------|-------|
-| **Primary Blue** | `#1976D2` | AppBars, primary buttons, links |
-| **Secondary Teal** | `#00796B` | Success states, "Pay Now" buttons |
-| **Background** | `#F4F6F8` | Application background |
-| **Surface** | `#FFFFFF` | Card backgrounds |
-| **Error Red** | `#D32F2F` | Error messages, alerts |
-| **Warning Orange** | `#F57C00` | Warning states |
-| **Success Green** | `#388E3C` | Success messages |
-| **Text Primary** | `#212121` | Main text content |
-| **Text Secondary** | `#757575` | Supporting text |
-
-### Typography
-
-| Element | Font | Weight | Size |
-|---------|------|--------|------|
-| **H1** | Roboto | 300 | 96px |
-| **H2** | Roboto | 300 | 60px |
-| **H3** | Roboto | 400 | 48px |
-| **H4** | Roboto | 400 | 34px |
-| **H5** | Roboto | 400 | 24px |
-| **H6** | Roboto | 500 | 20px |
-| **Body** | Roboto | 400 | 16px |
-| **Caption** | Roboto | 400 | 12px |
-
-### UI Components
-
-| Component | Border Radius | Elevation |
-|-----------|---------------|-----------|
-| **Cards** | 12px | 2 |
-| **Buttons** | 8px | 0 (flat) / 2 (raised) |
-| **Dialogs** | 16px | 24 |
-| **Chips** | 16px | 0 |
-
----
-
-## 📊 User Roles & Permissions
-
-### Role-Based Access Control (RBAC)
-
-| Role | Dashboard | User Mgmt | Course Mgmt | Finance | Reports | Alumni | Library |
-|------|-----------|-----------|-------------|---------|---------|---------|---------|
-| **Student** | ✅ Own | ❌ | ✅ View | ✅ Own | ❌ | ✅ Network | ✅ Access |
-| **Teacher** | ✅ Own | ❌ | ✅ Assigned | ❌ | ✅ Class | ❌ | ✅ Access |
-| **Admin** | ✅ All | ✅ Full | ✅ Full | ✅ Full | ✅ All | ✅ Manage | ✅ Manage |
-| **Alumni** | ✅ Own | ❌ | ❌ | ❌ | ❌ | ✅ Full | ❌ |
-| **Librarian** | ✅ Own | ❌ | ❌ | ❌ | ✅ Library | ❌ | ✅ Full |
-
----
-
-## 🔧 Development
-
-### Prerequisites
-
-| Software | Version | Download |
-|----------|---------|----------|
-| **Node.js** | 18.0+ | [nodejs.org](https://nodejs.org/) |
-| **npm** | 8.0+ | Included with Node.js |
-| **Git** | 2.0+ | [git-scm.com](https://git-scm.com/) |
-
-### Key Dependencies
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `react` | ^19.2.0 | UI framework |
-| `@mui/material` | ^7.3.6 | UI components |
-| `@mui/x-data-grid` | ^8.23.0 | Data tables |
-| `react-router-dom` | ^7.11.0 | Routing |
-| `framer-motion` | ^12.23.26 | Animations |
-| `recharts` | ^3.6.0 | Charts |
-
----
-
-## 📈 Future Roadmap
-
-### Phase 2: Backend Integration (Q1-Q2 2026)
-
-| Task | Technology | Timeline |
-|------|-----------|----------|
-| REST API Development | FastAPI | 4 weeks |
-| Database Setup | PostgreSQL + MongoDB | 2 weeks |
-| Authentication | JWT + OAuth2 | 2 weeks |
-| File Upload | AWS S3 | 1 week |
-| Real-time Chat | WebSockets | 2 weeks |
-
-### Phase 3: AI & Intelligence (Q2-Q3 2026)
-
-| Feature | Technology | Priority |
-|---------|-----------|----------|
-| AI Chatbot | Google Gemini + LangChain | High |
-| Face Recognition | OpenCV + dlib | High |
-| Predictive Analytics | Scikit-learn | Medium |
-| NLP for Grievances | NLTK/spaCy | Medium |
-| Recommendation Engine | Collaborative Filtering | Low |
-
-### Phase 4: Advanced Features (Q3-Q4 2026)
-
-| Feature | Description | Impact |
-|---------|-------------|--------|
-| Mobile App | React Native | High |
-| Video Conferencing | Jitsi/Zoom SDK | High |
-| Payment Gateway | Stripe/JazzCash | High |
-| Email Notifications | SendGrid | Medium |
-| SMS Notifications | Twilio | Low |
-
----
-
-##  Contact
-
-**Muhammad Asad:** bit22031@pugc.edu.pk  
-**Muhammad Saad:** bit22034@pugc.edu.pk  
-**Muhammad Hanzla:** hanzlaabubakar56@gmail.com
-
-**Institution:** University of the Punjab, Gujranwala Campus  
-**Department:** Information Technology
+Thanks to faculty advisors, supervisors, and reviewers who supported the project architecture, validation, and iterative quality improvements.
 
 ---
 
 <div align="center">
 
-**Built with ❤️ for Final Year Project**
+Built for an integrated, intelligent, and operationally resilient digital campus.
 
-⭐ Star this repository if you find it helpful!
+</div>
+This project is developed as an FYDP deliverable for academic and evaluation use under institutional ownership and policy. Refer to departmental guidance for distribution and reuse permissions.
+
+---
+
+<div align="center">
+
+Built for an integrated, intelligent, and operationally resilient digital campus.
 
 </div>
