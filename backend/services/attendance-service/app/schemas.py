@@ -17,6 +17,19 @@ class GPSVerifyResponse(BaseModel):
     distance_meters: float
 
 
+class GeofenceConfigUpdateRequest(BaseModel):      
+    campus_lat: float
+    campus_lng: float
+    max_radius_meters: int
+
+
+class GeofenceConfigResponse(BaseModel):
+    campus_lat: float
+    campus_lng: float
+    max_radius_meters: int
+    source: Optional[str] = None
+
+
 # ---------------------------------------------------------------------------
 # Liveness verification
 # ---------------------------------------------------------------------------

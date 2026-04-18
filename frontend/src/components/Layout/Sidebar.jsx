@@ -63,6 +63,7 @@ import {
   AccountBalance as AccountBalanceIcon,
   CardMembership as CardMembershipIcon,
   Campaign as CampaignIcon,
+  Fingerprint as FingerprintIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -134,6 +135,7 @@ const adminMenuItems = [
   { text: 'Grievances', icon: SupportAgentIcon, path: '/admin/grievances' },
   { text: 'Announcements', icon: CampaignIcon, path: '/admin/announcements' },
   { text: 'Reports', icon: AssessmentIcon, path: '/admin/reports' },
+  { text: 'Biometric Enrollment', icon: FingerprintIcon, path: '/attendance/biometric-enrollment' },   
   { text: 'Settings', icon: SettingsIcon, path: '/admin/settings', divider: true },
   { text: 'Profile', icon: PersonIcon, path: '/admin/profile' },
   { text: 'Library', icon: MenuBookIcon, path: '/library' },
@@ -152,6 +154,7 @@ const teacherMenuItems = [
     icon: HowToRegIcon, 
     path: '/teacher/attendance',
   },
+    { text: 'Biometric Enrollment', icon: FingerprintIcon, path: '/attendance/biometric-enrollment' },   
   { text: 'Reports', icon: AssessmentIcon, path: '/teacher/reports', divider: true },
   { text: 'Profile', icon: PersonIcon, path: '/teacher/profile' },
   { text: 'Library', icon: MenuBookIcon, path: '/library' },

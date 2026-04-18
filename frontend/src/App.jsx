@@ -73,6 +73,7 @@ import AttendanceHistory from './pages/Attendance/History';
 import GPSVerification from './pages/Attendance/GPSVerification';
 import LivenessDetection from './pages/Attendance/LivenessDetection';
 import FaceCapture from './pages/Attendance/FaceCapture';
+import BiometricEnrollment from './pages/Attendance/BiometricEnrollment';
 import Confirmation from './pages/Attendance/Confirmation';
 import AttendanceSuccess from './pages/Attendance/AttendanceSuccess';
 
@@ -262,6 +263,8 @@ function App() {
         <Route path="attendance/gps-verification" element={<GPSVerification />} />
         <Route path="attendance/liveness-detection" element={<LivenessDetection />} />
         <Route path="attendance/face-capture" element={<FaceCapture />} />
+        <Route path="attendance/biometric-enrollment" element={<BiometricEnrollment />} />
+        <Route path="attendance/face-enrollment" element={<Navigate to="/attendance/biometric-enrollment" replace />} />
         <Route path="attendance/confirmation" element={<Confirmation />} />
         <Route path="attendance/success" element={<AttendanceSuccess />} />
         <Route path="attendance/history" element={<AttendanceHistory />} />

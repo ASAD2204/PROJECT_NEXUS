@@ -26,11 +26,18 @@ export const attendanceAPI = {
   getStats: (params) => client.get('/attendance/stats', { params }),
   getMyStats: () => client.get('/attendance/stats/me'),
 
+  // ── Geofence settings ──
+  getGeofenceConfig: () => client.get('/attendance/geofence'),
+  updateGeofenceConfig: (data) => client.put('/attendance/geofence', data),
+  resetGeofenceConfig: () => client.delete('/attendance/geofence'),
+
   // ── Enrollment (face registration) ──
   enrollFace: (formData) =>
     client.post('/attendance/enroll', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
+  enrollFaceForStudent: (studentId, data) => client.post(`/attendance/enroll-face/${studentId}`, data),
+  enrollFaceMulti: (studentId, data) => client.post(`/attendance/enroll-face-multi/${studentId}`, data),
 
   // ── Active Sessions (for teacher) ──
   getActiveSessions: () => client.get('/attendance/sessions/active'),

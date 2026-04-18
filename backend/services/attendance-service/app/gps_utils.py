@@ -1,5 +1,5 @@
 import math
-from app.config import settings
+from app.geofence import get_geofence_config
 
 
 def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -17,7 +17,11 @@ def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
 
 def is_on_campus(student_lat: float, student_lng: float) -> tuple[bool, float]:
     """Check whether coordinates fall within the configured campus radius."""
+    geofence = get_geofence_config()
     distance = haversine_distance(
-        settings.CAMPUS_LAT, settings.CAMPUS_LNG, student_lat, student_lng
+        float(geofence["campus_lat"]),
+        float(geofence["campus_lng"]),
+        student_lat,
+        student_lng,
     )
-    return distance <= settings.MAX_RADIUS_METERS, distance
+    return distance <= int(geofence["max_radius_meters"]), distance

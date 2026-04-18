@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';    
 import { motion } from 'framer-motion';
 import {
   Box,
@@ -30,6 +31,9 @@ import {
   Notifications,
   Security,
   School,
+  MyLocation,
+  Public,
+  RestartAlt,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import PageHeader from '../../components/Common/PageHeader';
@@ -37,12 +41,31 @@ import PageTransition from '../../components/Common/PageTransition';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 import { fadeInUp, staggerContainer } from '../../utils/animations';
 import { opsAPI } from '../../api/ops';
+import { attendanceAPI } from '../../api/attendance';
+
+const parseGeofenceNumber = (value, fallback) => { 
+  if (value === '' || value === null || value === undefined) {
+    return fallback;
+  }
+
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? NaN : parsed;      
+};
+
+const normalizeGeofence = (payload) => ({
+  campus_lat: parseGeofenceNumber(payload?.campus_lat, 32.0853),
+  campus_lng: parseGeofenceNumber(payload?.campus_lng, 74.1894),
+  max_radius_meters: parseGeofenceNumber(payload?.max_radius_meters, 100),
+  source: payload?.source || 'environment',        
+});
 
 const Settings = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const { showSnackbar } = useSnackbar();
   const fileInputRef = useRef(null);
   const [logoPreview, setLogoPreview] = useState(null);
+  const [geofenceSaving, setGeofenceSaving] = useState(false);
   const [settings, setSettings] = useState({
     campusName: '',
     campusAddress: '',
@@ -64,6 +87,12 @@ const Settings = () => {
     notifyOnAttendance: true,
     notifyOnGrades: true,
   });
+  const [geofenceSettings, setGeofenceSettings] = useState({
+    campus_lat: 32.0853,
+    campus_lng: 74.1894,
+    max_radius_meters: 100,
+    source: 'environment',
+  });
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -72,6 +101,13 @@ const Settings = () => {
         const d = res.data;
         if (d && typeof d === 'object' && !Array.isArray(d)) setSettings(prev => ({ ...prev, ...d }));
       } catch (e) { console.error(e); }
+
+      try {
+        const geofenceRes = await attendanceAPI.getGeofenceConfig();
+        setGeofenceSettings(normalizeGeofence(geofenceRes.data));
+      } catch (e) {
+        console.error(e);
+      }
     };
     fetchSettings();
   }, []);
@@ -83,6 +119,49 @@ const Settings = () => {
     } catch (e) {
       console.error(e);
       showSnackbar('Failed to save settings', 'error');
+    }
+  };
+
+  const handleSaveGeofence = async () => {
+    const payload = normalizeGeofence(geofenceSettings);
+    if (!Number.isFinite(payload.campus_lat) || !Number.isFinite(payload.campus_lng) || !Number.isFinite(payload.max_radius_meters)) {
+      showSnackbar('Enter valid geofence coordinates and radius', 'error');
+      return;
+    }
+
+    if (payload.max_radius_meters <= 0) {
+      showSnackbar('Geofence radius must be greater than zero', 'error');
+      return;
+    }
+
+    setGeofenceSaving(true);
+    try {
+      const res = await attendanceAPI.updateGeofenceConfig({
+        campus_lat: payload.campus_lat,
+        campus_lng: payload.campus_lng,
+        max_radius_meters: Math.round(payload.max_radius_meters),
+      });
+      setGeofenceSettings(normalizeGeofence(res.data));
+      showSnackbar('Attendance geofence saved', 'success');
+    } catch (e) {
+      console.error(e);
+      showSnackbar(e.response?.data?.detail || 'Failed to save attendance geofence', 'error');
+    } finally {
+      setGeofenceSaving(false);
+    }
+  };
+
+  const handleResetGeofence = async () => {        
+    setGeofenceSaving(true);
+    try {
+      const res = await attendanceAPI.resetGeofenceConfig();
+      setGeofenceSettings(normalizeGeofence(res.data));
+      showSnackbar('Attendance geofence reset to defaults', 'info');
+    } catch (e) {
+      console.error(e);
+      showSnackbar(e.response?.data?.detail || 'Failed to reset attendance geofence', 'error');        
+    } finally {
+      setGeofenceSaving(false);
     }
   };
 
@@ -319,6 +398,123 @@ const Settings = () => {
                     Save Security Settings
                   </Button>
                 </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Attendance Geofence */}
+          <Grid size={12} component={motion.div} variants={fadeInUp}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 3, flexWrap: 'wrap' }}>     
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>     
+                    <MyLocation sx={{ color: 'primary.main' }} />
+                    <Typography variant="h6">      
+                      Attendance Geofence
+                    </Typography>
+                    <Chip
+                      size="small"
+                      label={geofenceSettings.source === 'redis' ? 'Saved override' : 'Environment default'}
+                      color={geofenceSettings.source === 'redis' ? 'success' : 'default'}
+                      variant={geofenceSettings.source === 'redis' ? 'filled' : 'outlined'}
+                    />
+                  </Box>
+                  <Button
+                    variant="text"
+                    startIcon={<School />}
+                    onClick={() => navigate('/attendance/biometric-enrollment')}
+                  >
+                    Open Enrollment Page
+                  </Button>
+                </Box>
+
+                <Grid container spacing={3}>       
+                  <Grid size={{ xs: 12, md: 7 }}>  
+                    <Stack spacing={2.5}>
+                      <TextField
+                        label="Campus Center Latitude"
+                        type="number"
+                        value={geofenceSettings.campus_lat}
+                        onChange={(e) => setGeofenceSettings({ ...geofenceSettings, campus_lat: e.target.value })}
+                        fullWidth
+                        helperText="Attendance GPS checks use this latitude as the campus center."     
+                        InputProps={{ startAdornment: <MyLocation sx={{ mr: 1, color: 'text.secondary' }} /> }}
+                      />
+                      <TextField
+                        label="Campus Center Longitude"
+                        type="number"
+                        value={geofenceSettings.campus_lng}
+                        onChange={(e) => setGeofenceSettings({ ...geofenceSettings, campus_lng: e.target.value })}
+                        fullWidth
+                        helperText="Students must be within the configured radius of this coordinate." 
+                        InputProps={{ startAdornment: <Public sx={{ mr: 1, color: 'text.secondary' }} /> }}
+                      />
+                      <TextField
+                        label="Maximum Radius (meters)"
+                        type="number"
+                        value={geofenceSettings.max_radius_meters}
+                        onChange={(e) => setGeofenceSettings({ ...geofenceSettings, max_radius_meters: e.target.value })}
+                        fullWidth
+                        helperText="Changing this value updates campus fencing immediately."
+                        InputProps={{ startAdornment: <MyLocation sx={{ mr: 1, color: 'text.secondary' }} /> }}
+                      />
+
+                      <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap' }}>
+                        <Button
+                          variant="contained"
+                          onClick={handleSaveGeofence}
+                          startIcon={<Save />}     
+                          disabled={geofenceSaving}
+                        >
+                          Save Attendance Geofence 
+                        </Button>
+                        <Button
+                          variant="outlined"       
+                          onClick={handleResetGeofence}
+                          startIcon={<RestartAlt />}
+                          disabled={geofenceSaving}
+                        >
+                          Reset to Defaults        
+                        </Button>
+                      </Stack>
+                    </Stack>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 5 }}>  
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 3,
+                        height: '100%',
+                        borderRadius: 3,
+                        bgcolor: alpha(theme.palette.primary.main, 0.05),
+                        border: '1px solid',       
+                        borderColor: alpha(theme.palette.primary.main, 0.12),
+                      }}
+                    >
+                      <Stack spacing={2}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Runtime Effect
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          These values are read by the attendance service on every GPS check. No restart is needed after saving.
+                        </Typography>
+                        <Divider />
+                        <Stack spacing={1}>        
+                          <Typography variant="body2">
+                            <strong>Latitude:</strong> {Number(geofenceSettings.campus_lat).toFixed(4)}
+                          </Typography>
+                          <Typography variant="body2">
+                            <strong>Longitude:</strong> {Number(geofenceSettings.campus_lng).toFixed(4)}
+                          </Typography>
+                          <Typography variant="body2">
+                            <strong>Radius:</strong> {Math.round(Number(geofenceSettings.max_radius_meters) || 0)} meters
+                          </Typography>
+                        </Stack>
+                      </Stack>
+                    </Paper>
+                  </Grid>
+                </Grid>
               </CardContent>
             </Card>
           </Grid>

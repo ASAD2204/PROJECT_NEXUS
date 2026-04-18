@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db, redis_client
 from app.dependencies import get_current_user, require_role
+from app.geofence import clear_geofence_config, get_geofence_config, set_geofence_config
 from app.gps_utils import is_on_campus
 from app.image_utils import (
     detect_eyes_state,
@@ -32,12 +33,14 @@ from app.image_utils import (
     verify_voice_challenge,
 )
 from app.kafka_producer import publish_attendance_marked
-from app.models import Attendance, Student
+from app.models import Attendance, Section, Student
 from app.schemas import (
     AttendanceOut,
     AttendanceUpdate,
     FaceEnrollMultiRequest,
     FaceEnrollRequest,
+    GeofenceConfigResponse,
+    GeofenceConfigUpdateRequest,
     FaceVerifyRequest,
     FaceVerifyResponse,
     GPSVerifyRequest,
@@ -242,6 +245,57 @@ def gps_check_compat(
         "gps_verified": on_campus,
         "distance_meters": round(distance, 2),
     }
+
+
+@router.get("/geofence", response_model=GeofenceConfigResponse)
+def read_geofence_config(
+    _current_user: dict = Depends(require_role("admin")),
+):
+    """Return the active campus geofence settings."""
+    return GeofenceConfigResponse(**get_geofence_config())
+
+
+@router.put("/geofence", response_model=GeofenceConfigResponse)
+def update_geofence_config(
+    payload: GeofenceConfigUpdateRequest,
+    _current_user: dict = Depends(require_role("admin")),
+):
+    """Persist campus geofence settings for live attendance checks."""
+    if payload.max_radius_meters <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="max_radius_meters must be greater than 0",
+        )
+
+    try:
+        config = set_geofence_config(
+            payload.campus_lat,
+            payload.campus_lng,
+            payload.max_radius_meters,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
+
+    return GeofenceConfigResponse(**config)        
+
+
+@router.delete("/geofence", response_model=GeofenceConfigResponse)
+def reset_geofence_config(
+    _current_user: dict = Depends(require_role("admin")),
+):
+    """Reset geofence settings back to the environment defaults."""
+    try:
+        config = clear_geofence_config()
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
+
+    return GeofenceConfigResponse(**config)        
 
 
 # ========================= STEP 2 -- Liveness Detection ===================
