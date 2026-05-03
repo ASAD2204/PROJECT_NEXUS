@@ -1,0 +1,113 @@
+# ==========================================================================
+# Project Nexus — PRODUCTION CLOUD STACK
+# ==========================================================================
+version: "3.8"
+
+networks:
+  nexus-network:
+    driver: overlay # Use overlay for multi-node Swarm
+    attachable: true
+
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:
+  chroma_data:
+  prometheus_data:
+  grafana_data:
+
+x-common-env: &common-env
+  JWT_SECRET: ${JWT_SECRET}
+  JWT_ALGORITHM: "HS256"
+  JWT_SESSION_CHECK: "True"
+  ALLOW_ORIGINS: ${ALLOW_ORIGINS:-*}
+
+x-postgres-env: &postgres-env
+  <<: *common-env
+  DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+
+x-deploy-replica: &deploy-replica
+  replicas: 2 # High Availability
+  update_config:
+    parallelism: 1
+    delay: 10s
+    order: start-first
+  restart_policy:
+    condition: on-failure
+
+services:
+
+  # --- Infrastructure ---
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks: [nexus-network]
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+  mongodb:
+    image: mongo:6-jammy
+    volumes:
+      - mongo_data:/data/db
+    networks: [nexus-network]
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks: [nexus-network]
+
+  # --- API Gateway ---
+  api-gateway:
+    image: nexus/api-gateway:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    networks: [nexus-network]
+    deploy:
+      <<: *deploy-replica
+
+  # --- Core Services ---
+  auth-service:
+    image: nexus/auth-service:latest
+    environment:
+      <<: *postgres-env
+      REDIS_URL: redis://redis:6379
+    networks: [nexus-network]
+    deploy:
+      <<: *deploy-replica
+
+  sis-service:
+    image: nexus/sis-service:latest
+    environment:
+      <<: *postgres-env
+    networks: [nexus-network]
+    deploy:
+      <<: *deploy-replica
+
+  lms-service:
+    image: nexus/lms-service:latest
+    environment:
+      <<: *postgres-env
+      MONGO_URL: mongodb://mongodb:27017/nexus_lms
+      REDIS_URL: redis://redis:6379
+      KAFKA_BROKER: kafka:9092
+    networks: [nexus-network]
+    deploy:
+      <<: *deploy-replica
+
+  # --- Frontend ---
+  frontend:
+    image: nexus/frontend:latest
+    ports:
+      - "8080:80"
+    networks: [nexus-network]
+    deploy:
+      <<: *deploy-replica

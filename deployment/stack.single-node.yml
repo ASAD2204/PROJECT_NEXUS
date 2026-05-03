@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  api-gateway:
+    ports:
+      - target: 80
+        published: 8081
+        mode: ingress
+    deploy:
+      replicas: 1
+
+  frontend:
+    ports:
+      - target: 80
+        published: 80
+        mode: ingress
+    deploy:
+      replicas: 1
+
+  prometheus:
+    deploy:
+      replicas: 0
+
+  grafana:
+    deploy:
+      replicas: 0
+
+  blackbox-exporter:
+    deploy:
+      replicas: 0
+
+  backup-service:
+    deploy:
+      replicas: 0

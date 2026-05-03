@@ -1,0 +1,48 @@
+services:
+  # Frontend Application
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    container_name: project-nexus-frontend
+
+  # Future Backend Services (To be implemented by Saad)
+  # backend:
+  #   build:
+  #     context: ../backend
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - DATABASE_URL=postgresql://user:password@db:5432/nexus
+  #   depends_on:
+  #     - db
+  #   restart: unless-stopped
+
+  # PostgreSQL Database (To be implemented)
+  # db:
+  #   image: postgres:15-alpine
+  #   environment:
+  #     - POSTGRES_USER=nexus_user
+  #     - POSTGRES_PASSWORD=nexus_pass
+  #     - POSTGRES_DB=nexus_db
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   restart: unless-stopped
+
+  # Redis Cache (To be implemented)
+  # redis:
+  #   image: redis:7-alpine
+  #   ports:
+  #     - "6379:6379"
+  #   restart: unless-stopped
+
+# volumes:
+#   postgres_data:

@@ -1,0 +1,31 @@
+
+> project-nexus@0.0.0 build
+> vite build
+
+[36mvite v7.3.0 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32m✓[39m 341 modules transformed.
+[31m✗[39m Build failed in 948ms
+[31merror during build:
+[31m[vite:esbuild] Transform failed with 1 error:
+C:/mydata/PROJECT_NEXUS-Asad_node - Copy/PROJECT_NEXUS-Asad_node/frontend/src/pages/Student/Dashboard.jsx:401:35: ERROR: Expected "}" but found ":"[31m
+file: [36mC:/mydata/PROJECT_NEXUS-Asad_node - Copy/PROJECT_NEXUS-Asad_node/frontend/src/pages/Student/Dashboard.jsx:401:35[31m
+[33m
+[33mExpected "}" but found ":"[33m
+399 |                  <Skeleton variant="rectangular" height={430} sx={{ borderRadius: 2 }} />
+400 |                ) : (
+401 |                  <Box sx={ minHeight: 380 }><ResponsiveContainer width="100%" height={380}>
+    |                                     ^
+402 |                    <AreaChart data={gpaHistory} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
+403 |                      <defs>
+[31m
+    at failureErrorWithLog (C:\mydata\PROJECT_NEXUS-Asad_node - Copy\PROJECT_NEXUS-Asad_node\frontend\node_modules\esbuild\lib\main.js:1467:15)
+    at C:\mydata\PROJECT_NEXUS-Asad_node - Copy\PROJECT_NEXUS-Asad_node\frontend\node_modules\esbuild\lib\main.js:736:50
+    at responseCallbacks.<computed> (C:\mydata\PROJECT_NEXUS-Asad_node - Copy\PROJECT_NEXUS-Asad_node\frontend\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (C:\mydata\PROJECT_NEXUS-Asad_node - Copy\PROJECT_NEXUS-Asad_node\frontend\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (C:\mydata\PROJECT_NEXUS-Asad_node - Copy\PROJECT_NEXUS-Asad_node\frontend\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:563:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+    at Readable.push (node:internal/streams/readable:394:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)[39m

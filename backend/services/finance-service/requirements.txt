@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+pydantic-settings
+python-jose[cryptography]
+redis
+kafka-python
+stripe
+reportlab
+python-multipart

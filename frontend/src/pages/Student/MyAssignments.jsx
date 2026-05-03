@@ -1,0 +1,356 @@
+/**
+ * My Assignments Page - Student View
+ * 
+ * Displays all assignments for the student across all enrolled courses.
+ * Shows assignment status, due dates, grades, and submission progress.
+ * 
+ * Features:
+ * - Statistics cards showing total, pending, submitted, and graded assignments
+ * - Assignment cards with course info, due dates, and status badges
+ * - Days remaining countdown for pending assignments
+ * - Progress bars for graded assignments
+ * - Quick navigation to assignment submission pages
+ * - Responsive grid layout
+ * 
+ * @component
+ */
+
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  Chip,
+  Stack,
+  LinearProgress,
+  useTheme,
+} from '@mui/material';
+import Grid from '@mui/material/Grid';
+import {
+  Assignment,
+  CheckCircle,
+  PendingActions,
+  Warning,
+  CalendarToday,
+  Grade,
+  ArrowForward,
+  FileDownload,
+} from '@mui/icons-material';
+import PageHeader from '../../components/Common/PageHeader';
+import StatCard from '../../components/Common/StatCard';
+import { fadeInUp, staggerContainer } from '../../utils/animations';
+import { lmsAPI } from '../../api/lms';
+
+const MyAssignments = () => {
+  const theme = useTheme();
+  const navigate = useNavigate();
+  const [assignments, setAssignments] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      try {
+        const res = await lmsAPI.getMyAssignments();
+        const raw = res.data?.assignments || res.data || [];
+        setAssignments(raw.map((a) => ({
+          id: a.id || a.assignment_id,
+          title: a.title,
+          course: a.course_title || a.course || 'Course',
+          courseCode: a.course_code || a.courseCode || '',
+          dueDate: a.due_date || a.dueDate,
+          submittedDate: a.submitted_on || a.submittedOn,
+          status: (a.status || 'pending').toLowerCase(),
+          totalMarks: a.total_marks || a.totalMarks || 0,
+          obtainedMarks: a.obtained_marks || a.obtainedMarks,
+          description: a.description || '',
+        })));
+      } catch { /* empty */ }
+      setLoading(false);
+    };
+    fetchAssignments();
+  }, []);
+
+  const stats = {
+    total: assignments.length,
+    pending: assignments.filter(a => a.status === 'pending').length,
+    submitted: assignments.filter(a => a.status === 'submitted').length,
+    graded: assignments.filter(a => a.status === 'graded').length,
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pending': return 'warning';
+      case 'overdue': return 'error';
+      case 'submitted': return 'info';
+      case 'graded': return 'success';
+      default: return 'default';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'pending': return <PendingActions />;
+      case 'overdue': return <Warning />;
+      case 'submitted': return <CheckCircle />;
+      case 'graded': return <Grade />;
+      default: return <Assignment />;
+    }
+  };
+
+  const getDaysRemaining = (dueDate) => {
+    const today = new Date();
+    const due = new Date(dueDate);
+    const diffTime = due - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  return (
+    <Box className="page-container">
+      {/* HEADER */}
+      <PageHeader
+        icon={Assignment}
+        title="My Assignments"
+        subtitle="Track and submit your course assignments"
+        gradient="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+        action={
+          <Button
+            variant="outlined"
+            startIcon={<FileDownload />}
+            sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)', '&:hover': { borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)' } }}
+            onClick={() => {
+              const headers = ['Assignment', 'Course', 'Status', 'Due Date', 'Obtained Marks', 'Total Marks'];
+              const rows = assignments.map(a => [
+                a.title,
+                a.course,
+                a.status,
+                new Date(a.dueDate).toLocaleDateString(),
+                a.obtainedMarks || '-',
+                a.totalMarks
+              ]);
+              const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+              const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.setAttribute("href", url);
+              link.setAttribute("download", "my_assignments.csv");
+              document.body.appendChild(link);
+              link.click();
+            }}
+          >
+            Export List
+          </Button>
+        }
+      />
+
+      {/* STATS CARDS */}
+      <Grid 
+        container 
+        spacing={3} 
+        sx={{ mb: 4 }}
+        component={motion.div}
+        variants={staggerContainer}
+        initial="initial"
+        animate="animate"
+      >
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
+          <StatCard
+            title="Total"
+            value={stats.total}
+            icon={Assignment}
+            color="primary"
+            tooltip="Total number of assignments across all your courses this semester."
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
+          <StatCard
+            title="Pending"
+            value={stats.pending}
+            icon={PendingActions}
+            color="warning"
+            tooltip="Assignments that are not yet submitted. Submit before the deadline to avoid penalties."
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
+          <StatCard
+            title="Submitted"
+            value={stats.submitted}
+            icon={CheckCircle}
+            color="info"
+            tooltip="Assignments you have submitted and are awaiting grading by your instructors."
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
+          <StatCard
+            title="Graded"
+            value={stats.graded}
+            icon={Grade}
+            color="success"
+            tooltip="Assignments that have been graded. Check your marks and feedback below."
+          />
+        </Grid>
+      </Grid>
+
+      {/* ASSIGNMENTS LIST */}
+      <Box
+        component={motion.div}
+        variants={staggerContainer}
+        initial="initial"
+        animate="animate"
+      >
+        <Typography variant="h5" fontWeight="bold" gutterBottom sx={{ mb: 3 }}>
+          All Assignments
+        </Typography>
+        
+        <Grid container spacing={3}>
+          {assignments.map((assignment) => {
+            const daysRemaining = getDaysRemaining(assignment.dueDate);
+            return (
+              <Grid size={{ xs: 12, md: 6, lg: 4 }} key={assignment.id} component={motion.div} variants={fadeInUp}>
+                <Card
+                  sx={{
+                    height: '100%',
+                    minHeight: 340,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: theme.palette.mode === 'dark' 
+                      ? 'rgba(102,126,234,0.15)' 
+                      : 'rgba(102,126,234,0.12)',
+                    boxShadow: theme.palette.mode === 'dark'
+                      ? '0 8px 24px rgba(0,0,0,0.3)'
+                      : '0 8px 24px rgba(102,126,234,0.12)',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: theme.palette.mode === 'dark'
+                        ? '0 12px 32px rgba(0,0,0,0.4)'
+                        : '0 12px 32px rgba(102,126,234,0.2)',
+                    },
+                  }}
+                >
+                  <CardContent sx={{ p: 3 }}>
+                    {/* Header */}
+                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography variant="h6" fontWeight="bold" gutterBottom>
+                          {assignment.title}
+                        </Typography>
+                        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                          <Chip 
+                            label={assignment.courseCode} 
+                            size="small" 
+                            sx={{ fontWeight: 600 }}
+                          />
+                          <Typography variant="body2" color="text.secondary">
+                            {assignment.course}
+                          </Typography>
+                        </Stack>
+                      </Box>
+                      <Chip
+                        icon={getStatusIcon(assignment.status)}
+                        label={assignment.status.toUpperCase()}
+                        color={getStatusColor(assignment.status)}
+                        sx={{ fontWeight: 'bold' }}
+                      />
+                    </Stack>
+
+                    {/* Description */}
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      {assignment.description}
+                    </Typography>
+
+                    {/* Due Date */}
+                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+                      <CalendarToday sx={{ fontSize: 18, color: 'text.secondary' }} />
+                      <Typography variant="body2" color="text.secondary">
+                        Due: {new Date(assignment.dueDate).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric', 
+                          year: 'numeric' 
+                        })}
+                      </Typography>
+                      {assignment.status === 'pending' && daysRemaining >= 0 && (
+                        <Chip 
+                          label={`${daysRemaining} days left`} 
+                          size="small" 
+                          color={daysRemaining < 3 ? 'error' : 'warning'}
+                        />
+                      )}
+                    </Stack>
+
+                    {/* Graded Info */}
+                    {assignment.status === 'graded' && (
+                      <Box sx={{ mb: 2 }}>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                          <Typography variant="body2" fontWeight={600}>
+                            Score: {assignment.obtainedMarks}/{assignment.totalMarks}
+                          </Typography>
+                          <Typography variant="body2" fontWeight={600} color="primary">
+                            {Math.round((assignment.obtainedMarks / (assignment.totalMarks || 1)) * 100)}%
+                          </Typography>
+                        </Stack>
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={(assignment.obtainedMarks / (assignment.totalMarks || 1)) * 100}
+                          sx={{ 
+                            height: 8, 
+                            borderRadius: 1,
+                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                          }}
+                        />
+                      </Box>
+                    )}
+
+                    {/* Action Button */}
+                    <Button
+                      variant={assignment.status === 'pending' || assignment.status === 'overdue' ? 'contained' : 'outlined'}
+                      fullWidth
+                      endIcon={<ArrowForward />}
+                      onClick={() => {
+                        if (assignment.status === 'pending' || assignment.status === 'overdue') {
+                          navigate(`/lms/assignment/${assignment.id}`);
+                        } else if (assignment.status === 'submitted') {
+                          navigate(`/lms/assignment/${assignment.id}`);
+                        } else {
+                          navigate(`/lms/assignment/${assignment.id}`);
+                        }
+                      }}
+                      sx={{
+                        py: 1.2,
+                        borderRadius: 2,
+                        fontWeight: 'bold',
+                        ...(assignment.status === 'pending' || assignment.status === 'overdue' ? {
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          '&:hover': {
+                            background: 'linear-gradient(135deg, #5568d3 0%, #654391 100%)',
+                          },
+                        } : {}),
+                      }}
+                    >
+                      {assignment.status === 'pending' || assignment.status === 'overdue' 
+                        ? 'Submit Now' 
+                        : assignment.status === 'submitted'
+                        ? 'View Submission'
+                        : 'View Details'}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
+      </Box>
+    </Box>
+  );
+};
+
+export default MyAssignments;

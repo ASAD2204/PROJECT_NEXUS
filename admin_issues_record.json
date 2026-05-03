@@ -1,0 +1,127 @@
+{
+  "project": "PROJECT_NEXUS-Asad_node",
+  "lastUpdated": "2026-04-27",
+  "issues": [
+    {
+      "id": "admin-users-delete-edit",
+      "page": "Admin > User Management",
+      "status": "resolved",
+      "symptoms": [
+        "Delete request returns Bad Request",
+        "Edit action was only a placeholder"
+      ],
+      "likelyCause": [
+        "Backend had no admin update endpoint",
+        "Self-delete is blocked by the auth-service guard"
+      ],
+      "relatedFiles": [
+        "backend/services/auth-service/app/routes.py",
+        "backend/services/auth-service/app/schemas.py",
+        "frontend/src/api/auth.js",
+        "frontend/src/pages/Admin/UserManagement.jsx"
+      ],
+      "solved": true,
+      "notes": "Admin update endpoint and edit dialog were added; delete now warns on self-delete instead of surfacing a bad request. A live smoke test against a disposable user now returns 200 and removes the row from Postgres."
+    },
+    {
+      "id": "api-gateway-lms-finance-routing",
+      "page": "API Gateway",
+      "status": "resolved",
+      "symptoms": [
+        "Host requests to /api/v1/lms/* returned 404",
+        "Host requests to /api/v1/finance/* returned 404"
+      ],
+      "likelyCause": [
+        "Nginx proxy path handling for LMS and finance was not forwarding the exact upstream URI"
+      ],
+      "relatedFiles": [
+        "backend/api-gateway/nginx.conf",
+        "backend/services/lms-service/app/routes.py",
+        "backend/services/finance-service/app/routes.py"
+      ],
+      "solved": true,
+      "notes": "Explicit proxy_pass URIs were added for LMS and finance, then the api-gateway container was rebuilt and recreated. Host requests now reach the backend and return 401 instead of 404."
+    },
+    {
+      "id": "admin-course-management-load-create",
+      "page": "Admin > Course Management",
+      "status": "resolved",
+      "symptoms": [
+        "Course list not loading from DB",
+        "Unable to create new course"
+      ],
+      "likelyCause": [
+        "Potential backend response-shape mismatch",
+        "Dependent SIS/LMS calls are all-or-nothing"
+      ],
+      "relatedFiles": [
+        "frontend/src/pages/Admin/CourseManagement.jsx",
+        "frontend/src/api/sis.js",
+        "backend/services/lms-service/app/routes.py"
+      ],
+      "solved": true,
+      "notes": "Create now validates department input and load failures are surfaced; the live LMS schema now includes program_id, and a gateway smoke test returns 200 for /api/v1/lms/courses."
+    },
+    {
+      "id": "admin-finance-load-sync",
+      "page": "Admin > Finance Management",
+      "status": "in_progress",
+      "symptoms": [
+        "Failed to load data",
+        "Program fee synchronization needs to work"
+      ],
+      "likelyCause": [
+        "Promise.all aborts on one rejected request",
+        "Fee structure and ledger data need more defensive unwrapping"
+      ],
+      "relatedFiles": [
+        "frontend/src/pages/Admin/FinanceManagement.jsx",
+        "frontend/src/api/finance.js",
+        "backend/services/finance-service/app/routes.py"
+      ],
+      "solved": false,
+      "notes": "Loading is now partial-failure tolerant; the gateway finance routing issue has been fixed, so runtime verification can continue."
+    },
+    {
+      "id": "admin-timetable-load",
+      "page": "Admin > Timetable Manager",
+      "status": "in_progress",
+      "symptoms": [
+        "Data load failure",
+        "Timetable generation is not reliable enough"
+      ],
+      "likelyCause": [
+        "All-or-nothing fetch of sections, constraints, and programs",
+        "Scheduler/LMS service availability or auth mismatch"
+      ],
+      "relatedFiles": [
+        "frontend/src/pages/Admin/TimetableManagement.jsx",
+        "frontend/src/api/scheduler.js",
+        "frontend/src/api/lms.js",
+        "backend/services/scheduler-service/app/routes.py"
+      ],
+      "solved": false,
+      "notes": "Load path now tolerates partial failures and normalizes IDs; LMS-backed section loading still needs runtime verification now that the gateway routing blocker has been cleared."
+    },
+    {
+      "id": "admin-reports-load",
+      "page": "Admin > Reports",
+      "status": "in_progress",
+      "symptoms": [
+        "Report data loading issue",
+        "Recharts container warnings observed in console"
+      ],
+      "likelyCause": [
+        "Analytics dashboard data may fail or arrive in a different shape",
+        "Charts need a more stable container width/height"
+      ],
+      "relatedFiles": [
+        "frontend/src/pages/Admin/Reports.jsx",
+        "frontend/src/api/analytics.js",
+        "backend/services/analytics-service/app/routes.py"
+      ],
+      "solved": false,
+      "notes": "Charts now have explicit containers and dashboard fetch failures are surfaced; runtime verification still pending."
+    }
+  ]
+}

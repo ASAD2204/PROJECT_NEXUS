@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+pydantic-settings
+python-jose[cryptography]
+chromadb
+numpy
+redis
+kafka-python
+Pillow
+python-multipart
+opencv-python-headless
+scipy
+face-recognition

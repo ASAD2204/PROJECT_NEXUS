@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+pydantic-settings
+python-jose[cryptography]
+redis
+scikit-learn
+pandas
+numpy
+kafka-python
+joblib
+motor
