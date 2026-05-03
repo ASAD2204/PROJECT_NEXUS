@@ -53,6 +53,3 @@ backend/**/.env
 
 # Ignore any file named env or ending with .env
 **/.env
-!/.env.example
-!**/.env.example
-!backend/**/.env.example
