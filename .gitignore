@@ -35,3 +35,21 @@ env/
 *.njsproj
 *.sln
 *.sw?
+
+# Environment files (sensitive)
+# Ignore dotenv files and local env variants
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+.env.test
+
+# Frontend envs
+frontend/.env
+
+# Backend service env files
+backend/**/.env
+
+# Ignore any file named env or ending with .env
+**/.env
