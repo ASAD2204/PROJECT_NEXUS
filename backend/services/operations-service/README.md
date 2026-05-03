@@ -1,3 +1,4 @@
+<!-- touched-for-commit: backend operations doc -->
 # Operations Service
 
 > **Status: 100% COMPLETED** - All development, integration, and testing phases are finished.
