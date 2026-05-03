@@ -7,3 +7,4 @@ python-jose[cryptography]
 redis
 reportlab
 python-multipart
+httpx
