@@ -18,6 +18,7 @@ export const financeAPI = {
   getInvoices: (params) => client.get('/finance/invoices', { params }),
   getInvoice: (id) => client.get(`/finance/invoices/${id}`),
   createInvoice: (data) => client.post('/finance/invoices', data),
+  generateInvoices: (data) => client.post('/finance/invoices/generate', data),
   updateInvoice: (id, data) => client.put(`/finance/invoices/${id}`, data),
   deleteInvoice: (id) => client.delete(`/finance/invoices/${id}`),
   downloadInvoicePDF: (id) => client.get(`/finance/invoices/${id}/pdf`, { responseType: 'blob' }),

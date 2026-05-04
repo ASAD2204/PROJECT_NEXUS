@@ -46,7 +46,7 @@ STUDENT_PERSONA = (
 
 FACULTY_PERSONA = (
     BASE_SYSTEM +
-    "\n**You are assisting a FACULTY member.**\n"
+    "\n**You are assisting a FACULTY member / TEACHER.**\n"
     "You can help with:\n"
     "- Viewing assigned sections and course info\n"
     "- Identifying at-risk students\n"
@@ -67,6 +67,31 @@ ADMIN_PERSONA = (
     "- System status and policies\n"
     "- Any academic question\n\n"
     "Tone: Executive, data-driven, concise.\n"
+)
+
+LIBRARIAN_PERSONA = (
+    BASE_SYSTEM +
+    "\n**You are assisting a LIBRARIAN.**\n"
+    "You can help with:\n"
+    "- Library inventory and book status\n"
+    "- Member (student/faculty) borrowing history\n"
+    "- Late fee summaries\n"
+    "- Resource acquisition requests\n"
+    "- Library policies and academic research assistance\n\n"
+    "Tone: Knowledgeable, organized, and helpful.\n"
+)
+
+ALUMNI_PERSONA = (
+    BASE_SYSTEM +
+    "\n**You are assisting an ALUMNUS.**\n"
+    "Welcome back to the university portal!\n"
+    "You can help with:\n"
+    "- Career services and networking\n"
+    "- Accessing academic transcripts and degree verification\n"
+    "- University events and alumni news\n"
+    "- Donation and endowment info\n"
+    "- Mentoring current students\n\n"
+    "Tone: Warm, respectful, and encouraging.\n"
 )
 
 # ---------------------------------------------------------------------------
@@ -161,10 +186,15 @@ def get_persona(role: str) -> str:
     personas = {
         "student": STUDENT_PERSONA,
         "faculty": FACULTY_PERSONA,
+        "teacher": FACULTY_PERSONA,
         "admin": ADMIN_PERSONA,
         "superadmin": ADMIN_PERSONA,
+        "hod": ADMIN_PERSONA,
+        "librarian": LIBRARIAN_PERSONA,
+        "alumni": ALUMNI_PERSONA,
     }
-    return personas.get(role, STUDENT_PERSONA)
+    return personas.get(role.lower(), STUDENT_PERSONA)
+
 
 
 def get_domain_expertise(program_name: str) -> str:

@@ -19,6 +19,7 @@ import { getTheme } from './theme.js';
 import { ThemeProvider, useThemeMode } from './contexts/ThemeContext.jsx';
 import { AuthProvider } from './contexts/AuthContext.jsx';
 import { SnackbarProvider } from './contexts/SnackbarContext.jsx';
+import { ConfigProvider } from './contexts/ConfigContext.jsx';
 import globalStyles from './styles/globalStyles.js';
 
 /**
@@ -40,10 +41,13 @@ const ThemedApp = () => {
       <SnackbarProvider>
         {/* Router for navigation */}
         <BrowserRouter basename={import.meta.env.BASE_URL}>
-          {/* Authentication context */}
-          <AuthProvider>
-            <App />
-          </AuthProvider>
+          {/* Global configuration context */}
+          <ConfigProvider>
+            {/* Authentication context */}
+            <AuthProvider>
+              <App />
+            </AuthProvider>
+          </ConfigProvider>
         </BrowserRouter>
       </SnackbarProvider>
     </MuiThemeProvider>

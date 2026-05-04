@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     JWT_EXPIRE_MINUTES: int = 30
     STRIPE_SECRET_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
+    GATEWAY_URL: str = "http://api-gateway:80"
 
     class Config:
         env_file = ".env"

@@ -73,6 +73,8 @@ const SmartAttendance = () => {
   const [selectedCourse, setSelectedCourse] = useState('');
   const [todaysClasses, setTodaysClasses] = useState([]);
   const [stats, setStats] = useState({ attended: 0, totalClasses: 0, percentage: 0 });
+  const [isMarked, setIsMarked] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(false);
 
   useEffect(() => {
     const fetchClasses = async () => {
@@ -84,6 +86,7 @@ const SmartAttendance = () => {
         const courses = coursesRes.data?.courses || coursesRes.data || [];
         setTodaysClasses(courses.map(c => ({
           id: c.id || c.course_id || c.code,
+          course_id: c.course_id || c.id,
           code: c.code || c.course_code || '',
           title: c.title || c.name || c.course_name || '',
           time: c.time || c.schedule || '',
@@ -105,8 +108,26 @@ const SmartAttendance = () => {
     fetchClasses();
   }, []);
 
+  const handleCourseChange = async (courseId) => {
+    setSelectedCourse(courseId);
+    setIsMarked(false);
+    
+    const course = todaysClasses.find(c => c.id === courseId);
+    if (course) {
+      setCheckingStatus(true);
+      try {
+        const res = await attendanceAPI.checkStatus(course.course_id);
+        setIsMarked(res.data?.marked || false);
+      } catch (e) {
+        console.error('Failed to check attendance status', e);
+      } finally {
+        setCheckingStatus(false);
+      }
+    }
+  };
+
   const handleProceedToVerification = () => {
-    if (selectedCourse) {
+    if (selectedCourse && !isMarked) {
       const course = todaysClasses.find(c => c.id === selectedCourse);
       sessionStorage.setItem('selectedCourse', JSON.stringify(course));
       navigate('/attendance/gps-verification');
@@ -163,7 +184,7 @@ const SmartAttendance = () => {
                   <FormControl fullWidth>
                     <Select
                       value={selectedCourse}
-                      onChange={(e) => setSelectedCourse(e.target.value)}
+                      onChange={(e) => handleCourseChange(e.target.value)}
                       displayEmpty
                       sx={{ 
                         borderRadius: 2,
@@ -204,9 +225,11 @@ const SmartAttendance = () => {
                     <Paper sx={{ 
                       p: 3, 
                       borderRadius: 2, 
-                      background: 'linear-gradient(135deg, rgba(102,126,234,0.15) 0%, rgba(118,75,162,0.15) 100%)',
+                      background: isMarked 
+                        ? 'linear-gradient(135deg, rgba(76,175,80,0.15) 0%, rgba(56,142,60,0.15) 100%)'
+                        : 'linear-gradient(135deg, rgba(102,126,234,0.15) 0%, rgba(118,75,162,0.15) 100%)',
                       border: '2px solid',
-                      borderColor: 'primary.main',
+                      borderColor: isMarked ? 'success.main' : 'primary.main',
                       position: 'relative',
                       overflow: 'hidden'
                     }}>
@@ -214,7 +237,7 @@ const SmartAttendance = () => {
                         <Box key={course.id}>
                           <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
                             <Box>
-                              <Typography variant="h5" fontWeight="bold" color="primary" gutterBottom>
+                              <Typography variant="h5" fontWeight="bold" color={isMarked ? 'success.main' : 'primary.main'} gutterBottom>
                                 {course.code}
                               </Typography>
                               <Typography variant="h6" fontWeight={600} gutterBottom>
@@ -222,10 +245,11 @@ const SmartAttendance = () => {
                               </Typography>
                             </Box>
                             <Chip 
-                              label="Active" 
-                              color="success" 
+                              label={isMarked ? "Attendance Marked" : "Ready to Mark"} 
+                              color={isMarked ? "success" : "primary"} 
                               size="small" 
                               sx={{ fontWeight: 600 }}
+                              icon={isMarked ? <CheckCircle /> : undefined}
                             />
                           </Box>
                           <Divider sx={{ my: 2 }} />
@@ -250,111 +274,133 @@ const SmartAttendance = () => {
                 </Card>
 
                 {/* Verification Steps */}
-                <Card sx={{ mb: 3 }}>
-                  <CardContent sx={{ p: 3 }}>
-                    <Typography variant="h6" fontWeight="bold" gutterBottom>
-                      Verification Process
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      Complete these steps to mark your attendance
-                    </Typography>
-                    <List>
-                      <ListItem>
-                        <ListItemIcon>
-                          <Box sx={{ 
-                            width: 40, 
-                            height: 40, 
-                            borderRadius: '50%', 
-                            bgcolor: 'primary.lighter',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}>
-                            <MyLocation color="primary" />
-                          </Box>
-                        </ListItemIcon>
-                        <ListItemText 
-                          primary="GPS Location Verification" 
-                          secondary="Verify you're within class radius"
-                          primaryTypographyProps={{ fontWeight: 600 }}
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemIcon>
-                          <Box sx={{ 
-                            width: 40, 
-                            height: 40, 
-                            borderRadius: '50%', 
-                            bgcolor: 'success.lighter',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}>
-                            <Visibility color="success" />
-                          </Box>
-                        </ListItemIcon>
-                        <ListItemText 
-                          primary="Liveness Detection" 
-                          secondary="Blink your eyes or speak to verify"
-                          primaryTypographyProps={{ fontWeight: 600 }}
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemIcon>
-                          <Box sx={{ 
-                            width: 40, 
-                            height: 40, 
-                            borderRadius: '50%', 
-                            bgcolor: 'warning.lighter',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}>
-                            <Face color="warning" />
-                          </Box>
-                        </ListItemIcon>
-                        <ListItemText 
-                          primary="Face Recognition" 
-                          secondary="Capture your face for verification"
-                          primaryTypographyProps={{ fontWeight: 600 }}
-                        />
-                      </ListItem>
-                    </List>
-                    
-                    <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }}>
-                      <Typography variant="body2" fontWeight="bold">
-                        Ready to start?
+                {!isMarked ? (
+                  <Card sx={{ mb: 3 }}>
+                    <CardContent sx={{ p: 3 }}>
+                      <Typography variant="h6" fontWeight="bold" gutterBottom>
+                        Verification Process
                       </Typography>
-                      <Typography variant="caption">
-                        The entire process takes less than 30 seconds
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        Complete these steps to mark your attendance
                       </Typography>
-                    </Alert>
+                      <List>
+                        <ListItem>
+                          <ListItemIcon>
+                            <Box sx={{ 
+                              width: 40, 
+                              height: 40, 
+                              borderRadius: '50%', 
+                              bgcolor: 'primary.lighter',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <MyLocation color="primary" />
+                            </Box>
+                          </ListItemIcon>
+                          <ListItemText 
+                            primary="GPS Location Verification" 
+                            secondary="Verify you're within class radius"
+                            primaryTypographyProps={{ fontWeight: 600 }}
+                          />
+                        </ListItem>
+                        <ListItem>
+                          <ListItemIcon>
+                            <Box sx={{ 
+                              width: 40, 
+                              height: 40, 
+                              borderRadius: '50%', 
+                              bgcolor: 'success.lighter',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <Visibility color="success" />
+                            </Box>
+                          </ListItemIcon>
+                          <ListItemText 
+                            primary="Liveness Detection" 
+                            secondary="Blink your eyes or speak to verify"
+                            primaryTypographyProps={{ fontWeight: 600 }}
+                          />
+                        </ListItem>
+                        <ListItem>
+                          <ListItemIcon>
+                            <Box sx={{ 
+                              width: 40, 
+                              height: 40, 
+                              borderRadius: '50%', 
+                              bgcolor: 'warning.lighter',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <Face color="warning" />
+                            </Box>
+                          </ListItemIcon>
+                          <ListItemText 
+                            primary="Face Recognition" 
+                            secondary="Capture your face for verification"
+                            primaryTypographyProps={{ fontWeight: 600 }}
+                          />
+                        </ListItem>
+                      </List>
+                      
+                      <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }}>
+                        <Typography variant="body2" fontWeight="bold">
+                          Ready to start?
+                        </Typography>
+                        <Typography variant="caption">
+                          The entire process takes less than 30 seconds
+                        </Typography>
+                      </Alert>
 
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      size="large"
-                      endIcon={<ArrowForward />}
-                      onClick={handleProceedToVerification}
-                      sx={{ 
-                        mt: 3, 
-                        py: 2,
-                        fontSize: '1.1rem',
-                        fontWeight: 600,
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        boxShadow: '0 6px 20px rgba(102,126,234,0.4)',
-                        '&:hover': {
-                          background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
-                          boxShadow: '0 8px 25px rgba(102,126,234,0.5)',
-                          transform: 'translateY(-2px)',
-                        },
-                        transition: 'all 0.3s ease'
-                      }}
-                    >
-                      Start Verification Process
-                    </Button>
-                  </CardContent>
-                </Card>
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        size="large"
+                        disabled={checkingStatus}
+                        endIcon={checkingStatus ? <CircularProgress size={24} /> : <ArrowForward />}
+                        onClick={handleProceedToVerification}
+                        sx={{ 
+                          mt: 3, 
+                          py: 2,
+                          fontSize: '1.1rem',
+                          fontWeight: 600,
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          boxShadow: '0 6px 20px rgba(102,126,234,0.4)',
+                          '&:hover': {
+                            background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+                            boxShadow: '0 8px 25px rgba(102,126,234,0.5)',
+                            transform: 'translateY(-2px)',
+                          },
+                          transition: 'all 0.3s ease'
+                        }}
+                      >
+                        {checkingStatus ? 'Checking Status...' : 'Start Verification Process'}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card sx={{ mb: 3 }}>
+                    <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                      <CheckCircle sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
+                      <Typography variant="h5" fontWeight="bold" gutterBottom>
+                        Attendance Completed
+                      </Typography>
+                      <Typography variant="body1" color="text.secondary" gutterBottom>
+                        You have already successfully marked your attendance for this class today.
+                      </Typography>
+                      <Button
+                        variant="outlined"
+                        onClick={() => setSelectedCourse('')}
+                        sx={{ mt: 3 }}
+                      >
+                        Select Another Class
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
               </>
             )}
           </Grid>

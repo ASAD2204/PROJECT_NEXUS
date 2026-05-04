@@ -37,11 +37,13 @@ const WebcamCapture = ({ onCapture, autoStart = true, overlay = null }) => {
   }, []);
 
   const stopCamera = useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
-    }
-  }, [stream]);
+    setStream(prevStream => {
+      if (prevStream) {
+        prevStream.getTracks().forEach(track => track.stop());
+      }
+      return null;
+    });
+  }, []);
 
   useEffect(() => {
     if (autoStart) {

@@ -1,0 +1,44 @@
+[
+  {
+    "full_name": "Ali Ahmad",
+    "email": "transfer.student@uni.edu.pk",
+    "role": "student",
+    "roll_no": "TRF-8801",
+    "current_semester": 7,
+    "total_credit_hours_completed": 96,
+    "current_cgpa": 3.42,
+    "department": "Computer Science",
+    "program": "Bachelor of Information Technology",
+    "session": "2020-2024",
+    "password": "TempPass@123",
+    "academic_history": [
+      {
+        "semester": 1,
+        "course_code": "CS101",
+        "course_title": "Introduction to Computing",
+        "credit_hours": 3,
+        "marks": 78,
+        "grade": "B+",
+        "grade_points": 3.3
+      },
+      {
+        "semester": 1,
+        "course_code": "MTH101",
+        "course_title": "Calculus I",
+        "credit_hours": 3,
+        "marks": 72,
+        "grade": "B",
+        "grade_points": 3.0
+      },
+      {
+        "semester": 2,
+        "course_code": "CS201",
+        "course_title": "Object Oriented Programming",
+        "credit_hours": 3,
+        "marks": 81,
+        "grade": "A-",
+        "grade_points": 3.7
+      }
+    ]
+  }
+]

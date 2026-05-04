@@ -136,7 +136,7 @@ const CourseManagement = () => {
       instructorId: instructorId || null,
       instructorName: instructorRecord?.name || '',
       semester: semesterId ? String(semesterId) : '',
-      semesterLabel: semesterRecord?.title || semesterRecord?.name || (semesterId ? `Semester ${semesterId}` : ''),
+      semesterLabel: semesterId ? `Semester ${semesterId}` : '-',
       semesterId: semesterId,
       roomNo: primarySection?.room_no || course.room_no || course.roomNo || '',
       sections: sections,
@@ -268,33 +268,17 @@ const CourseManagement = () => {
       dept_id: departmentId,
       description: formData.description || null,
       program_id: Number(formData.program) || null,
+      faculty_id: Number(formData.instructor) || null,
+      semester_id: Number(formData.semester) || null,
+      capacity: Number(formData.capacity) || 50,
+      room_no: formData.roomNumber || null,
     };
 
     try {
-      let courseId = editingCourseId;
       if (editingCourseId) {
         await sisAPI.updateCourse(editingCourseId, coursePayload);
       } else {
-        const res = await sisAPI.createCourse(coursePayload);
-        courseId = res.data?.course_id || res.data?.id;
-      }
-
-      // If instructor or capacity is provided, create or update section
-      if (courseId && (formData.instructor || formData.semester)) {
-        const sectionPayload = {
-          course_id: courseId,
-          faculty_id: Number(formData.instructor) || null,
-          semester_id: Number(formData.semester) || 1,
-          capacity: Number(formData.capacity) || 50,
-          room_no: formData.roomNumber || null,
-        };
-
-        // If editing and sectionId present, update that section instead of creating a new one
-        if (editingCourseId && formData.sectionId) {
-          await sisAPI.updateSection(Number(formData.sectionId), sectionPayload);
-        } else {
-          await sisAPI.createSection(sectionPayload);
-        }
+        await sisAPI.createCourse(coursePayload);
       }
 
       setOpenDialog(false);
@@ -412,25 +396,10 @@ const CourseManagement = () => {
     };
   });
 
-  const semesterOptions = semesters.length > 0
-    ? semesters.map((semester) => ({
-        value: String(semester.semester_id || semester.id),
-        label: semester.title || semester.name || `Semester ${semester.semester_id || semester.id}`,
-      }))
-    : [
-        { value: '1', label: '1st Semester' },
-        { value: '2', label: '2nd Semester' },
-        { value: '3', label: '3rd Semester' },
-        { value: '4', label: '4th Semester' },
-        { value: '5', label: '5th Semester' },
-        { value: '6', label: '6th Semester' },
-        { value: '7', label: '7th Semester' },
-        { value: '8', label: '8th Semester' },
-        { value: '9', label: '9th Semester' },
-        { value: '10', label: '10th Semester' },
-        { value: '11', label: '11th Semester' },
-        { value: '12', label: '12th Semester' },
-      ];
+  const semesterOptions = Array.from({ length: 12 }, (_, i) => ({
+    value: String(i + 1),
+    label: `Semester ${i + 1}`,
+  }));
 
   return (
     <motion.div {...pageTransition}>

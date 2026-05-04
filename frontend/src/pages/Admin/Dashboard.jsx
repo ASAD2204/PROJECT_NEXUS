@@ -56,6 +56,7 @@ import {
   PersonAdd,
   Assignment,
   AccountBalance,
+  ChatBubbleOutline,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
@@ -65,6 +66,7 @@ import { pageTransition } from '../../utils/animations';
 import { analyticsAPI } from '../../api/analytics';
 import { sisAPI } from '../../api/sis';
 import { opsAPI } from '../../api/ops';
+import { hrAPI } from '../../api/hr';
 
 const AdminDashboard = () => {
   const theme = useTheme();
@@ -74,41 +76,45 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState([
     { title: 'Total Students', value: '—', subtitle: 'Loading...', icon: People, color: 'primary', tooltip: '' },
     { title: 'Faculty Members', value: '—', subtitle: 'Loading...', icon: School, color: 'success', tooltip: '' },
-    { title: 'Active Courses', value: '—', subtitle: 'Loading...', icon: Assignment, color: 'info', tooltip: '' },
-    { title: 'Revenue (This Month)', value: '—', subtitle: 'Loading...', icon: AccountBalance, color: 'warning', tooltip: '' },
+    { title: 'Active Sections', value: '—', subtitle: 'Loading...', icon: Assignment, color: 'info', tooltip: '' },
+    { title: 'Revenue (Total)', value: '—', subtitle: 'Loading...', icon: AccountBalance, color: 'warning', tooltip: '' },
   ]);
   const [recentActivities, setRecentActivities] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [monthlyEnrollment, setMonthlyEnrollment] = useState([0, 0, 0, 0, 0, 0]);
   const [monthlyRevenue, setMonthlyRevenue] = useState([0, 0, 0, 0, 0, 0]);
   const [pendingApprovals, setPendingApprovals] = useState([
-    { type: 'Leave Requests', count: 0, icon: EventAvailable },
-    { type: 'Course Proposals', count: 0, icon: Assignment },
-    { type: 'Fee Waivers', count: 0, icon: Payment },
-    { type: 'Student Registrations', count: 0, icon: PersonAdd },
+    { type: 'Pending Leaves', count: 0, icon: EventAvailable, path: '/admin/hr' },
+    { type: 'Open Grievances', count: 0, icon: ChatBubbleOutline, path: '/admin/grievances' },
+    { type: 'Red Risk Students', count: 0, icon: Warning, path: '/admin/reports' },
+    { type: 'Unpaid Invoices', count: 0, icon: Payment, path: '/admin/finance' },
   ]);
   const [attendanceSnapshot, setAttendanceSnapshot] = useState({ percentage: 0, present: 0, total: 0 });
 
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const [dashRes, deptRes, facultyRes, annRes] = await Promise.allSettled([
+        const [dashRes, deptRes, facultyRes, annRes, leavesRes, grievancesRes] = await Promise.allSettled([
           analyticsAPI.getAdminDashboard(),
           sisAPI.getDepartments(),
           sisAPI.getFaculty(),
           opsAPI.getAnnouncements({ limit: 6 }),
+          hrAPI.getPendingLeaves(),
+          opsAPI.getGrievances({ status: 'Open' }),
         ]);
+
         if (dashRes.status === 'fulfilled') {
           const d = dashRes.value.data;
           if (d) {
             const facultyCount = facultyRes.status === 'fulfilled'
-              ? ((facultyRes.value.data?.faculty || facultyRes.value.data || []).length)
+              ? (Array.isArray(facultyRes.value.data) ? facultyRes.value.data.length : (facultyRes.value.data?.faculty || []).length)
               : 0;
+
             setStats([
-              { title: 'Total Students', value: String(d.total_students ?? 0), subtitle: `${d.active_students ?? 0} active`, icon: People, color: 'primary', tooltip: '' },
-              { title: 'Faculty Members', value: String(facultyCount), subtitle: 'Current staff profiles', icon: School, color: 'success', tooltip: '' },
-              { title: 'Active Sections', value: String(d.total_sections ?? 0), subtitle: 'Live teaching sections', icon: Assignment, color: 'info', tooltip: '' },
-              { title: 'Revenue (Collected)', value: `₨ ${(Number(d?.revenue?.total_collected || 0) / 1000000).toFixed(1)}M`, subtitle: `Outstanding ₨ ${(Number(d?.revenue?.outstanding || 0) / 1000000).toFixed(1)}M`, icon: AccountBalance, color: 'warning', tooltip: '' },
+              { title: 'Total Students', value: String(d.total_students ?? 0), subtitle: `${d.active_students ?? 0} active students`, icon: People, color: 'primary', tooltip: 'Total student profiles registered' },
+              { title: 'Faculty Members', value: String(facultyCount), subtitle: 'Active staff members', icon: School, color: 'success', tooltip: 'Total teaching faculty records' },
+              { title: 'Active Sections', value: String(d.total_sections ?? 0), subtitle: 'Current semester courses', icon: Assignment, color: 'info', tooltip: 'Live teaching sections for Spring 2026' },
+              { title: 'Revenue (Collected)', value: `₨ ${(Number(d?.revenue?.total_collected || 0) / 1000000).toFixed(1)}M`, subtitle: `Out: ₨ ${(Number(d?.revenue?.outstanding || 0) / 1000000).toFixed(1)}M`, icon: AccountBalance, color: 'warning', tooltip: 'Total revenue collected this session' },
             ]);
 
             setAttendanceSnapshot({
@@ -117,42 +123,53 @@ const AdminDashboard = () => {
               total: Number(d?.attendance?.total_records || 0),
             });
 
+            const pendingLeaves = leavesRes.status === 'fulfilled' ? (Array.isArray(leavesRes.value.data) ? leavesRes.value.data.length : 0) : 0;
+            const openGrievances = grievancesRes.status === 'fulfilled' ? (Array.isArray(grievancesRes.value.data) ? grievancesRes.value.data.length : 0) : 0;
+
             setPendingApprovals([
-              { type: 'Red Risk Students', count: Number(d?.at_risk_summary?.red || 0), icon: Warning },
-              { type: 'Yellow Risk Students', count: Number(d?.at_risk_summary?.yellow || 0), icon: Assignment },
-              { type: 'Outstanding Fee Cases', count: Number(d?.revenue?.outstanding || 0) > 0 ? 1 : 0, icon: Payment },
-              { type: 'Total Sections', count: Number(d?.total_sections || 0), icon: PersonAdd },
+              { type: 'Pending Leaves', count: pendingLeaves, icon: EventAvailable, path: '/admin/hr' },
+              { type: 'Open Grievances', count: openGrievances, icon: ChatBubbleOutline, path: '/admin/grievances' },
+              { type: 'Red Risk Students', count: Number(d?.at_risk_summary?.red || 0), icon: Warning, path: '/admin/reports' },
+              { type: 'Unpaid Invoices', count: Number(d?.revenue?.unpaid_student_count || 0), icon: Payment, path: '/admin/finance' },
             ]);
 
-            setMonthlyEnrollment((prev) => prev.map((_, idx) => {
-              const factor = 0.75 + (idx * 0.05);
-              return Math.round(Number(d.total_students || 0) * factor);
-            }));
-
-            setMonthlyRevenue((prev) => prev.map((_, idx) => {
-              const factor = 0.7 + (idx * 0.06);
-              return Number(((Number(d?.revenue?.total_collected || 0) / 1000000) * factor).toFixed(1));
-            }));
+            if (d.monthly_enrollment) {
+              setMonthlyEnrollment(d.monthly_enrollment);
+            }
+            if (d.monthly_revenue) {
+              setMonthlyRevenue(d.monthly_revenue);
+            }
           }
         }
+
         if (deptRes.status === 'fulfilled') {
           const depts = deptRes.value.data?.departments || deptRes.value.data || [];
-          setDepartments(depts.map(dp => ({ name: dp.name, students: dp.students ?? 0, faculty: dp.faculty ?? 0, courses: dp.courses ?? 0, growth: dp.growth ?? 0 })));
+          setDepartments(depts.slice(0, 4).map(dp => ({ 
+            name: dp.name, 
+            students: dp.students ?? 0, 
+            faculty: dp.faculty ?? 0, 
+            courses: dp.courses ?? 0, 
+            growth: dp.growth ?? 0 
+          })));
         }
+
         if (annRes.status === 'fulfilled') {
           const rows = annRes.value.data?.announcements || annRes.value.data || [];
           setRecentActivities((Array.isArray(rows) ? rows : []).slice(0, 6).map((row) => ({
             id: row.announcement_id || row.id,
             title: row.title || 'Announcement',
             description: row.content || row.description || '',
-            timestamp: row.created_at || row.published_at,
+            timestamp: row.created_at ? new Date(row.created_at).toLocaleDateString() : 'Just now',
             status: row.is_active === false ? 'warning' : 'info',
           })));
         }
-      } catch (e) { console.error(e); }
+      } catch (e) { 
+        console.error('Dashboard data fetch error:', e); 
+      }
     };
     fetchDashboard();
   }, []);
+
 
   return (
     <motion.div {...pageTransition}>
@@ -193,6 +210,7 @@ const AdminDashboard = () => {
                       <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
                         <Paper
                           elevation={0}
+                          onClick={() => item.path && navigate(item.path)}
                           sx={{
                             p: 3,
                             backgroundColor: alpha(theme.palette.warning.main, 0.08),

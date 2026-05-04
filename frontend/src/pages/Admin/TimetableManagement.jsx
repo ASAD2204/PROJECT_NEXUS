@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Box,
@@ -28,6 +28,9 @@ import {
   Divider,
   LinearProgress,
   alpha,
+  Stepper,
+  Step,
+  StepLabel,
 } from '@mui/material';
 import { 
   Schedule, 
@@ -42,6 +45,10 @@ import {
   FileDownload,
   Publish,
   Visibility,
+  School,
+  Layers,
+  Settings,
+  Preview,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import PageHeader from '../../components/Common/PageHeader';
@@ -55,37 +62,34 @@ import { lmsAPI } from '../../api/lms';
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const unwrapCollection = (payload, keys = []) => {
-  if (Array.isArray(payload)) {
-    return payload;
-  }
-
+  if (Array.isArray(payload)) return payload;
   for (const key of keys) {
-    if (Array.isArray(payload?.[key])) {
-      return payload[key];
-    }
+    if (Array.isArray(payload?.[key])) return payload[key];
   }
-
   return [];
 };
 
-const toNumericIdList = (values) => Array.from(
-  new Set(
-    (Array.isArray(values) ? values : [values])
-      .map((value) => Number(value))
-      .filter(Number.isFinite)
-  )
-);
+const STEPS = ['Select Batch', 'Add Constraints', 'Configuration', 'Solve & Review'];
 
 const TimetableManagement = () => {
   const theme = useTheme();
   const { showSnackbar } = useSnackbar();
+  
+  // -- State --
   const [loading, setLoading] = useState(false);
-  const [sections, setSections] = useState([]);
-  const [constraints, setConstraints] = useState([]);
-  const [selectedSections, setSelectedSections] = useState([]);
+  const [activeStep, setActiveStep] = useState(0);
+  
   const [programs, setPrograms] = useState([]);
-  const [filterProg, setFilterProg] = useState('');
-  const [filterSem, setFilterSem] = useState('1');
+  const [allCourses, setAllCourses] = useState([]);
+  const [constraints, setConstraints] = useState([]);
+  const [timetableSets, setTimetableSets] = useState([]);
+
+  // Selection state
+  const [selectedProgram, setSelectedProgram] = useState('');
+  const [selectedSemester, setSelectedSemester] = useState('');
+  const [selectedCourses, setSelectedCourses] = useState([]);
+
+  // Config state
   const [genConfig, setGenConfig] = useState({
     days_of_week: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
     slot_minutes: 60,
@@ -105,44 +109,27 @@ const TimetableManagement = () => {
   });
 
   const [results, setResults] = useState(null);
-  const [timetableSets, setTimetableSets] = useState([]);
   const [draftName, setDraftName] = useState('');
-  const [activeStep, setActiveStep] = useState(1);
 
+  // -- Data Loading --
   const loadData = useCallback(async () => {
     try {
-      const [secRes, conRes, progRes] = await Promise.allSettled([
-        lmsAPI.getAllSections(),
-        schedulerAPI.getConstraints(),
+      setLoading(true);
+      const [progRes, courseRes, conRes, setRes] = await Promise.all([
         sisAPI.getPrograms(),
+        lmsAPI.getCoursesAdmin(),
+        schedulerAPI.getConstraints(),
+        schedulerAPI.getTimetableSets(),
       ]);
-      const setsRes = await schedulerAPI.getTimetableSets().catch(() => ({ data: [] }));
 
-      const sectionRows = secRes.status === 'fulfilled'
-        ? unwrapCollection(secRes.value.data, ['sections'])
-        : [];
-      const constraintRows = conRes.status === 'fulfilled'
-        ? unwrapCollection(conRes.value.data, ['constraints'])
-        : [];
-      const programRows = progRes.status === 'fulfilled'
-        ? unwrapCollection(progRes.value.data, ['programs'])
-        : [];
-
-      setSections(sectionRows);
-      setConstraints(constraintRows);
-      setPrograms(programRows);
-      setTimetableSets(Array.isArray(setsRes.data) ? setsRes.data : []);
-
-      const failureCount = [secRes, conRes, progRes].filter((result) => result.status === 'rejected').length;
-      if (failureCount > 0) {
-        showSnackbar(
-          failureCount === 3 ? 'Failed to load timetable data' : 'Loaded timetable data with partial failures',
-          failureCount === 3 ? 'error' : 'warning'
-        );
-      }
+      setPrograms(unwrapCollection(progRes.data, ['programs']));
+      setAllCourses(unwrapCollection(courseRes.data, ['courses']));
+      setConstraints(unwrapCollection(conRes.data, ['constraints']));
+      setTimetableSets(Array.isArray(setRes.data) ? setRes.data : []);
     } catch (e) {
-      console.error(e);
-      showSnackbar('Failed to load data', 'error');
+      showSnackbar('Failed to load required data', 'error');
+    } finally {
+      setLoading(false);
     }
   }, [showSnackbar]);
 
@@ -150,38 +137,40 @@ const TimetableManagement = () => {
     loadData();
   }, [loadData]);
 
+  // -- Helpers --
+  const filteredCourses = useMemo(() => {
+    if (!selectedProgram || !selectedSemester) return [];
+    return allCourses.filter(c => 
+      String(c.program_id) === String(selectedProgram) && 
+      String(c.semester_id) === String(selectedSemester)
+    );
+  }, [allCourses, selectedProgram, selectedSemester]);
+
+  // -- Handlers --
   const handleGenerate = async () => {
-    if (selectedSections.length === 0) {
-      showSnackbar('Select at least one section from the list before generating a timetable.', 'warning');
+    if (selectedCourses.length === 0) {
+      showSnackbar('Please select at least one course.', 'warning');
       return;
     }
     setLoading(true);
     setResults(null);
     try {
-      const sectionIds = toNumericIdList(selectedSections);
       const res = await schedulerAPI.generateTimetable({
-        section_ids: sectionIds,
+        course_ids: selectedCourses,
         ...genConfig,
         save_as_draft: true,
-        draft_name: draftName || undefined,
-        program_id: filterProg ? Number(filterProg) : null,
-        semester_id: filterSem ? Number(filterSem) : null,
+        draft_name: draftName || `${programs.find(p => String(p.program_id) === selectedProgram)?.title} Sem ${selectedSemester}`,
+        program_id: Number(selectedProgram),
+        semester_id: Number(selectedSemester),
       });
       setResults(res.data);
-      setActiveStep(4);
       if (res.data.unscheduled?.length > 0 && res.data.created?.length === 0) {
-        showSnackbar('Could not generate a valid schedule. Check constraints.', 'error');
+        showSnackbar('Conflict solver failed to find slots.', 'error');
       } else {
-        showSnackbar(
-          res.data.timetable_set_id
-            ? `Generated ${res.data.created?.length} slots and saved draft #${res.data.timetable_set_id}`
-            : `Generated ${res.data.created?.length} slots successfully!`,
-          'success'
-        );
+        showSnackbar('Timetable generated successfully!', 'success');
         loadData();
       }
     } catch (e) {
-      console.error(e);
       showSnackbar(e.response?.data?.detail || 'Generation failed', 'error');
     } finally {
       setLoading(false);
@@ -192,56 +181,333 @@ const TimetableManagement = () => {
     try {
       await schedulerAPI.createConstraint(newConstraint);
       showSnackbar('Constraint added', 'success');
-      loadData();
+      const conRes = await schedulerAPI.getConstraints();
+      setConstraints(unwrapCollection(conRes.data, ['constraints']));
     } catch (e) {
       showSnackbar('Failed to add constraint', 'error');
     }
   };
 
-  const handlePreviewSet = async (setId) => {
+  const handleDeleteConstraint = async (id) => {
     try {
-      const res = await schedulerAPI.getTimetableSet(setId);
-      setResults({ created: res.data.created || [], unscheduled: [], timetable_set_id: setId });
-      setActiveStep(4);
+      await schedulerAPI.deleteConstraint(id);
+      showSnackbar('Constraint removed', 'success');
+      const conRes = await schedulerAPI.getConstraints();
+      setConstraints(unwrapCollection(conRes.data, ['constraints']));
     } catch (e) {
-      showSnackbar('Failed to load timetable set', 'error');
+      showSnackbar('Failed to delete constraint', 'error');
     }
   };
 
-  const handlePublishSet = async (setId) => {
+  const handlePublishSet = async (id) => {
     try {
-      await schedulerAPI.publishTimetableSet(setId);
-      showSnackbar('Timetable set published successfully', 'success');
+      await schedulerAPI.publishTimetableSet(id);
+      showSnackbar('Timetable published to live calendar', 'success');
       loadData();
     } catch (e) {
-      showSnackbar(e?.response?.data?.detail || 'Failed to publish timetable set', 'error');
+      showSnackbar('Failed to publish', 'error');
     }
   };
 
-  const handleExportSet = async (setId) => {
+  const handleDeleteSet = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this draft?')) return;
     try {
-      const res = await schedulerAPI.exportTimetableSet(setId);
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `timetable_set_${setId}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (e) {
-      showSnackbar('Failed to export timetable set', 'error');
-    }
-  };
-
-  const handleDeleteSet = async (setId) => {
-    if (!window.confirm('Delete this timetable draft?')) return;
-    try {
-      await schedulerAPI.deleteTimetableSet(setId);
-      showSnackbar('Timetable set deleted', 'success');
+      await schedulerAPI.deleteTimetableSet(id);
+      showSnackbar('Draft deleted', 'success');
       loadData();
     } catch (e) {
-      showSnackbar('Failed to delete timetable set', 'error');
+      showSnackbar('Failed to delete draft', 'error');
+    }
+  };
+
+  const handleNext = () => setActiveStep((prev) => prev + 1);
+  const handleBack = () => setActiveStep((prev) => prev - 1);
+
+  // -- Render Helpers --
+  const renderStepContent = (step) => {
+    switch (step) {
+      case 0:
+        return (
+          <Stack spacing={3}>
+            <Typography variant="subtitle1" fontWeight="bold">1. Select Academic Batch</Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Program</InputLabel>
+                  <Select
+                    value={selectedProgram}
+                    label="Program"
+                    onChange={(e) => {
+                      setSelectedProgram(e.target.value);
+                      setSelectedCourses([]);
+                    }}
+                  >
+                    {programs.map(p => (
+                      <MenuItem key={p.program_id} value={String(p.program_id)}>{p.title}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Semester</InputLabel>
+                  <Select
+                    value={selectedSemester}
+                    label="Semester"
+                    onChange={(e) => {
+                      setSelectedSemester(e.target.value);
+                      setSelectedCourses([]);
+                    }}
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
+                      <MenuItem key={s} value={String(s)}>Semester {s}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+
+            {filteredCourses.length > 0 && (
+              <Box>
+                <Typography variant="subtitle2" gutterBottom>Pick Courses to Schedule</Typography>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell padding="checkbox">
+                          <Checkbox 
+                            indeterminate={selectedCourses.length > 0 && selectedCourses.length < filteredCourses.length}
+                            checked={selectedCourses.length === filteredCourses.length}
+                            onChange={(e) => {
+                              if (e.target.checked) setSelectedCourses(filteredCourses.map(c => c.course_id));
+                              else setSelectedCourses([]);
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>Code</TableCell>
+                        <TableCell>Title</TableCell>
+                        <TableCell>Teacher</TableCell>
+                        <TableCell>Room</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {filteredCourses.map(course => (
+                        <TableRow key={course.course_id}>
+                          <TableCell padding="checkbox">
+                            <Checkbox 
+                              checked={selectedCourses.includes(course.course_id)}
+                              onChange={(e) => {
+                                if (e.target.checked) setSelectedCourses([...selectedCourses, course.course_id]);
+                                else setSelectedCourses(selectedCourses.filter(id => id !== course.course_id));
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>{course.code}</TableCell>
+                          <TableCell>{course.title}</TableCell>
+                          <TableCell>{course.faculty_id ? `ID: ${course.faculty_id}` : 'None'}</TableCell>
+                          <TableCell>{course.room_no || 'TBD'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            )}
+          </Stack>
+        );
+
+      case 1:
+        return (
+          <Stack spacing={3}>
+            <Typography variant="subtitle1" fontWeight="bold">2. Global Resource Constraints</Typography>
+            <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.info.main, 0.02) }}>
+              <Grid container spacing={2} alignItems="center">
+                <Grid item xs={12} sm={3}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Type</InputLabel>
+                    <Select
+                      value={newConstraint.resource_type}
+                      label="Type"
+                      onChange={e => setNewConstraint({ ...newConstraint, resource_type: e.target.value })}
+                    >
+                      <MenuItem value="faculty">Faculty Busy</MenuItem>
+                      <MenuItem value="room">Room Locked</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={2}>
+                  <TextField 
+                    label="Resource ID" 
+                    size="small" 
+                    fullWidth 
+                    value={newConstraint.resource_id}
+                    onChange={e => setNewConstraint({ ...newConstraint, resource_id: e.target.value })}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={2}>
+                  <Select
+                    fullWidth
+                    size="small"
+                    value={newConstraint.day_of_week}
+                    onChange={e => setNewConstraint({ ...newConstraint, day_of_week: e.target.value })}
+                  >
+                    {DAYS.map(d => <MenuItem key={d} value={d}>{d}</MenuItem>)}
+                  </Select>
+                </Grid>
+                <Grid item xs={6} sm={2}>
+                  <TextField type="time" label="Start" size="small" fullWidth InputLabelProps={{ shrink: true }} value={newConstraint.start_time} onChange={e => setNewConstraint({...newConstraint, start_time: e.target.value})} />
+                </Grid>
+                <Grid item xs={6} sm={2}>
+                  <TextField type="time" label="End" size="small" fullWidth InputLabelProps={{ shrink: true }} value={newConstraint.end_time} onChange={e => setNewConstraint({...newConstraint, end_time: e.target.value})} />
+                </Grid>
+                <Grid item xs={12} sm={1}>
+                  <IconButton color="primary" onClick={handleAddConstraint}><Add /></IconButton>
+                </Grid>
+              </Grid>
+            </Paper>
+
+            <Typography variant="subtitle2">Active Constraints</Typography>
+            <Grid container spacing={1}>
+              {constraints.map(c => (
+                <Grid item key={c.constraint_id} xs={12} sm={6} md={4}>
+                  <Chip 
+                    label={`${c.resource_type === 'faculty' ? '👤' : '🚪'} ${c.resource_id}: ${c.day_of_week.slice(0,3)} ${c.start_time.slice(0,5)}-${c.end_time.slice(0,5)}`}
+                    onDelete={() => handleDeleteConstraint(c.constraint_id)}
+                    color="error"
+                    variant="outlined"
+                    sx={{ width: '100%', justifyContent: 'space-between' }}
+                  />
+                </Grid>
+              ))}
+            </Grid>
+          </Stack>
+        );
+
+      case 2:
+        return (
+          <Stack spacing={3}>
+            <Typography variant="subtitle1" fontWeight="bold">3. Solver Configuration</Typography>
+            
+            <Card variant="outlined">
+              <CardContent>
+                <Typography variant="subtitle2" gutterBottom>Working Days</Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap">
+                  {DAYS.map((day) => (
+                    <Chip
+                      key={day}
+                      label={day}
+                      onClick={() => {
+                        const current = genConfig.days_of_week;
+                        const next = current.includes(day)
+                          ? current.filter(d => d !== day)
+                          : [...current, day];
+                        setGenConfig({ ...genConfig, days_of_week: next });
+                      }}
+                      color={genConfig.days_of_week.includes(day) ? "primary" : "default"}
+                      variant={genConfig.days_of_week.includes(day) ? "filled" : "outlined"}
+                      sx={{ m: 0.5 }}
+                    />
+                  ))}
+                </Stack>
+                {genConfig.days_of_week.length === 0 && (
+                  <Typography variant="caption" color="error">Please select at least one day.</Typography>
+                )}
+              </CardContent>
+            </Card>
+
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="subtitle2" gutterBottom>Working Window</Typography>
+                    <Stack spacing={2}>
+                      <Grid container spacing={1}>
+                        <Grid item xs={6}><TextField label="Start Hour (0-23)" type="number" fullWidth value={genConfig.start_hour} onChange={e => setGenConfig({...genConfig, start_hour: parseInt(e.target.value)})}/></Grid>
+                        <Grid item xs={6}><TextField label="End Hour (0-23)" type="number" fullWidth value={genConfig.end_hour} onChange={e => setGenConfig({...genConfig, end_hour: parseInt(e.target.value)})}/></Grid>
+                      </Grid>
+                      <TextField label="Lecture Duration (Mins)" type="number" fullWidth value={genConfig.slot_minutes} onChange={e => setGenConfig({...genConfig, slot_minutes: parseInt(e.target.value)})}/>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="subtitle2" gutterBottom>Break / Lunch</Typography>
+                    <Stack spacing={2}>
+                      <Grid container spacing={1}>
+                        <Grid item xs={6}><TextField label="Break Start" type="number" fullWidth value={genConfig.break_start_hour} onChange={e => setGenConfig({...genConfig, break_start_hour: parseInt(e.target.value)})}/></Grid>
+                        <Grid item xs={6}><TextField label="Break End" type="number" fullWidth value={genConfig.break_end_hour} onChange={e => setGenConfig({...genConfig, break_end_hour: parseInt(e.target.value)})}/></Grid>
+                      </Grid>
+                      <TextField label="Max Lectures per Day" type="number" fullWidth value={genConfig.max_classes_per_day} onChange={e => setGenConfig({...genConfig, max_classes_per_day: parseInt(e.target.value)})}/>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+            <TextField label="Draft Name" placeholder="e.g. BSCS-FALL-2024-V1" fullWidth value={draftName} onChange={e => setDraftName(e.target.value)}/>
+          </Stack>
+        );
+
+      case 3:
+        return (
+          <Stack spacing={3}>
+            {!results && (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <AutoFixHigh sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
+                <Typography variant="h6">Ready to Solve</Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Click "Solve Conflicts" to trigger the OR-Tools batch algorithm.
+                </Typography>
+                <Button variant="contained" size="large" onClick={handleGenerate} disabled={loading}>
+                  {loading ? 'Thinking...' : 'Solve Conflicts'}
+                </Button>
+                {loading && <LinearProgress sx={{ mt: 2, width: '100%', maxWidth: 400, mx: 'auto' }} />}
+              </Box>
+            )}
+
+            {results && (
+              <Box>
+                {results.unscheduled?.length > 0 && (
+                  <Paper sx={{ p: 2, mb: 2, bgcolor: alpha(theme.palette.error.main, 0.05), borderLeft: '4px solid', borderLeftColor: 'error.main' }}>
+                    <Typography variant="subtitle2" color="error" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <ErrorOutline fontSize="small" /> Could not schedule {results.unscheduled.length} items:
+                    </Typography>
+                    <Typography variant="caption" color="error.dark">
+                      {results.unscheduled.join(', ')}
+                    </Typography>
+                  </Paper>
+                )}
+
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Day</TableCell>
+                        <TableCell>Time</TableCell>
+                        <TableCell>Course</TableCell>
+                        <TableCell>Room</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {results.created?.map((slot, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Chip label={slot.day_of_week} size="small" /></TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>{slot.start_time.slice(0,5)} - {slot.end_time.slice(0,5)}</TableCell>
+                          <TableCell>{slot.course_code || `ID: ${slot.course_id}`}</TableCell>
+                          <TableCell>{slot.room_no || 'TBD'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            )}
+          </Stack>
+        );
+
+      default:
+        return null;
     }
   };
 
@@ -249,328 +515,68 @@ const TimetableManagement = () => {
     <PageTransition>
       <Box className="page-container">
         <PageHeader 
-          title="Timetable Manager" 
-          subtitle="AI-driven conflict-free scheduling for courses, rooms, and faculty"
+          title="Batch Timetable Solver" 
+          subtitle="Top-down batch scheduling using AI conflict resolution"
         />
-        <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap' }}>
-          <Chip label={`1. Select Batch`} color={activeStep >= 1 ? 'primary' : 'default'} />
-          <Chip label={`2. Add Constraints`} color={activeStep >= 2 ? 'primary' : 'default'} />
-          <Chip label={`3. Generate`} color={activeStep >= 3 ? 'primary' : 'default'} />
-          <Chip label={`4. Review & Save`} color={activeStep >= 4 ? 'primary' : 'default'} />
-          <Chip label={`5. Publish & Export`} color={activeStep >= 5 ? 'primary' : 'default'} />
-        </Stack>
 
-        <Grid container spacing={3} component={motion.div} variants={staggerContainer} initial="initial" animate="animate">
-          {/* Configuration Panel */}
-          <Grid size={{ xs: 12, lg: 4 }} component={motion.div} variants={fadeInUp}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} lg={8}>
+            <Card>
+              <CardContent>
+                <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
+                  {STEPS.map((label) => (
+                    <Step key={label}>
+                      <StepLabel>{label}</StepLabel>
+                    </Step>
+                  ))}
+                </Stepper>
+
+                <Box sx={{ minHeight: 400 }}>
+                  {renderStepContent(activeStep)}
+                </Box>
+
+                <Divider sx={{ my: 3 }} />
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Button disabled={activeStep === 0} onClick={handleBack}>Back</Button>
+                  {activeStep < STEPS.length - 1 ? (
+                    <Button variant="contained" onClick={handleNext}>Next</Button>
+                  ) : (
+                    <Button variant="contained" color="success" startIcon={<CheckCircle />} onClick={() => setActiveStep(0)}>Finish Wizard</Button>
+                  )}
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} lg={4}>
             <Stack spacing={3}>
               <Card>
                 <CardContent>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Schedule color="primary" /> Scheduler Config
-                  </Typography>
-                  <Divider sx={{ mb: 3 }} />
-                  
-                  <Stack spacing={2.5}>
-                    <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
-                      <Typography variant="subtitle2" gutterBottom>Quick Select by Program</Typography>
-                      <Grid container spacing={1}>
-                        <Grid size={6}>
-                          <FormControl fullWidth size="small">
-                            <InputLabel>Program</InputLabel>
-                            <Select
-                              value={filterProg}
-                              label="Program"
-                              onChange={(e) => setFilterProg(String(e.target.value))}
-                            >
-                              {programs.map((p) => (
-                                <MenuItem key={p.program_id} value={String(p.program_id)}>
-                                  {p.title || p.name || `Program ${p.program_id}`}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                        </Grid>
-                        <Grid size={6}>
-                          <TextField
-                            label="Semester"
-                            size="small"
-                            type="number"
-                            fullWidth
-                            value={filterSem}
-                            onChange={(e) => setFilterSem(e.target.value)}
-                          />
-                        </Grid>
-                      </Grid>
-                      <Button 
-                        variant="outlined" 
-                        size="small" 
-                        fullWidth 
-                        sx={{ mt: 1 }}
-                        onClick={() => {
-                          const targetProgramId = String(filterProg);
-                          const targetSemesterId = String(filterSem);
-                          const sids = sections
-                            .filter((s) => String(s.course?.program_id ?? '') === targetProgramId && String(s.semester_id ?? '') === targetSemesterId)
-                            .map((s) => s.section_id);
-                          setSelectedSections(toNumericIdList([...selectedSections, ...sids]));
-                        }}
-                      >
-                        Select All Program Sections
-                      </Button>
-                    </Box>
-
-                    <FormControl fullWidth>
-                      <InputLabel>Sections to Schedule</InputLabel>
-                      <Select
-                        multiple
-                        value={selectedSections}
-                        onChange={(e) => setSelectedSections(toNumericIdList(e.target.value))}
-                        input={<OutlinedInput label="Sections to Schedule" />}
-                        renderValue={(selected) => (
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                            {selected.map((value) => (
-                              <Chip key={value} label={`Sec ${value}`} size="small" />
-                            ))}
-                          </Box>
-                        )}
-                      >
-                        {sections.map((sec) => (
-                          <MenuItem key={sec.section_id} value={sec.section_id}>
-                            <Checkbox checked={selectedSections.includes(Number(sec.section_id))} />
-                            <ListItemText
-                              primary={`${sec.course?.code || sec.course?.title || 'Course'} - Section ${sec.section_id}`}
-                              secondary={`Prog ID: ${sec.course?.program_id || 'N/A'}, Sem: ${sec.semester_id || 'N/A'}`}
-                            />
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-
-                    <FormControl fullWidth>
-                      <InputLabel>Working Days</InputLabel>
-                      <Select
-                        multiple
-                        value={genConfig.days_of_week}
-                        onChange={(e) => setGenConfig({ ...genConfig, days_of_week: e.target.value })}
-                        input={<OutlinedInput label="Working Days" />}
-                        renderValue={(selected) => selected.join(', ')}
-                      >
-                        {DAYS.map((day) => (
-                          <MenuItem key={day} value={day}>
-                            <Checkbox checked={genConfig.days_of_week.indexOf(day) > -1} />
-                            <ListItemText primary={day} />
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-
-                    <Grid container spacing={2}>
-                      <Grid size={6}>
-                        <TextField
-                          label="Start Hour"
-                          type="number"
-                          fullWidth
-                          value={genConfig.start_hour}
-                          onChange={(e) => setGenConfig({ ...genConfig, start_hour: parseInt(e.target.value) })}
-                        />
-                      </Grid>
-                      <Grid size={6}>
-                        <TextField
-                          label="End Hour"
-                          type="number"
-                          fullWidth
-                          value={genConfig.end_hour}
-                          onChange={(e) => setGenConfig({ ...genConfig, end_hour: parseInt(e.target.value) })}
-                        />
-                      </Grid>
-                    </Grid>
-
-                    <TextField
-                      label="Slot Duration (Minutes)"
-                      type="number"
-                      fullWidth
-                      value={genConfig.slot_minutes}
-                      onChange={(e) => setGenConfig({ ...genConfig, slot_minutes: parseInt(e.target.value) })}
-                    />
-
-                    <Grid container spacing={2}>
-                      <Grid size={6}>
-                        <TextField
-                          label="Lunch Start (Hr)"
-                          type="number"
-                          fullWidth
-                          value={genConfig.break_start_hour}
-                          onChange={(e) => setGenConfig({ ...genConfig, break_start_hour: parseInt(e.target.value) })}
-                        />
-                      </Grid>
-                      <Grid size={6}>
-                        <TextField
-                          label="Lunch End (Hr)"
-                          type="number"
-                          fullWidth
-                          value={genConfig.break_end_hour}
-                          onChange={(e) => setGenConfig({ ...genConfig, break_end_hour: parseInt(e.target.value) })}
-                        />
-                      </Grid>
-                    </Grid>
-
-                    <TextField
-                      label="Max Classes/Day/Batch"
-                      type="number"
-                      fullWidth
-                      value={genConfig.max_classes_per_day}
-                      onChange={(e) => setGenConfig({ ...genConfig, max_classes_per_day: parseInt(e.target.value) })}
-                    />
-
-                    <TextField
-                      label="Draft Name (optional)"
-                      fullWidth
-                      value={draftName}
-                      onChange={(e) => setDraftName(e.target.value)}
-                      placeholder="BSIT Sem 1 - Spring Draft"
-                    />
-
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      size="large"
-                      startIcon={<AutoFixHigh />}
-                      onClick={handleGenerate}
-                      disabled={loading}
-                      sx={{ py: 1.5 }}
-                    >
-                      {loading ? 'Solving Conflicts...' : 'Generate Timetable'}
-                    </Button>
-                    {loading && <LinearProgress sx={{ borderRadius: 1 }} />}
-                  </Stack>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Block color="error" /> Constraints
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                  
-                  <Stack spacing={2}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>Type</InputLabel>
-                      <Select
-                        value={newConstraint.resource_type}
-                        onChange={(e) => setNewConstraint({ ...newConstraint, resource_type: e.target.value })}
-                        label="Type"
-                      >
-                        <MenuItem value="faculty">Faculty Unavailable</MenuItem>
-                        <MenuItem value="room">Room Blocked</MenuItem>
-                      </Select>
-                    </FormControl>
-
-                    <TextField
-                      label="ID (Faculty/Room)"
-                      size="small"
-                      fullWidth
-                      value={newConstraint.resource_id}
-                      onChange={(e) => setNewConstraint({ ...newConstraint, resource_id: e.target.value })}
-                    />
-
-                    <Grid container spacing={1}>
-                      <Grid size={6}>
-                        <TextField
-                          label="Start"
-                          type="time"
-                          size="small"
-                          fullWidth
-                          value={newConstraint.start_time}
-                          onChange={(e) => setNewConstraint({ ...newConstraint, start_time: e.target.value })}
-                        />
-                      </Grid>
-                      <Grid size={6}>
-                        <TextField
-                          label="End"
-                          type="time"
-                          size="small"
-                          fullWidth
-                          value={newConstraint.end_time}
-                          onChange={(e) => setNewConstraint({ ...newConstraint, end_time: e.target.value })}
-                        />
-                      </Grid>
-                    </Grid>
-
-                    <Button variant="outlined" startIcon={<Add />} onClick={handleAddConstraint}>
-                      Add Constraint
-                    </Button>
-                  </Stack>
-
-                  {constraints.length > 0 && (
-                    <Box sx={{ mt: 3 }}>
-                      <Typography variant="subtitle2" fontWeight="bold" gutterBottom>Active Constraints</Typography>
-                      <Stack spacing={1}>
-                        {constraints.map((c) => (
-                          <Paper key={c.constraint_id} variant="outlined" sx={{ p: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: alpha(theme.palette.error.main, 0.02) }}>
-                            <Box>
-                              <Typography variant="caption" fontWeight="bold" display="block">
-                                {c.resource_type.toUpperCase()}: {c.resource_id}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {c.day_of_week} | {c.start_time.slice(0, 5)} - {c.end_time.slice(0, 5)}
-                              </Typography>
-                            </Box>
-                            <IconButton size="small" color="error" onClick={async () => {
-                              try {
-                                await schedulerAPI.deleteConstraint(c.constraint_id);
-                                showSnackbar('Constraint removed', 'success');
-                                loadData();
-                              } catch (e) {
-                                showSnackbar('Failed to delete', 'error');
-                              }
-                            }}>
-                              <Delete fontSize="small" />
-                            </IconButton>
-                          </Paper>
-                        ))}
-                      </Stack>
-                    </Box>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom>
-                    Saved Timetable Sets
-                  </Typography>
+                  <Typography variant="h6" fontWeight="bold" gutterBottom>Saved Drafts</Typography>
                   <Divider sx={{ mb: 2 }} />
                   <Stack spacing={1.5}>
                     {timetableSets.length === 0 && (
-                      <Typography variant="body2" color="text.secondary">
-                        No saved drafts yet.
-                      </Typography>
+                      <Typography variant="body2" color="text.secondary">No drafts available.</Typography>
                     )}
-                    {timetableSets.map((set) => (
-                      <Paper key={set.set_id} variant="outlined" sx={{ p: 1.5 }}>
-                        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
-                          <Box>
-                            <Typography variant="body2" fontWeight={600}>{set.name}</Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {set.status} • {set.created_count} slots
-                            </Typography>
-                          </Box>
-                          <Stack direction="row" spacing={0.5}>
-                            <IconButton size="small" color="primary" onClick={() => handlePreviewSet(set.set_id)}>
-                              <Visibility fontSize="small" />
-                            </IconButton>
-                            <IconButton size="small" color="success" onClick={() => { handlePublishSet(set.set_id); setActiveStep(5); }}>
-                              <Publish fontSize="small" />
-                            </IconButton>
-                            <IconButton size="small" color="info" onClick={() => handleExportSet(set.set_id)}>
-                              <FileDownload fontSize="small" />
-                            </IconButton>
-                            <IconButton size="small" color="error" onClick={() => handleDeleteSet(set.set_id)}>
-                              <Delete fontSize="small" />
-                            </IconButton>
-                          </Stack>
+                    {timetableSets.map(set => (
+                      <Paper key={set.set_id} variant="outlined" sx={{ p: 2 }}>
+                        <Typography variant="subtitle2">{set.name}</Typography>
+                        <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                          <Chip label={set.status} size="small" color={set.status === 'Published' ? 'success' : 'default'} />
+                          <Typography variant="caption" color="text.secondary">{set.created_count} slots</Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+                          <Button 
+                            size="small" 
+                            variant="outlined" 
+                            startIcon={<Publish />} 
+                            disabled={set.status === 'Published'}
+                            onClick={() => handlePublishSet(set.set_id)}
+                          >
+                            Publish
+                          </Button>
+                          <IconButton size="small" color="error" onClick={() => handleDeleteSet(set.set_id)}><Delete /></IconButton>
                         </Stack>
                       </Paper>
                     ))}
@@ -578,99 +584,6 @@ const TimetableManagement = () => {
                 </CardContent>
               </Card>
             </Stack>
-          </Grid>
-
-          {/* Results Panel */}
-          <Grid size={{ xs: 12, lg: 8 }} component={motion.div} variants={fadeInUp}>
-            {results ? (
-              <Stack spacing={3}>
-                {results.unscheduled?.length > 0 && (
-                  <Card sx={{ border: '1px solid', borderColor: 'error.main', bgcolor: alpha(theme.palette.error.main, 0.02) }}>
-                    <CardContent>
-                      <Typography variant="subtitle1" color="error" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <ErrorOutline /> Issues Found
-                      </Typography>
-                      <Stack spacing={0.5} sx={{ mt: 1 }}>
-                        {results.unscheduled.map((err, i) => (
-                          <Typography key={i} variant="body2" color="error.dark">• {err}</Typography>
-                        ))}
-                      </Stack>
-                    </CardContent>
-                  </Card>
-                )}
-
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <CalendarMonth color="success" /> Generated Results
-                    </Typography>
-                    <Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<FileDownload />}
-                        onClick={() => {
-                          if (results?.timetable_set_id) {
-                            handleExportSet(results.timetable_set_id);
-                            return;
-                          }
-                          window.print();
-                        }}
-                      >
-                        Print / Export
-                      </Button>
-                    </Stack>
-                    <Divider sx={{ mb: 2 }} />
-                    
-                    <TableContainer component={Paper} elevation={0} variant="outlined">
-                      <Table size="small">
-                        <TableHead sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
-                          <TableRow>
-                            <TableCell>Day</TableCell>
-                            <TableCell>Time Slot</TableCell>
-                            <TableCell>Section</TableCell>
-                            <TableCell>Room</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {results.created?.map((slot, i) => (
-                            <TableRow key={i} hover>
-                              <TableCell><Chip label={slot.day_of_week} size="small" variant="outlined" /></TableCell>
-                              <TableCell fontWeight="bold">{slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}</TableCell>
-                              <TableCell>Section {slot.section_id}</TableCell>
-                              <TableCell>{slot.room_no || 'TBD'}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </CardContent>
-                </Card>
-              </Stack>
-            ) : (
-              <Box 
-                sx={{ 
-                  height: '100%', 
-                  minHeight: 400,
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  bgcolor: alpha(theme.palette.primary.main, 0.02),
-                  borderRadius: 4,
-                  border: '2px dashed',
-                  borderColor: alpha(theme.palette.primary.main, 0.1),
-                  p: 4,
-                  textAlign: 'center'
-                }}
-              >
-                <Schedule sx={{ fontSize: 64, color: alpha(theme.palette.primary.main, 0.2), mb: 2 }} />
-                <Typography variant="h5" color="text.secondary" fontWeight="bold">Ready to Solve</Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 400, mt: 1 }}>
-                  Select sections and configure your working hours, then click Generate to let the AI find conflict-free slots.
-                </Typography>
-              </Box>
-            )}
           </Grid>
         </Grid>
       </Box>

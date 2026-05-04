@@ -388,11 +388,11 @@ const Dashboard = () => {
                     Academic Performance
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    GPA trend over 7 semesters
+                    GPA trend over {gpaHistory.length} semesters
                   </Typography>
                 </Box>
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <Chip label="7 Semesters" size="small" color="primary" variant="outlined" />
+                  <Chip label={`${gpaHistory.length} Semesters`} size="small" color="primary" variant="outlined" />
                   <TrendingUpIcon sx={{ color: 'success.main', fontSize: 32 }} />
                 </Stack>
               </Box>

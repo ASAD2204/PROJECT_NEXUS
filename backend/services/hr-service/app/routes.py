@@ -15,7 +15,7 @@ from app.models import (
     AuthUser,
     HrNotification,
     LmsAttendance,
-    LmsSection,
+    LmsCourse,
     OpsLeave,
     OpsLeaveDocument,
     SisEnrollment,
@@ -142,8 +142,8 @@ def _notify_teachers_for_approved_student_leave(db: Session, leave: OpsLeave):
 
     faculty_user_rows = (
         db.query(SisFaculty.user_id)
-        .join(LmsSection, LmsSection.faculty_id == SisFaculty.faculty_id)
-        .join(SisEnrollment, SisEnrollment.section_id == LmsSection.section_id)
+        .join(LmsCourse, LmsCourse.faculty_id == SisFaculty.faculty_id)
+        .join(SisEnrollment, SisEnrollment.course_id == LmsCourse.course_id)
         .filter(
             SisEnrollment.student_id == student.student_id,
             SisEnrollment.status == "Enrolled",
@@ -227,10 +227,10 @@ def _mark_student_leave_attendance(db: Session, leave: OpsLeave):
     if not student:
         return
 
-    section_ids = [
+    course_ids = [
         row[0]
         for row in (
-            db.query(SisEnrollment.section_id)
+            db.query(SisEnrollment.course_id)
             .filter(
                 SisEnrollment.student_id == student.student_id,
                 SisEnrollment.status == "Enrolled",
@@ -239,17 +239,17 @@ def _mark_student_leave_attendance(db: Session, leave: OpsLeave):
             .all()
         )
     ]
-    if not section_ids:
+    if not course_ids:
         return
 
     current_day = leave.start_date
     while current_day <= leave.end_date:
-        for section_id in section_ids:
+        for course_id in course_ids:
             existing = (
                 db.query(LmsAttendance)
                 .filter(
                     LmsAttendance.student_id == student.student_id,
-                    LmsAttendance.section_id == section_id,
+                    LmsAttendance.course_id == course_id,
                     LmsAttendance.date == current_day,
                 )
                 .first()
@@ -260,7 +260,7 @@ def _mark_student_leave_attendance(db: Session, leave: OpsLeave):
             else:
                 db.add(
                     LmsAttendance(
-                        section_id=section_id,
+                        course_id=course_id,
                         student_id=student.student_id,
                         date=current_day,
                         status="Leave",

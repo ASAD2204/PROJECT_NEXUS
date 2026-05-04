@@ -23,6 +23,7 @@ const Confirmation = () => {
   
   const selectedCourse = JSON.parse(sessionStorage.getItem('selectedCourse') || '{}');
   const capturedImage = sessionStorage.getItem('capturedFace');
+  const matchConfidence = sessionStorage.getItem('matchConfidence') || '0';
 
   return (
     <Box sx={{ minHeight: 'calc(100vh - 64px)', pb: 4 }}>

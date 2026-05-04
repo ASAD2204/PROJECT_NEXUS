@@ -64,16 +64,32 @@ async def _resolve_user_names(user_ids: List[str]) -> dict:
     user_map = {}
     if not user_ids:
         return user_map
+    
+    # Filter out None and ensure they are strings
+    valid_ids = [str(uid) for uid in user_ids if uid is not None]
+    if not valid_ids:
+        return user_map
+
+    # Create lookup map for lowercase ID -> original ID
+    id_lookup = {uid.lower(): uid for uid in valid_ids}
+    
     async with httpx.AsyncClient() as client:
         try:
             resp = await client.post(
                 f"{AUTH_SERVICE_URL}/users/bulk",
-                json=user_ids,
+                json=valid_ids,
                 timeout=5.0
             )
             if resp.status_code == 200:
                 for u_data in resp.json():
-                    user_map[u_data["user_id"]] = f"{u_data.get('first_name', '')} {u_data.get('last_name', '')}".strip() or u_data["email"]
+                    name = f"{u_data.get('first_name', '')} {u_data.get('last_name', '')}".strip() or u_data["email"]
+                    resp_id_low = str(u_data["user_id"]).lower()
+                    if resp_id_low in id_lookup:
+                        user_map[id_lookup[resp_id_low]] = name
+                    else:
+                        user_map[resp_id_low] = name
+            else:
+                print(f"Auth service bulk lookup failed: {resp.status_code} - {resp.text}")
         except Exception as e:
             print(f"Failed to fetch user names: {e}")
     return user_map
@@ -162,16 +178,25 @@ async def add_by_email(
     async with httpx.AsyncClient() as client:
         try:
             # Internal call to auth-service
+            print(f"Looking up user by email: {body.email}")
             resp = await client.get(f"{AUTH_SERVICE_URL}/users/by-email/{body.email}")
+            
+            if resp.status_code == 404:
+                raise HTTPException(status_code=404, detail=f"User with email {body.email} not found")
+            
             if resp.status_code != 200:
-                raise HTTPException(status_code=404, detail="User with this email not found")
+                print(f"Auth service error: {resp.status_code} - {resp.text}")
+                raise HTTPException(status_code=500, detail="Failed to communicate with Auth Service")
             
             target_user = resp.json()
             target_id = target_user["user_id"]
+            # Correctly construct target name from first_name and last_name
+            target_name = f"{target_user.get('first_name', '')} {target_user.get('last_name', '')}".strip() or target_user["email"]
         except HTTPException:
             raise
-        except Exception:
-            raise HTTPException(status_code=404, detail="User with this email not found")
+        except Exception as e:
+            print(f"Unexpected error during email lookup: {e}")
+            raise HTTPException(status_code=500, detail="Internal server error during user lookup")
 
     participants = sorted([user["user_id"], target_id])
 
@@ -183,7 +208,7 @@ async def add_by_email(
     if existing:
         return SessionOut(
             session_id=str(existing["_id"]),
-            name=target_user.get("name") or target_user.get("full_name"),
+            name=target_name,
             participants=existing["participants"],
             created_at=existing["created_at"],
         )
@@ -202,7 +227,7 @@ async def add_by_email(
 
     return SessionOut(
         session_id=str(result.inserted_id),
-        name=target_user.get("name") or target_user.get("full_name"),
+        name=target_name,
         participants=participants,
         created_at=now,
     )
@@ -210,18 +235,39 @@ async def add_by_email(
 
 @router.get("/sessions", response_model=List[SessionOut])
 async def list_sessions(user: dict = Depends(get_current_user)):
-    """List all sessions for the authenticated user."""
+    """List all sessions for the authenticated user with resolved names for 1-to-1 chats."""
     user_id = user["user_id"]
     cursor = chat_sessions.find({"participants": user_id}).sort("created_at", -1)
     sessions = await cursor.to_list(length=200)
-    return [
-        SessionOut(
-            session_id=str(s["_id"]),
-            participants=s.get("participants", []),
-            created_at=s.get("created_at", ""),
+
+    # ── Resolve Names for 1-to-1 chats ──
+    # Gather all unique participant IDs
+    all_participant_ids = set()
+    for s in sessions:
+        all_participant_ids.update(s.get("participants", []))
+    
+    user_map = await _resolve_user_names(list(all_participant_ids))
+
+    results = []
+    for s in sessions:
+        session_id = str(s["_id"])
+        session_name = s.get("name")
+        
+        if not session_name and not s.get("is_group", False):
+            # Find the other participant's name
+            other_id = next((pid for pid in s["participants"] if pid != user_id), None)
+            if other_id:
+                session_name = user_map.get(other_id, f"User {other_id[:8]}")
+
+        results.append(
+            SessionOut(
+                session_id=session_id,
+                name=session_name,
+                participants=s.get("participants", []),
+                created_at=s.get("created_at", ""),
+            )
         )
-        for s in sessions
-    ]
+    return results
 
 
 @router.get("/online")
@@ -314,11 +360,17 @@ async def create_session(
             detail="You must be one of the participants",
         )
 
+    # Resolve the other participant's name
+    other_id = next((pid for pid in participants if pid != user["user_id"]), None)
+    user_map = await _resolve_user_names([other_id]) if other_id else {}
+    target_name = user_map.get(other_id)
+
     # Check for an existing session between the same two users
-    existing = await chat_sessions.find_one({"participants": participants})
+    existing = await chat_sessions.find_one({"participants": participants, "is_group": {"$ne": True}})
     if existing:
         return SessionOut(
             session_id=str(existing["_id"]),
+            name=target_name,
             participants=existing["participants"],
             created_at=existing["created_at"],
         )
@@ -327,12 +379,14 @@ async def create_session(
     now = datetime.utcnow().isoformat()
     doc = {
         "participants": participants,
+        "is_group": False,
         "created_at": now,
     }
     result = await chat_sessions.insert_one(doc)
 
     return SessionOut(
         session_id=str(result.inserted_id),
+        name=target_name,
         participants=participants,
         created_at=now,
     )

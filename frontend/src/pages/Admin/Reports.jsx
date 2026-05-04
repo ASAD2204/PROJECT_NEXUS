@@ -27,6 +27,7 @@ import {
   Assessment,
   Print,
   Share,
+  PictureAsPdf,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { 
@@ -41,6 +42,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import PageHeader from '../../components/Common/PageHeader';
 import StatCard from '../../components/Common/StatCard';
 import { pageTransition } from '../../utils/animations';
@@ -55,6 +58,7 @@ const AdminReports = () => {
   const [departments, setDepartments] = useState([]);
   const [lastGeneratedAt, setLastGeneratedAt] = useState('');
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
+  const [dashboardData, setDashboardData] = useState(null);
 
   const normalizeText = (value) => String(value || '').trim().toLowerCase();
 
@@ -118,6 +122,7 @@ const AdminReports = () => {
       : [];
 
     setDepartments(Array.isArray(departmentRows) ? departmentRows : []);
+    setDashboardData(dashboard);
 
     if (!dashboard) {
       setToast({ open: true, message: 'Unable to load analytics dashboard data.', severity: 'error' });
@@ -163,19 +168,25 @@ const AdminReports = () => {
       },
     ]);
 
-    setRevenueData([
-      { month: 'Invoiced', revenue: Number(dashboard?.revenue?.total_invoiced || 0) },
-      { month: 'Collected', revenue: Number(dashboard?.revenue?.total_collected || 0) },
-      { month: 'Outstanding', revenue: Number(dashboard?.revenue?.outstanding || 0) },
-    ]);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
 
-    setStudentGrowth([
-      { year: 'Total', students: Number(dashboard.total_students || 0) },
-      { year: 'Active', students: Number(dashboard.active_students || 0) },
-    ]);
+    // Note: Revenue from backend is in Millions
+    setRevenueData(months.map((m, idx) => ({
+      month: m,
+      revenue: Number(dashboard?.monthly_revenue?.[idx] || 0)
+    })));
+
+    setStudentGrowth(months.map((m, idx) => ({
+      year: m,
+      students: Number(dashboard?.monthly_enrollment?.[idx] || 0)
+    })));
+
+    setAttendanceByDepartment(months.map((m, idx) => ({
+      dept: m,
+      attendance: Number(dashboard?.monthly_attendance?.[idx] || 0)
+    })));
 
     setEnrollmentData(deptRows);
-    setAttendanceByDepartment(deptRows.map((dp) => ({ dept: dp.department, attendance: dp.attendance })));
     setFacultyDistribution(deptRows.length
       ? deptRows
       : [{ department: 'All', faculty: 0, students: Number(dashboard.total_students || 0) }]);
@@ -219,10 +230,10 @@ const AdminReports = () => {
   const buildReportRows = () => {
     const selectedReportLabel = reportTypes.find((type) => type.value === reportType)?.label || reportType;
     const summaryRows = summaryStats.map((stat) => ['Summary', stat.title, stat.value, stat.subtitle || '']);
-    const revenueRows = revenueData.map((item) => ['Revenue Trend', item.month, item.revenue, selectedReportLabel]);
-    const enrollmentRows = enrollmentData.map((item) => ['Department Enrollment', item.department, item.students, item.faculty]);
-    const attendanceRows = attendanceByDepartment.map((item) => ['Attendance', item.dept, item.attendance, selectedReportLabel]);
-    const facultyRows = facultyDistribution.map((item) => ['Faculty Ratio', item.department, item.faculty, item.students]);
+    const revenueRows = revenueData.map((item) => ['Revenue Trend (M)', item.month, `PKR ${item.revenue}M`, selectedReportLabel]);
+    const enrollmentRows = enrollmentData.map((item) => ['Department Enrollment', item.department, item.students, `Faculty: ${item.faculty}`]);
+    const attendanceRows = attendanceByDepartment.map((item) => ['Attendance %', item.dept, `${item.attendance}%`, selectedReportLabel]);
+    const facultyRows = facultyDistribution.map((item) => ['Faculty Ratio', item.department, `Faculty: ${item.faculty}`, `Students: ${item.students}`]);
 
     return {
       label: selectedReportLabel,
@@ -254,6 +265,65 @@ const AdminReports = () => {
       .join('\n');
     downloadTextFile(`admin-report-${reportType}-${semester}-${department}.xls`, tsv, 'application/vnd.ms-excel;charset=utf-8;');
     setToast({ open: true, message: `${label} exported for Excel.`, severity: 'success' });
+  };
+
+  const handleExportPdf = () => {
+    const doc = new jsPDF();
+    const selectedReportLabel = reportTypes.find((type) => type.value === reportType)?.label || reportType;
+    
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(theme.palette.primary.main);
+    doc.text('Project Nexus - Administrative Report', 14, 22);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(100);
+    doc.text(`Report Type: ${selectedReportLabel}`, 14, 32);
+    doc.text(`Semester: ${semester === 'current' ? 'Spring 2026' : semester}`, 14, 38);
+    doc.text(`Department: ${department === 'all' ? 'All Departments' : department}`, 14, 44);
+    doc.text(`Generated At: ${lastGeneratedAt || new Date().toLocaleString()}`, 14, 50);
+    
+    doc.setDrawColor(theme.palette.divider);
+    doc.line(14, 55, 196, 55);
+
+    // Summary Section
+    doc.setFontSize(16);
+    doc.setTextColor(0);
+    doc.text('Summary Statistics', 14, 65);
+    
+    const summaryData = summaryStats.map(stat => [stat.title, stat.value, stat.subtitle]);
+    autoTable(doc, {
+      startY: 70,
+      head: [['Metric', 'Value', 'Context']],
+      body: summaryData,
+      theme: 'striped',
+      headStyles: { fillStyle: theme.palette.primary.main },
+    });
+
+    // Data Tables
+    doc.setFontSize(16);
+    doc.text('Detailed Analytics', 14, doc.lastAutoTable.finalY + 15);
+
+    const { rows } = buildReportRows();
+    autoTable(doc, {
+      startY: doc.lastAutoTable.finalY + 20,
+      head: [['Section', 'Category', 'Data', 'Details']],
+      body: rows,
+      theme: 'grid',
+      headStyles: { fillColor: [66, 66, 66] },
+    });
+
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.setTextColor(150);
+      doc.text(`Page ${i} of ${pageCount} | Nexus Analytics Service`, 14, 285);
+    }
+
+    doc.save(`admin-report-${reportType}.pdf`);
+    setToast({ open: true, message: 'PDF report downloaded successfully.', severity: 'success' });
   };
 
   const handlePrintReport = () => {
@@ -319,7 +389,7 @@ const AdminReports = () => {
                     label="Semester"
                     onChange={(e) => setSemester(e.target.value)}
                   >
-                    <MenuItem value="current">Current Semester</MenuItem>
+                    <MenuItem value="current">Current Semester (Spring 2026)</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -350,7 +420,7 @@ const AdminReports = () => {
             </Grid>
             <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: 'wrap' }}>
               <Chip label={`Report: ${reportTypes.find((type) => type.value === reportType)?.label || reportType}`} color="primary" variant="outlined" size="small" />
-              <Chip label={`Semester: ${semester}`} color="info" variant="outlined" size="small" />
+              <Chip label={`Semester: ${semester === 'current' ? 'Spring 2026' : semester}`} color="info" variant="outlined" size="small" />
               <Chip label={department === 'all' ? 'All Departments' : department} color="success" variant="outlined" size="small" />
               {lastGeneratedAt && <Chip label={`Generated ${lastGeneratedAt}`} color="default" variant="outlined" size="small" />}
             </Stack>
@@ -379,9 +449,14 @@ const AdminReports = () => {
             <Card>
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                  <Typography variant="h6" fontWeight="bold">
-                    Revenue Trend
-                  </Typography>
+                  <Box>
+                    <Typography variant="h6" fontWeight="bold">
+                      Revenue Trend (Millions PKR)
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Monthly revenue collection for the current year
+                    </Typography>
+                  </Box>
                   <Stack direction="row" spacing={1}>
                     <IconButton size="small" onClick={handlePrintReport} aria-label="Print report">
                       <Print />
@@ -415,8 +490,10 @@ const AdminReports = () => {
                         axisLine={false}
                         width={40}
                         tick={{ fontSize: 12 }}
+                        label={{ value: 'PKR (M)', angle: -90, position: 'insideLeft', fontSize: 10 }}
                       />
                       <Tooltip 
+                        formatter={(value) => [`${value}M`, 'Revenue']}
                         contentStyle={{ 
                           borderRadius: 8, 
                           border: 'none',
@@ -500,10 +577,10 @@ const AdminReports = () => {
                       Student Enrollment Growth
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Year-over-year student enrollment trends
+                      Monthly student enrollment trends for the current period
                     </Typography>
                   </Box>
-                  <Chip label="5 Year Trend" size="small" color="primary" variant="outlined" />
+                  <Chip label="Current Trend" size="small" color="primary" variant="outlined" />
                 </Box>
                 <Box sx={{ width: '100%', height: { xs: 300, sm: 350, md: 400 }, minHeight: 300, minWidth: 0 }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -560,13 +637,13 @@ const AdminReports = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                   <Box>
                     <Typography variant="h6" fontWeight="bold">
-                      Attendance Rate by Department
+                      Attendance Rate Trend
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Department-wise attendance performance comparison
+                      Monthly attendance rate performance across all departments
                     </Typography>
                   </Box>
-                  <Chip label="Current Semester" size="small" color="success" variant="outlined" />
+                  <Chip label="Academic Trend" size="small" color="success" variant="outlined" />
                 </Box>
                 <Box sx={{ width: '100%', height: { xs: 300, sm: 350, md: 400 }, minHeight: 300, minWidth: 0 }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -593,8 +670,10 @@ const AdminReports = () => {
                         axisLine={false}
                         width={40}
                         tick={{ fontSize: 12 }}
+                        label={{ value: '%', angle: -90, position: 'insideLeft', fontSize: 10 }}
                       />
                       <Tooltip 
+                        formatter={(value) => [`${value}%`, 'Attendance']}
                         contentStyle={{ 
                           borderRadius: 8, 
                           border: 'none',
@@ -622,7 +701,7 @@ const AdminReports = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                   <Box>
                     <Typography variant="h6" fontWeight="bold">
-                      Faculty-Student Ratio Analysis
+                      Faculty-Student Distribution
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Faculty count vs student enrollment by department
@@ -659,7 +738,7 @@ const AdminReports = () => {
                         axisLine={false}
                         width={40}
                         tick={{ fontSize: 12 }}
-                        label={{ value: 'Faculty', angle: -90, position: 'insideLeft' }}
+                        label={{ value: 'Faculty', angle: -90, position: 'insideLeft', fontSize: 10 }}
                       />
                       <YAxis 
                         yAxisId="right"
@@ -670,7 +749,7 @@ const AdminReports = () => {
                         axisLine={false}
                         width={50}
                         tick={{ fontSize: 12 }}
-                        label={{ value: 'Students', angle: 90, position: 'insideRight' }}
+                        label={{ value: 'Students', angle: 90, position: 'insideRight', fontSize: 10 }}
                       />
                       <Tooltip 
                         contentStyle={{ 
@@ -709,11 +788,11 @@ const AdminReports = () => {
         <Card>
           <CardContent>
             <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-              Export Report
+              Export Options
             </Typography>
-            <Stack direction="row" spacing={2}>
-              <Button variant="outlined" startIcon={<Download />} onClick={handlePrintReport}>
-                Export as PDF
+            <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', gap: 2 }}>
+              <Button variant="contained" color="error" startIcon={<PictureAsPdf />} onClick={handleExportPdf}>
+                Download PDF Report
               </Button>
               <Button variant="outlined" startIcon={<Download />} onClick={handleExportExcel}>
                 Export as Excel
@@ -721,8 +800,11 @@ const AdminReports = () => {
               <Button variant="outlined" startIcon={<Download />} onClick={handleExportCsv}>
                 Export as CSV
               </Button>
+              <Button variant="outlined" startIcon={<Print />} onClick={handlePrintReport}>
+                Print Page
+              </Button>
               <Button variant="outlined" startIcon={<Share />} onClick={handleShareReport}>
-                Share Report
+                Share Summary
               </Button>
             </Stack>
           </CardContent>
@@ -743,3 +825,4 @@ const AdminReports = () => {
 };
 
 export default AdminReports;
+

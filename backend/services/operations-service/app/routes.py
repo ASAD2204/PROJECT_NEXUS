@@ -5,7 +5,8 @@ from datetime import datetime
 from typing import Optional
 
 from bson import ObjectId
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -34,6 +35,9 @@ from app.schemas import (
     SystemLogCreate,
     SystemLogOut,
 )
+
+class SettingUpdate(BaseModel):
+    value: str
 
 router = APIRouter(prefix="/ops", tags=["Operations"])
 
@@ -1079,3 +1083,59 @@ async def inspect_ratelimit_counter(
         "count": int(value) if value is not None else 0,
         "ttl_seconds": ttl,
     }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# GLOBAL SETTINGS (MongoDB — system_settings collection)
+# ═══════════════════════════════════════════════════════════════════════════
+
+settings_collection = mongo_db.get_collection("system_settings")
+
+@router.put("/settings/{key}")
+async def set_global_setting(
+    key: str,
+    payload: SettingUpdate,
+    current_user: dict = Depends(require_role("admin")),
+):
+    """Store a global system setting in MongoDB (admin only)."""
+    await settings_collection.update_one(
+        {"key": key},
+        {"$set": {"value": payload.value, "updated_at": datetime.utcnow()}},
+        upsert=True
+    )
+    # Sync to Redis for performance (caching)
+    await redis_client.set(f"config:{key}", payload.value)
+    return {"key": key, "value": payload.value}
+
+
+@router.get("/settings/{key}")
+async def get_global_setting(key: str):
+    """Retrieve a global system setting from MongoDB."""
+    doc = await settings_collection.find_one({"key": key})
+    if not doc:
+        # Fallbacks for critical university info
+        defaults = {
+            "campusName": "Project Nexus University",
+            "campusAddress": "University Campus, Finance Dept",
+            "campusEmail": "admin@nexus.edu",
+            "campusPhone": "+92 300 1234567"
+        }
+        return {"key": key, "value": defaults.get(key, "")}
+    return {"key": key, "value": doc["value"]}
+
+
+@router.get("/settings")
+async def list_global_settings():
+    """Retrieve all global system settings from MongoDB."""
+    settings_dict = {
+        "campusName": "Project Nexus University",
+        "campusAddress": "University Campus, Finance Dept",
+        "campusEmail": "admin@nexus.edu",
+        "campusPhone": "+92 300 1234567"
+    }
+    
+    cursor = settings_collection.find({})
+    async for doc in cursor:
+        settings_dict[doc["key"]] = doc["value"]
+        
+    return settings_dict

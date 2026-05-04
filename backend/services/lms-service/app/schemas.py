@@ -7,47 +7,62 @@ from datetime import datetime, date, time
 
 class CourseCreate(BaseModel):
     dept_id: int
-    code: str = Field(..., max_length=10)
+    program_id: Optional[int] = None
+    semester_id: Optional[int] = None
+    faculty_id: Optional[int] = None
+    code: str = Field(..., max_length=20)
     title: str
     credit_hours: int
     description: Optional[str] = None
+    capacity: Optional[int] = 50
+    room_no: Optional[str] = None
     cover_image: Optional[str] = None
-    program_id: Optional[int] = None
+    lectures_per_week: int = 1
+    lecture_duration_minutes: int = 60
 
 
 class CourseOut(BaseModel):
     course_id: int
     dept_id: Optional[int] = None
     program_id: Optional[int] = None
+    semester_id: Optional[int] = None
+    faculty_id: Optional[int] = None
     code: str
     title: str
     credit_hours: int
     description: Optional[str] = None
+    capacity: Optional[int] = None
+    room_no: Optional[str] = None
     cover_image: Optional[str] = None
+    lectures_per_week: int = 1
+    lecture_duration_minutes: int = 60
 
     class Config:
         from_attributes = True
 
 
 class CourseDetailOut(BaseModel):
-    """Enhanced course response with sections and enrollment data for admin views."""
+    """Enhanced course response with enrollment data for admin views."""
     course_id: int
     dept_id: Optional[int] = None
     program_id: Optional[int] = None
+    semester_id: Optional[int] = None
+    faculty_id: Optional[int] = None
     code: str
     title: str
     credit_hours: int
     description: Optional[str] = None
     cover_image: Optional[str] = None
-    capacity: Optional[int] = None  # Total capacity across all sections
-    enrolled: int = 0  # Total enrolled students across all sections
-    sections: List[dict] = Field(default_factory=list)  # List of sections with enrollment data
+    capacity: int = 0
+    enrolled: int = 0
+    lectures_per_week: int = 1
+    lecture_duration_minutes: int = 60
 
     class Config:
         from_attributes = True
 
 
-# ── Sections ──────────────────────────────────────────────────────────────
+# ── Sections (DEPRECATED, using CourseOut for compatibility where needed) ─
 
 class SectionCreate(BaseModel):
     course_id: int
@@ -73,7 +88,7 @@ class SectionOut(BaseModel):
 # ── Assignments ───────────────────────────────────────────────────────────
 
 class AssignmentCreate(BaseModel):
-    section_id: int
+    course_id: int
     title: str
     description: Optional[str] = None
     total_marks: int = 100
@@ -91,7 +106,7 @@ class AssignmentUpdate(BaseModel):
 
 class AssignmentOut(BaseModel):
     assignment_id: int
-    section_id: int
+    course_id: int
     title: str
     description: Optional[str] = None
     total_marks: int
@@ -128,7 +143,7 @@ class RecentSubmissionOut(BaseModel):
     student_name: str
     submitted_at: datetime
     marks_obtained: Optional[float] = None
-    section_id: int
+    course_id: int
     course_name: str
 
     class Config:
@@ -149,7 +164,7 @@ class QuestionCreate(BaseModel):
 
 
 class QuizCreate(BaseModel):
-    section_id: int
+    course_id: int
     title: str
     duration_minutes: int = 30
     start_time: Optional[datetime] = None
@@ -170,7 +185,7 @@ class QuestionOut(BaseModel):
 
 class QuizOut(BaseModel):
     quiz_id: int
-    section_id: int
+    course_id: int
     title: str
     duration_minutes: Optional[int] = None
     start_time: Optional[datetime] = None
@@ -221,7 +236,7 @@ class QuizAttemptStatusOut(BaseModel):
 
 class AttendanceOut(BaseModel):
     attendance_id: int
-    section_id: int
+    course_id: int
     student_id: int
     date: date
     status: str
@@ -237,7 +252,7 @@ class AttendanceOut(BaseModel):
 # ── Timetable ─────────────────────────────────────────────────────────────
 
 class TimetableSlotCreate(BaseModel):
-    section_id: int
+    course_id: int
     day_of_week: str
     start_time: time
     end_time: time
@@ -246,7 +261,7 @@ class TimetableSlotCreate(BaseModel):
 
 class TimetableSlotOut(BaseModel):
     slot_id: int
-    section_id: int
+    course_id: int
     day_of_week: str
     start_time: time
     end_time: time
@@ -257,7 +272,7 @@ class TimetableSlotOut(BaseModel):
 
 
 class TimetableConstraintCheckRequest(BaseModel):
-    section_id: int
+    course_id: int
     day_of_week: str
     start_time: time
     end_time: time
@@ -275,7 +290,7 @@ class TimetableConstraintCheckOut(BaseModel):
 
 
 class AutoScheduleRequest(BaseModel):
-    section_ids: List[int]
+    course_ids: List[int]
     days_of_week: List[str] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
     slot_minutes: int = 60
     start_hour: int = 8
@@ -284,7 +299,7 @@ class AutoScheduleRequest(BaseModel):
 
 
 class AutoScheduledSlotOut(BaseModel):
-    section_id: int
+    course_id: int
     day_of_week: str
     start_time: time
     end_time: time
@@ -304,7 +319,7 @@ class StudentGrade(BaseModel):
 
 
 class GradeSubmitRequest(BaseModel):
-    section_id: int
+    course_id: int
     grades: List[StudentGrade]
     final_submit: bool = False
 
@@ -312,8 +327,7 @@ class GradeSubmitRequest(BaseModel):
 # ── Course Materials ──────────────────────────────────────────────────────
 
 class CourseMaterialCreate(BaseModel):
-    course_id: Optional[int] = None
-    section_id: Optional[int] = None
+    course_id: int
     title: str
     description: Optional[str] = None
     file_url: Optional[str] = None
@@ -323,7 +337,7 @@ class CourseMaterialCreate(BaseModel):
 
 class CourseMaterialOut(BaseModel):
     material_id: int
-    section_id: int
+    course_id: int
     title: str
     description: Optional[str] = None
     file_ref_id: Optional[str] = None
@@ -353,7 +367,7 @@ class QuizClassroomOut(QuizOut):
 
 
 class ClassroomOut(BaseModel):
-    section_id: int
+    course_id: int
     course: CourseOut
     faculty_id: int
     faculty_name: str
@@ -377,43 +391,6 @@ class MessageResponse(BaseModel):
 class FeedbackSurveyCreate(BaseModel):
     survey_type: str  # course_evaluation, faculty_feedback, facility_feedback
     course_id: Optional[int] = None
-    section_id: Optional[int] = None
-    faculty_id: Optional[int] = None
-    responses: Optional[dict] = None
-    overall_rating: float
-    comments: Optional[str] = None
-    is_anonymous: bool = False
-    semester_id: Optional[int] = None
-
-
-class FeedbackSurveyOut(BaseModel):
-    id: str
-    survey_type: str
-    course_id: Optional[int] = None
-    section_id: Optional[int] = None
-    faculty_id: Optional[int] = None
-    student_id: Optional[int] = None
-    responses: Optional[dict] = None
-    overall_rating: float
-    comments: Optional[str] = None
-    submitted_at: str
-    is_anonymous: bool = False
-    semester_id: Optional[int] = None
-
-
-class FeedbackSummary(BaseModel):
-    faculty_id: int
-    total_reviews: int
-    avg_rating: float
-    semester_id: Optional[int] = None
-
-
-# ── Feedback Surveys (MongoDB — FYP Spec Table 142) ──────────────────────
-
-class FeedbackSurveyCreate(BaseModel):
-    survey_type: str  # course_evaluation, faculty_feedback, facility_feedback
-    course_id: Optional[int] = None
-    section_id: Optional[int] = None
     faculty_id: Optional[int] = None
     responses: dict  # Flexible Q&A {q1: answer1, q2: answer2}
     overall_rating: float  # 1-5 scale
@@ -426,7 +403,6 @@ class FeedbackSurveyOut(BaseModel):
     id: str
     survey_type: str
     course_id: Optional[int] = None
-    section_id: Optional[int] = None
     faculty_id: Optional[int] = None
     student_id: Optional[int] = None
     responses: dict

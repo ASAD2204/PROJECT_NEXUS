@@ -1,0 +1,13 @@
+[
+  {
+    "full_name": "Dr. Ghulam Mustafa",
+    "email": "gmustafa@uni.edu.pk",
+    "role": "faculty",
+    "employee_code": "EMP-102",
+    "department": "Computer Science",
+    "designation": "Assistant Professor",
+    "specialization": "Data Science",
+    "type": "Permanent",
+    "password": "TempPass@123"
+  }
+]

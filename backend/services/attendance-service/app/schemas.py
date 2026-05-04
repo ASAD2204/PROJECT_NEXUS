@@ -70,7 +70,8 @@ class VoiceChallengeVerifyResponse(BaseModel):
 
 class FaceVerifyRequest(BaseModel):
     image_data: str  # base64 encoded image
-    section_id: int
+    course_id: Optional[int] = None
+    section_id: Optional[int] = None
 
 
 class FaceVerifyResponse(BaseModel):
@@ -94,7 +95,7 @@ class FaceEnrollMultiRequest(BaseModel):
 
 class AttendanceOut(BaseModel):
     attendance_id: int
-    section_id: int
+    course_id: int
     student_id: int
     date: date
     status: str

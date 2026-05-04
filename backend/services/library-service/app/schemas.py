@@ -166,6 +166,7 @@ class LibraryStatsOut(BaseModel):
     total_reservations: int
     books_by_category: dict = {}
     recent_transactions: list = []
+    monthly_circulation: list = [] # [{"month": "Jan", "issued": 10, "returned": 8, "reserved": 2}, ...]
 
 
 # ---------------------------------------------------------------------------

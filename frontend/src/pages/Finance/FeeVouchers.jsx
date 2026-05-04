@@ -293,14 +293,16 @@ const FeeVouchers = () => {
     }
   };
 
-  const handleDownloadInvoicePDF = async () => {
-    if (!selectedInvoice?.id) return;
+  const handleDownloadInvoicePDF = async (id) => {
+    // If id is an event object (e.g. from onClick={handleDownloadInvoicePDF}), use selectedInvoice instead
+    const invId = (id && (typeof id === 'string' || typeof id === 'number')) ? id : selectedInvoice?.id;
+    if (!invId) return;
     try {
-      const response = await financeAPI.downloadInvoicePDF(selectedInvoice.id);
+      const response = await financeAPI.downloadInvoicePDF(invId);
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `invoice_${selectedInvoice.invoiceNo}.pdf`);
+      link.setAttribute('download', `invoice_${invId}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -309,6 +311,10 @@ const FeeVouchers = () => {
       console.error(e);
       setSnackbar({ open: true, message: 'Failed to download invoice PDF' });
     }
+  };
+
+  const handlePrintReceipt = () => {
+    window.print();
   };
 
   // Fee breakdown for invoice
@@ -331,6 +337,7 @@ const FeeVouchers = () => {
           id: row.id || row.trx_id,
           date: row.date || row.trx_date || null,
           invoice: row.invoice || (row.invoice_id ? `INV-${row.invoice_id}` : 'N/A'),
+          invoice_id: row.invoice_id,
           amount: Number(row.amount ?? row.amount_paid ?? 0),
           method: row.method || 'N/A',
         }));
@@ -694,10 +701,14 @@ const FeeVouchers = () => {
                         <Typography variant="caption" color="text.secondary">
                           Method: {payment.method}
                         </Typography>
-                        <Button size="small" startIcon={<Download />} sx={{ mt: 1 }}>
+                        <Button 
+                          size="small" 
+                          startIcon={<Download />} 
+                          sx={{ mt: 1 }}
+                          onClick={() => handleDownloadInvoicePDF(payment.invoice_id)}
+                        >
                           Download Receipt
-                        </Button>
-                      </CardContent>
+                        </Button>                      </CardContent>
                     </Card>
                   </TimelineContent>
                 </TimelineItem>
@@ -1102,15 +1113,15 @@ const FeeVouchers = () => {
               spacing={2}
               sx={{ width: '100%' }}
             >
-              <Button 
-                variant="contained" 
-                startIcon={<Download />} 
+              <Button
+                variant="contained"
+                startIcon={<Download />}
                 size="small"
                 sx={{ flex: { sm: 1 }, width: { xs: '100%', sm: 'auto' } }}
+                onClick={() => handleDownloadInvoicePDF()}
               >
                 Download Receipt
-              </Button>
-              <Button 
+              </Button>              <Button 
                 variant="outlined" 
                 size="small"
                 onClick={() => {
@@ -1193,6 +1204,7 @@ const FeeVouchers = () => {
             variant="outlined" 
             startIcon={<Print />}
             size="small"
+            onClick={handlePrintReceipt}
             sx={{ width: { xs: '100%', sm: 'auto' } }}
           >
             Print

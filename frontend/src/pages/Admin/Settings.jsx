@@ -40,6 +40,7 @@ import { useTheme } from '@mui/material/styles';
 import PageHeader from '../../components/Common/PageHeader';
 import PageTransition from '../../components/Common/PageTransition';
 import { useSnackbar } from '../../contexts/SnackbarContext';
+import { useConfig } from '../../contexts/ConfigContext';
 import { fadeInUp, staggerContainer } from '../../utils/animations';
 import { opsAPI } from '../../api/ops';
 import { attendanceAPI } from '../../api/attendance';
@@ -63,6 +64,7 @@ const Settings = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { showSnackbar } = useSnackbar();
+  const { refreshConfig } = useConfig();
   const fileInputRef = useRef(null);
   const [logoPreview, setLogoPreview] = useState(null);
   const [geofenceSaving, setGeofenceSaving] = useState(false);
@@ -75,6 +77,7 @@ const Settings = () => {
     campusAddress: '123 Academic Way, Science City',
     campusEmail: 'admin@nexus.edu',
     campusPhone: '+92 300 1234567',
+    campusLogo: '',
     passwordMinLength: 8,
     requireSpecialChar: true,
     requireUppercase: true,
@@ -102,7 +105,12 @@ const Settings = () => {
   const loadSettings = useCallback(async () => {
     try {
       const res = await opsAPI.getFeatureFlags();
-      if (res.data) setSettings(prev => ({ ...prev, ...res.data }));
+      if (res.data) {
+        setSettings(prev => ({ ...prev, ...res.data }));
+        if (res.data.campusLogo) {
+          setLogoPreview(res.data.campusLogo);
+        }
+      }
     } catch (e) { console.error('Failed to load flags', e); }
 
     try {
@@ -123,7 +131,9 @@ const Settings = () => {
           campusAddress: settings.campusAddress,
           campusEmail: settings.campusEmail,
           campusPhone: settings.campusPhone,
+          campusLogo: settings.campusLogo,
       });
+      await refreshConfig();
       showSnackbar('General settings updated', 'success');
     } catch (e) {
       showSnackbar('Failed to save general settings', 'error');
@@ -195,7 +205,8 @@ const Settings = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setLogoPreview(reader.result);
-        showSnackbar('Logo uploaded', 'success');
+        setSettings(prev => ({ ...prev, campusLogo: reader.result }));
+        showSnackbar('Logo uploaded (click Save to persist)', 'info');
       };
       reader.readAsDataURL(file);
     }

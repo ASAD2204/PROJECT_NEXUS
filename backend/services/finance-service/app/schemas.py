@@ -62,6 +62,7 @@ class InvoiceOut(BaseModel):
 
 class PaymentInitiateRequest(BaseModel):
     invoice_id: int
+    payment_method: Optional[str] = "Stripe"
 
 
 class PaymentInitiateResponse(BaseModel):

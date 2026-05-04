@@ -68,6 +68,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useConfig } from '../../contexts/ConfigContext';
 
 // Badge helpers now return safe defaults — real data comes from API via Dashboard pages.
 // Sidebar badges are cosmetic indicators; we keep them simple.
@@ -198,6 +199,7 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, userType, user } = useAuth();
+  const { config } = useConfig();
   const [collapsed, setCollapsed] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -322,39 +324,54 @@ const Sidebar = ({ drawerWidth = 240, mobileOpen, onDrawerToggle }) => {
                     : '0 6px 20px rgba(255,255,255,0.3)',
                 },
               }}
-            >
-              <Typography 
-                variant="h5" 
-                fontWeight="800" 
-                color="white" 
-                sx={{ 
-                  letterSpacing: 3,
-                  textShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                }}
               >
-                NEXUS
-              </Typography>
-            </Box>
-            <Typography 
+              {config.campusLogo ? (
+                <img src={config.campusLogo} alt="Logo" style={{ maxHeight: 35, maxWidth: 130 }} />
+              ) : (
+                <Typography 
+                  variant="h5" 
+                  fontWeight="800" 
+                  color="white" 
+                  sx={{ 
+                    letterSpacing: 2,
+                    textShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                    fontSize: config.campusName.length > 10 ? '1.1rem' : '1.5rem'
+                  }}
+                >
+                  {config.campusName.split(' ')[0].toUpperCase()}
+                </Typography>
+              )}
+              </Box>
+              <Typography 
               variant="caption" 
               color="rgba(255, 255, 255, 0.9)" 
               sx={{ 
                 fontWeight: 500,
                 letterSpacing: 0.5,
                 textShadow: '0 1px 4px rgba(0,0,0,0.2)',
+                display: 'block',
+                px: 1,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
               }}
-            >
-              Intelligent Campus Platform
-            </Typography>
-          </Box>
+              >
+              {config.campusName}
+              </Typography>          </Box>
         ) : (
-          <SchoolIcon 
-            sx={{ 
-              fontSize: 32, 
-              color: 'white',
-              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
-            }} 
-          />
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            {config.campusLogo ? (
+              <Avatar src={config.campusLogo} variant="rounded" sx={{ width: 32, height: 32, bgcolor: 'transparent' }} />
+            ) : (
+              <SchoolIcon 
+                sx={{ 
+                  fontSize: 32, 
+                  color: 'white',
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
+                }} 
+              />
+            )}
+          </Box>
         )}
       </Box>
 

@@ -19,9 +19,9 @@ class Attendance(Base):
     __tablename__ = "lms_attendance"
 
     attendance_id = Column(Integer, primary_key=True, autoincrement=True)
-    section_id = Column(
+    course_id = Column(
         Integer,
-        ForeignKey("lms_sections.section_id"),
+        ForeignKey("lms_courses.course_id"),
         nullable=False,
     )
     student_id = Column(Integer, nullable=False)
@@ -37,15 +37,18 @@ class Attendance(Base):
     is_biometric_verified = Column(Boolean, default=True)
 
 
-class Section(Base):
-    """Read-only mirror of the LMS sections table."""
-    __tablename__ = "lms_sections"
+class Course(Base):
+    """Read-only mirror of the LMS courses table."""
+    __tablename__ = "lms_courses"
     __table_args__ = {"extend_existing": True}
 
-    section_id = Column(Integer, primary_key=True, autoincrement=True)
-    course_id = Column(Integer, nullable=True)
+    course_id = Column(Integer, primary_key=True, autoincrement=True)
+    dept_id = Column(Integer, nullable=True)
+    program_id = Column(Integer, nullable=True)
     semester_id = Column(Integer, nullable=True)
     faculty_id = Column(Integer, nullable=True)
+    code = Column(String(20), nullable=True)
+    title = Column(String(100), nullable=True)
     room_no = Column(String(20), nullable=True)
     capacity = Column(Integer, nullable=True)
 
@@ -67,5 +70,5 @@ class SisEnrollment(Base):
 
     enrollment_id = Column(Integer, primary_key=True)
     student_id = Column(Integer, ForeignKey("sis_students.student_id"))
-    section_id = Column(Integer, ForeignKey("lms_sections.section_id"))
+    course_id = Column(Integer, ForeignKey("lms_courses.course_id"))
     status = Column(String(20), default="Enrolled")

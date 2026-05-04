@@ -263,8 +263,8 @@ const ChatList = ({
                   }}
                   sx={{ py: 1.5, px: 2 }}
                 >
-                  <ListItemAvatar><Avatar sx={{ bgcolor: theme.palette.primary.main }}>{teacher.designation?.[0] || 'T'}</Avatar></ListItemAvatar>
-                  <ListItemText primary={<Typography variant="subtitle1" fontWeight="600">{teacher.designation} (ID: {teacher.employee_code})</Typography>} secondary={<Typography variant="caption" color="primary">Click to start chat</Typography>} />
+                  <ListItemAvatar><Avatar sx={{ bgcolor: theme.palette.primary.main }}>{teacher.name?.[0] || 'T'}</Avatar></ListItemAvatar>
+                  <ListItemText primary={<Typography variant="subtitle1" fontWeight="600">{teacher.name || teacher.designation}</Typography>} secondary={<Typography variant="caption" color="text.secondary">{teacher.designation} (ID: {teacher.employee_code})</Typography>} />
                 </ListItemButton>
               ))}
               <Box sx={{ borderBottom: '1px solid', borderColor: 'divider', my: 1 }} />

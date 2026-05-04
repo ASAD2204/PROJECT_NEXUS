@@ -202,6 +202,34 @@ const globalStyles = (theme) => ({
       display: 'none',
     },
   },
+  '@media print': {
+    '.MuiDrawer-root, .MuiAppBar-root, .MuiButton-root, .no-print': {
+      display: 'none !important',
+    },
+    'body, #root, .page-container': {
+      padding: '0 !important',
+      margin: '0 !important',
+      backgroundColor: 'white !important',
+      height: 'auto !important',
+    },
+    '.MuiDialog-root': {
+      position: 'static !important',
+    },
+    '.MuiDialog-container': {
+      height: 'auto !important',
+      display: 'block !important',
+    },
+    '.MuiPaper-root': {
+      boxShadow: 'none !important',
+      border: 'none !important',
+    },
+    '.MuiDialogContent-root': {
+      padding: '0 !important',
+    },
+    '.MuiDialogTitle-root, .MuiDialogActions-root': {
+      display: 'none !important',
+    },
+  },
 });
 
 export default globalStyles;

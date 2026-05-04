@@ -1,11 +1,5 @@
 """
 Analytics service — read-only mirror models of tables managed by other services.
-
-These models use ``extend_existing = True`` so they co-exist with the
-authoritative models in their owning services when sharing the same
-PostgreSQL database.
-
-Column names match the actual ``init.sql`` definitions exactly.
 """
 
 from sqlalchemy import (
@@ -83,12 +77,12 @@ class SisEnrollment(Base):
 
     enrollment_id = Column(Integer, primary_key=True)
     student_id = Column(Integer, ForeignKey("sis_students.student_id"))
-    section_id = Column(Integer, ForeignKey("lms_sections.section_id"))
+    course_id = Column(Integer, ForeignKey("lms_courses.course_id"))
     status = Column(String(20), default="Enrolled")
     final_grade_points = Column(Float, nullable=True)
 
     student = relationship("SisStudent", back_populates="enrollments")
-    section = relationship("LmsSection", back_populates="enrollments")
+    course = relationship("LmsCourse", back_populates="enrollments")
 
 
 class SisTranscript(Base):
@@ -109,35 +103,25 @@ class SisTranscript(Base):
 # LMS — Learning Management System
 # ---------------------------------------------------------------------------
 
-class LmsSection(Base):
-    __tablename__ = "lms_sections"
-    __table_args__ = {"extend_existing": True}
-
-    section_id = Column(Integer, primary_key=True)
-    course_id = Column(Integer, ForeignKey("lms_courses.course_id"))
-    semester_id = Column(Integer)
-    faculty_id = Column(Integer, ForeignKey("sis_faculty.faculty_id"))
-    room_no = Column(String(20))
-    capacity = Column(Integer)
-
-    course = relationship("LmsCourse", back_populates="sections")
-    enrollments = relationship("SisEnrollment", back_populates="section")
-    attendance_records = relationship("LmsAttendance", back_populates="section")
-    assignments = relationship("LmsAssignment", back_populates="section")
-    quizzes = relationship("LmsQuiz", back_populates="section")
-
-
 class LmsCourse(Base):
     __tablename__ = "lms_courses"
     __table_args__ = {"extend_existing": True}
 
     course_id = Column(Integer, primary_key=True)
     dept_id = Column(Integer)
-    code = Column(String(10))
+    program_id = Column(Integer)
+    semester_id = Column(Integer)
+    faculty_id = Column(Integer, ForeignKey("sis_faculty.faculty_id"))
+    code = Column(String(20))
     title = Column(String(100))
     credit_hours = Column(Integer)
+    room_no = Column(String(20))
+    capacity = Column(Integer)
 
-    sections = relationship("LmsSection", back_populates="course")
+    enrollments = relationship("SisEnrollment", back_populates="course")
+    attendance_records = relationship("LmsAttendance", back_populates="course")
+    assignments = relationship("LmsAssignment", back_populates="course")
+    quizzes = relationship("LmsQuiz", back_populates="course")
 
 
 class LmsAttendance(Base):
@@ -145,14 +129,14 @@ class LmsAttendance(Base):
     __table_args__ = {"extend_existing": True}
 
     attendance_id = Column(Integer, primary_key=True)
-    section_id = Column(Integer, ForeignKey("lms_sections.section_id"))
+    course_id = Column(Integer, ForeignKey("lms_courses.course_id"))
     student_id = Column(Integer, ForeignKey("sis_students.student_id"))
     date = Column(Date)
     status = Column(String(10))  # 'Present', 'Absent', 'Leave', 'Late'
     check_in_time = Column(Time)
     is_biometric_verified = Column(Boolean, default=True)
 
-    section = relationship("LmsSection", back_populates="attendance_records")
+    course = relationship("LmsCourse", back_populates="attendance_records")
 
 
 class LmsAssignment(Base):
@@ -160,13 +144,13 @@ class LmsAssignment(Base):
     __table_args__ = {"extend_existing": True}
 
     assignment_id = Column(Integer, primary_key=True)
-    section_id = Column(Integer, ForeignKey("lms_sections.section_id"))
+    course_id = Column(Integer, ForeignKey("lms_courses.course_id"))
     title = Column(String(100))
     description = Column(Text, nullable=True)
     total_marks = Column(Integer)
     due_date = Column(TIMESTAMP)
 
-    section = relationship("LmsSection", back_populates="assignments")
+    course = relationship("LmsCourse", back_populates="assignments")
     submissions = relationship("LmsSubmission", back_populates="assignment")
 
 
@@ -189,13 +173,13 @@ class LmsQuiz(Base):
     __table_args__ = {"extend_existing": True}
 
     quiz_id = Column(Integer, primary_key=True)
-    section_id = Column(Integer, ForeignKey("lms_sections.section_id"))
+    course_id = Column(Integer, ForeignKey("lms_courses.course_id"))
     title = Column(String(100))
     duration_minutes = Column(Integer)
     start_time = Column(TIMESTAMP)
     end_time = Column(TIMESTAMP)
 
-    section = relationship("LmsSection", back_populates="quizzes")
+    course = relationship("LmsCourse", back_populates="quizzes")
     answers = relationship("LmsAnswer", back_populates="quiz")
 
 
@@ -239,19 +223,3 @@ class FinTransaction(Base):
     invoice_id = Column(Integer, ForeignKey("fin_invoices.invoice_id"))
     amount_paid = Column(Numeric(10, 2))
     trx_date = Column(TIMESTAMP, server_default=func.now())
-
-
-class FinFeeHead(Base):
-    __tablename__ = "fin_fee_heads"
-    __table_args__ = {"extend_existing": True}
-    head_id = Column(Integer, primary_key=True)
-    title = Column(String(100))
-    category = Column(String(50))
-
-
-class FinFeeStructure(Base):
-    __tablename__ = "fin_fee_structure"
-    __table_args__ = {"extend_existing": True}
-    structure_id = Column(Integer, primary_key=True)
-    head_id = Column(Integer, ForeignKey("fin_fee_heads.head_id"))
-    program_id = Column(Integer)

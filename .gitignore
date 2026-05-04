@@ -13,6 +13,15 @@ dist
 dist-ssr
 *.local
 
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Project specific exclusions
+final_report_drafts/
+*.pdf
+
 # Python bytecode and caches
 __pycache__/
 *.py[cod]

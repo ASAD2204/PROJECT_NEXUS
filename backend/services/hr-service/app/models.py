@@ -69,15 +69,15 @@ class SisEnrollment(Base):
 
     enrollment_id = Column(Integer, primary_key=True, autoincrement=True)
     student_id = Column(Integer)
-    section_id = Column(Integer)
+    course_id = Column(Integer)
     status = Column(String(20), default="Enrolled")
 
 
-class LmsSection(Base):
-    __tablename__ = "lms_sections"
+class LmsCourse(Base):
+    __tablename__ = "lms_courses"
     __table_args__ = {"extend_existing": True}
 
-    section_id = Column(Integer, primary_key=True)
+    course_id = Column(Integer, primary_key=True)
     faculty_id = Column(Integer)
 
 
@@ -86,7 +86,7 @@ class LmsAttendance(Base):
     __table_args__ = {"extend_existing": True}
 
     attendance_id = Column(Integer, primary_key=True, autoincrement=True)
-    section_id = Column(Integer)
+    course_id = Column(Integer)
     student_id = Column(Integer)
     date = Column(Date)
     status = Column(String(10))

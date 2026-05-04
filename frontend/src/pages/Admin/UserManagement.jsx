@@ -514,8 +514,16 @@ const UserManagement = () => {
         readSourceValue(source, 'program_id', 'programId', 'program', 'programName', 'program name')
       );
       const rollNo = String(readSourceValue(source, 'roll_no', 'rollNo', 'rollNumber', 'roll number')).trim();
+      const currentSemesterValue = readSourceValue(
+        source,
+        'current_semester',
+        'currentSemester',
+        'semester',
+        'current semester'
+      );
       payload.roll_no = rollNo;
       payload.program_id = programId;
+      payload.current_semester = currentSemesterValue ? Number(currentSemesterValue) : null;
     }
 
     if (role === 'faculty') {
@@ -557,6 +565,7 @@ const UserManagement = () => {
       }
       payload.roll_no = formData.rollNumber;
       payload.program_id = programId;
+      payload.current_semester = formData.semester ? Number(formData.semester) : null;
     }
 
     if (role === 'faculty') {
@@ -655,7 +664,7 @@ const UserManagement = () => {
       
       // Auto-mapping logic
       const initialMapping = {};
-      const targets = ['full_name', 'email', 'role', 'roll_no', 'employee_code', 'department', 'program'];
+      const targets = ['full_name', 'email', 'role', 'roll_no', 'current_semester', 'employee_code', 'department', 'program'];
       targets.forEach(target => {
         const match = headers.find(h => canonicalKey(h) === canonicalKey(target) || canonicalKey(h).includes(canonicalKey(target)));
         if (match) initialMapping[target] = match;
@@ -1240,9 +1249,9 @@ const UserManagement = () => {
                   <Grid size={{ xs: 12, md: 4 }}>
                     <TextField
                       fullWidth
-                      label="Semester *"
+                      label="Current Semester *"
                       type="number"
-                      placeholder="e.g., 1"
+                      placeholder="e.g., 5"
                       value={formData.semester}
                       onChange={handleChange('semester')}
                       inputProps={{ min: 1, max: 8 }}

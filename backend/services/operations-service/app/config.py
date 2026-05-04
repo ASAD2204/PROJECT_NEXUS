@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     INTERNAL_API_KEY: str = "change-me-internal-key"
     NOTIFICATION_SERVICE_URL: str = "http://notification-service:8000"
+    GATEWAY_URL: str = "http://api-gateway:80"
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 30

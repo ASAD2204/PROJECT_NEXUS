@@ -101,17 +101,13 @@ const normalizeTranscriptRow = (row, index) => ({
   generatedAt: row.generated_at || row.generatedAt || null,
 });
 
-const normalizeCourse = (enrollment, section) => {
-  const sectionCourse = section?.course || {};
-  const courseId = section?.course_id ?? section?.courseId ?? sectionCourse.course_id ?? sectionCourse.courseId ?? null;
-  const sectionId = section?.section_id ?? section?.sectionId ?? enrollment?.section_id ?? enrollment?.sectionId ?? null;
-  const courseCode = sectionCourse.code || section?.code || section?.course_code || `SEC-${sectionId}`;
-  const courseTitle = sectionCourse.title || section?.title || section?.course_title || `Section ${sectionId}`;
+const normalizeCourse = (enrollment, course) => {
+  const courseId = course?.course_id ?? course?.courseId ?? enrollment?.course_id ?? enrollment?.courseId ?? null;
+  const courseCode = course.code || course.course_code || `C-${courseId}`;
+  const courseTitle = course.title || course.course_title || `Course ${courseId}`;
 
   return {
-    id: sectionId,
-    section_id: sectionId,
-    sectionId,
+    id: courseId,
     course_id: courseId,
     courseId,
     code: courseCode,
@@ -120,29 +116,29 @@ const normalizeCourse = (enrollment, section) => {
     title: courseTitle,
     course_title: courseTitle,
     courseTitle,
-    room: section?.room_no || section?.room || 'TBD',
-    room_no: section?.room_no || section?.room || null,
-    faculty: section?.faculty_id ? `Faculty #${section.faculty_id}` : 'TBD',
-    faculty_id: section?.faculty_id ?? null,
-    time: section?.time || section?.schedule || 'TBD',
-    schedule: section?.schedule || section?.time || null,
-    capacity: section?.capacity ?? null,
+    room: course?.room_no || course?.room || 'TBD',
+    room_no: course?.room_no || course?.room || null,
+    faculty: course?.faculty_id ? `Faculty #${course.faculty_id}` : 'TBD',
+    faculty_id: course?.faculty_id ?? null,
+    time: course?.time || course?.schedule || 'TBD',
+    schedule: course?.schedule || course?.time || null,
+    capacity: course?.capacity ?? null,
     status: enrollment?.status || 'Enrolled',
     enrollmentStatus: enrollment?.status || 'Enrolled',
     finalGradePoints: enrollment?.final_grade_points ?? enrollment?.finalGradePoints ?? null,
     final_grade_points: enrollment?.final_grade_points ?? enrollment?.finalGradePoints ?? null,
-    creditHours: sectionCourse.credit_hours ?? sectionCourse.creditHours ?? 0,
-    credit_hours: sectionCourse.credit_hours ?? sectionCourse.creditHours ?? 0,
-    attendance_percentage: section?.attendance_percentage ?? section?.attendancePercentage ?? null,
-    attendancePercentage: section?.attendance_percentage ?? section?.attendancePercentage ?? null,
+    creditHours: course.credit_hours ?? course.creditHours ?? 0,
+    credit_hours: course.credit_hours ?? course.creditHours ?? 0,
+    attendance_percentage: course?.attendance_percentage ?? course?.attendancePercentage ?? null,
+    attendancePercentage: course?.attendance_percentage ?? course?.attendancePercentage ?? null,
   };
 };
 
 const normalizeAssignment = (assignment) => ({
   id: assignment.assignment_id ?? assignment.id,
   assignment_id: assignment.assignment_id ?? assignment.id,
-  section_id: assignment.section_id ?? assignment.sectionId ?? null,
-  sectionId: assignment.section_id ?? assignment.sectionId ?? null,
+  course_id: assignment.course_id ?? assignment.courseId ?? null,
+  courseId: assignment.course_id ?? assignment.courseId ?? null,
   title: assignment.title || 'Untitled Assignment',
   description: assignment.description || '',
   total_marks: assignment.total_marks ?? assignment.totalMarks ?? 0,
@@ -368,11 +364,11 @@ export const studentAPI = {
       return { data: { courses: [] } };
     }
 
-    const sectionResponses = await Promise.all(
-      enrollments.map((enrollment) => sisAPI.getCourse(enrollment.section_id).catch(() => ({ data: {} })))
+    const courseResponses = await Promise.all(
+      enrollments.map((enrollment) => sisAPI.getCourse(enrollment.course_id || enrollment.courseId).catch(() => ({ data: {} })))
     );
 
-    const courses = enrollments.map((enrollment, index) => normalizeCourse(enrollment, sectionResponses[index]?.data || {}));
+    const courses = enrollments.map((enrollment, index) => normalizeCourse(enrollment, courseResponses[index]?.data || {}));
     return { data: { courses } };
   },
 
@@ -412,6 +408,12 @@ export const studentAPI = {
         totalClasses: data.totalClasses ?? data.total_classes ?? 0,
       },
     };
+  },
+
+  getAnnouncements: async () => {
+    const res = await opsAPI.getAnnouncements();
+    const announcements = toArray(res.data, ['announcements']).map(normalizeAnnouncement);
+    return { data: { announcements } };
   },
 
   getAnnouncements: async () => {

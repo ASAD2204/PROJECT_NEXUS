@@ -143,34 +143,31 @@ CREATE TABLE sis_transcripts (
 -- MODULE 3: LEARNING MANAGEMENT SYSTEM (LMS)
 -- ==========================================================
 
--- 12. Courses (Master Catalog)
+-- 12. Courses (Specific Classes / Enrollable Entities)
 CREATE TABLE lms_courses (
     course_id SERIAL PRIMARY KEY,
     dept_id INT REFERENCES sis_departments(dept_id),
-    program_id INT,
-    code VARCHAR(10) UNIQUE, -- e.g., 'CS101'
+    program_id INT REFERENCES sis_programs(program_id),
+    semester_id INT REFERENCES sis_semesters(semester_id),
+    faculty_id INT REFERENCES sis_faculty(faculty_id),
+    code VARCHAR(20) UNIQUE, -- e.g., 'CS101-Morning'
     title VARCHAR(100),
     description TEXT,
     credit_hours INT,
-    cover_image VARCHAR(255)
-);
-
--- 13. Sections (Specific Classes)
-CREATE TABLE lms_sections (
-    section_id SERIAL PRIMARY KEY,
-    course_id INT REFERENCES lms_courses(course_id),
-    semester_id INT REFERENCES sis_semesters(semester_id),
-    faculty_id INT REFERENCES sis_faculty(faculty_id),
+    capacity INT DEFAULT 50,
     room_no VARCHAR(20),
-    capacity INT
+    cover_image VARCHAR(255),
+    -- Scheduling Load
+    lectures_per_week INT DEFAULT 1,
+    lecture_duration_minutes INT DEFAULT 60
 );
 
--- *SIS ENROLLMENTS (Requires lms_sections to exist)*
--- 14. Enrollments
+-- *SIS ENROLLMENTS*
+-- 14. Enrollments (Link to Course Instance)
 CREATE TABLE sis_enrollments (
     enrollment_id SERIAL PRIMARY KEY,
     student_id INT REFERENCES sis_students(student_id),
-    section_id INT REFERENCES lms_sections(section_id),
+    course_id INT REFERENCES lms_courses(course_id),
     status VARCHAR(20) DEFAULT 'Enrolled', -- 'Enrolled', 'Withdrawn', 'Dropped'
     final_grade_points FLOAT
 );
@@ -178,7 +175,7 @@ CREATE TABLE sis_enrollments (
 -- 15. Assignments
 CREATE TABLE lms_assignments (
     assignment_id SERIAL PRIMARY KEY,
-    section_id INT REFERENCES lms_sections(section_id),
+    course_id INT REFERENCES lms_courses(course_id),
     title VARCHAR(100),
     description TEXT,
     total_marks INT,
@@ -199,7 +196,7 @@ CREATE TABLE lms_submissions (
 -- 17. Quizzes
 CREATE TABLE lms_quizzes (
     quiz_id SERIAL PRIMARY KEY,
-    section_id INT REFERENCES lms_sections(section_id),
+    course_id INT REFERENCES lms_courses(course_id),
     title VARCHAR(100),
     duration_minutes INT,
     start_time TIMESTAMP,
@@ -229,7 +226,7 @@ CREATE TABLE lms_answers (
 -- 20. Attendance (Smart Attendance Logs)
 CREATE TABLE lms_attendance (
     attendance_id SERIAL PRIMARY KEY,
-    section_id INT REFERENCES lms_sections(section_id),
+    course_id INT REFERENCES lms_courses(course_id),
     student_id INT REFERENCES sis_students(student_id),
     date DATE NOT NULL,
     status VARCHAR(10) CHECK (status IN ('Present', 'Absent', 'Leave', 'Late')),
@@ -242,7 +239,7 @@ CREATE TABLE lms_attendance (
 -- 21. Timetable Slots (Constraint Logic)
 CREATE TABLE lms_timetable_slots (
     slot_id SERIAL PRIMARY KEY,
-    section_id INT REFERENCES lms_sections(section_id),
+    course_id INT REFERENCES lms_courses(course_id),
     day_of_week VARCHAR(10), -- 'Monday', 'Tuesday'
     start_time TIME,
     end_time TIME,
@@ -449,7 +446,7 @@ CREATE TABLE lib_librarian_profiles (
 -- 34. Course Materials (LMS)
 CREATE TABLE lms_course_materials (
     material_id SERIAL PRIMARY KEY,
-    section_id INT REFERENCES lms_sections(section_id),
+    course_id INT REFERENCES lms_courses(course_id),
     title VARCHAR(200) NOT NULL,
     description TEXT,
     material_type VARCHAR(50), -- 'PDF', 'Video', 'Slide', 'Link'

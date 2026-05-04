@@ -17,6 +17,7 @@ export const attendanceAPI = {
     }),
   verifyFace: (data) => client.post('/attendance/verify-face', data),
   markAttendance: (data) => client.post('/attendance/mark', data),
+  checkStatus: (courseId) => client.get(`/attendance/check/${courseId}`),
 
   // ── History & Stats ──
   getMyHistory: (params) => client.get('/attendance/history/me', { params }),

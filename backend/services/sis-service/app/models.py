@@ -2,7 +2,7 @@
 SQLAlchemy ORM models for the SIS (Student Information System) service.
 
 Defines core tables owned by this service (sis_*) and read-only mirror
-tables from other services (lms_sections, fin_invoices) that are
+tables from other services (lms_courses, fin_invoices) that are
 referenced for cross-service queries.
 """
 
@@ -193,50 +193,41 @@ class SisEnrollment(Base):
 
     enrollment_id = Column(Integer, primary_key=True, autoincrement=True)
     student_id = Column(Integer, ForeignKey("sis_students.student_id"), nullable=False)
-    section_id = Column(Integer, ForeignKey("lms_sections.section_id"), nullable=False)
+    course_id = Column(Integer, ForeignKey("lms_courses.course_id"), nullable=False)
     status = Column(String(20), default="Enrolled")
     final_grade_points = Column(Float)
 
     # relationships
     student = relationship("SisStudent", back_populates="enrollments")
-    section = relationship("LmsSection", back_populates="enrollments")
+    course = relationship("LmsCourse", back_populates="enrollments")
 
 
 # --------------------------------------------------------------------------- #
 #  Cross-service read-only mirror tables
 # --------------------------------------------------------------------------- #
 
-class LmsSection(Base):
-    """Read-only mirror of the LMS sections table."""
-    __tablename__ = "lms_sections"
-    __table_args__ = {"extend_existing": True}
-
-    section_id = Column(Integer, primary_key=True, autoincrement=True)
-    course_id = Column(Integer, ForeignKey("lms_courses.course_id"))
-    semester_id = Column(Integer)
-    faculty_id = Column(Integer)
-    room_no = Column(String(20))
-    capacity = Column(Integer)
-    course = relationship("LmsCourse", back_populates="sections")
-
-    # relationships
-    enrollments = relationship("SisEnrollment", back_populates="section")
-    timetable_slots = relationship("LmsTimetableSlot", back_populates="section")
-
-
 class LmsCourse(Base):
-    """Read-only mirror of lms_courses for credit-hour checks."""
+    """Read-only mirror of lms_courses."""
     __tablename__ = "lms_courses"
     __table_args__ = {"extend_existing": True}
 
     course_id = Column(Integer, primary_key=True, autoincrement=True)
     dept_id = Column(Integer)
     program_id = Column(Integer)
-    code = Column(String(10))
+    semester_id = Column(Integer)
+    faculty_id = Column(Integer)
+    code = Column(String(20))
     title = Column(String(100))
     credit_hours = Column(Integer)
+    capacity = Column(Integer)
+    room_no = Column(String(20))
+    
+    lectures_per_week = Column(Integer)
+    lecture_duration_minutes = Column(Integer)
 
-    sections = relationship("LmsSection", back_populates="course")
+    # relationships
+    enrollments = relationship("SisEnrollment", back_populates="course")
+    timetable_slots = relationship("LmsTimetableSlot", back_populates="course")
 
 
 class LmsTimetableSlot(Base):
@@ -245,12 +236,12 @@ class LmsTimetableSlot(Base):
     __table_args__ = {"extend_existing": True}
 
     slot_id = Column(Integer, primary_key=True, autoincrement=True)
-    section_id = Column(Integer, ForeignKey("lms_sections.section_id"), nullable=False)
+    course_id = Column(Integer, ForeignKey("lms_courses.course_id"), nullable=False)
     day_of_week = Column(String(10), nullable=False)
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
 
-    section = relationship("LmsSection", back_populates="timetable_slots")
+    course = relationship("LmsCourse", back_populates="timetable_slots")
 
 
 class FinInvoice(Base):

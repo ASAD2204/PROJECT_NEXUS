@@ -14,46 +14,40 @@ class LmsCourse(Base):
     course_id = Column(Integer, primary_key=True, autoincrement=True)
     dept_id = Column(Integer)
     program_id = Column(Integer, nullable=True)
-    code = Column(String(10), unique=True)
+    semester_id = Column(Integer, nullable=True)
+    faculty_id = Column(Integer, nullable=True)
+    code = Column(String(20), unique=True)
     title = Column(String(100))
-    credit_hours = Column(Integer)
     description = Column(Text, nullable=True)
+    credit_hours = Column(Integer)
+    capacity = Column(Integer, default=50)
+    room_no = Column(String(20), nullable=True)
     cover_image = Column(String(255), nullable=True)
+    
+    # Scheduling fields
+    lectures_per_week = Column(Integer, default=1)
+    lecture_duration_minutes = Column(Integer, default=60)
 
-    sections = relationship("LmsSection", back_populates="course")
-
-
-class LmsSection(Base):
-    __tablename__ = "lms_sections"
-
-    section_id = Column(Integer, primary_key=True, autoincrement=True)
-    course_id = Column(Integer, ForeignKey("lms_courses.course_id"))
-    semester_id = Column(Integer)
-    faculty_id = Column(Integer)
-    room_no = Column(String(20))
-    capacity = Column(Integer)
-
-    course = relationship("LmsCourse", back_populates="sections")
-    assignments = relationship("LmsAssignment", back_populates="section")
-    quizzes = relationship("LmsQuiz", back_populates="section")
-    attendance_records = relationship("LmsAttendance", back_populates="section")
-    timetable_slots = relationship("LmsTimetableSlot", back_populates="section")
-    enrollments = relationship("SisEnrollment", back_populates="section")
-    materials = relationship("LmsCourseMaterial", back_populates="section")
+    assignments = relationship("LmsAssignment", back_populates="course")
+    quizzes = relationship("LmsQuiz", back_populates="course")
+    attendance_records = relationship("LmsAttendance", back_populates="course")
+    timetable_slots = relationship("LmsTimetableSlot", back_populates="course")
+    enrollments = relationship("SisEnrollment", back_populates="course")
+    materials = relationship("LmsCourseMaterial", back_populates="course")
 
 
 class LmsAssignment(Base):
     __tablename__ = "lms_assignments"
 
     assignment_id = Column(Integer, primary_key=True, autoincrement=True)
-    section_id = Column(Integer, ForeignKey("lms_sections.section_id"))
+    course_id = Column(Integer, ForeignKey("lms_courses.course_id"))
     title = Column(String(100))
     description = Column(Text, nullable=True)
     total_marks = Column(Integer)
     due_date = Column(TIMESTAMP)
     attachment_ref_id = Column(String(100))
 
-    section = relationship("LmsSection", back_populates="assignments")
+    course = relationship("LmsCourse", back_populates="assignments")
     submissions = relationship("LmsSubmission", back_populates="assignment")
 
 
@@ -75,13 +69,13 @@ class LmsQuiz(Base):
     __tablename__ = "lms_quizzes"
 
     quiz_id = Column(Integer, primary_key=True, autoincrement=True)
-    section_id = Column(Integer, ForeignKey("lms_sections.section_id"))
+    course_id = Column(Integer, ForeignKey("lms_courses.course_id"))
     title = Column(String(100))
     duration_minutes = Column(Integer)
     start_time = Column(TIMESTAMP)
     end_time = Column(TIMESTAMP)
 
-    section = relationship("LmsSection", back_populates="quizzes")
+    course = relationship("LmsCourse", back_populates="quizzes")
     questions = relationship("LmsQuestion", back_populates="quiz")
     answers = relationship("LmsAnswer", back_populates="quiz")
 
@@ -126,7 +120,7 @@ class LmsAttendance(Base):
     __tablename__ = "lms_attendance"
 
     attendance_id = Column(Integer, primary_key=True, autoincrement=True)
-    section_id = Column(Integer, ForeignKey("lms_sections.section_id"))
+    course_id = Column(Integer, ForeignKey("lms_courses.course_id"))
     student_id = Column(Integer)
     date = Column(Date, nullable=False)
     status = Column(String(10))
@@ -135,20 +129,20 @@ class LmsAttendance(Base):
     gps_long = Column(Float)
     is_biometric_verified = Column(Boolean, default=True)
 
-    section = relationship("LmsSection", back_populates="attendance_records")
+    course = relationship("LmsCourse", back_populates="attendance_records")
 
 
 class LmsTimetableSlot(Base):
     __tablename__ = "lms_timetable_slots"
 
     slot_id = Column(Integer, primary_key=True, autoincrement=True)
-    section_id = Column(Integer, ForeignKey("lms_sections.section_id"))
+    course_id = Column(Integer, ForeignKey("lms_courses.course_id"))
     day_of_week = Column(String(10))
     start_time = Column(Time)
     end_time = Column(Time)
     room_no = Column(String(20))
 
-    section = relationship("LmsSection", back_populates="timetable_slots")
+    course = relationship("LmsCourse", back_populates="timetable_slots")
 
 
 class SisEnrollment(Base):
@@ -157,18 +151,18 @@ class SisEnrollment(Base):
 
     enrollment_id = Column(Integer, primary_key=True, autoincrement=True)
     student_id = Column(Integer)
-    section_id = Column(Integer, ForeignKey("lms_sections.section_id"))
+    course_id = Column(Integer, ForeignKey("lms_courses.course_id"))
     status = Column(String(20), default="Enrolled")
     final_grade_points = Column(Float, nullable=True)
 
-    section = relationship("LmsSection", back_populates="enrollments")
+    course = relationship("LmsCourse", back_populates="enrollments")
 
 
 class LmsCourseMaterial(Base):
     __tablename__ = "lms_course_materials"
 
     material_id = Column(Integer, primary_key=True, autoincrement=True)
-    section_id = Column(Integer, ForeignKey("lms_sections.section_id"))
+    course_id = Column(Integer, ForeignKey("lms_courses.course_id"))
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     file_ref_id = Column(String(255))
@@ -176,7 +170,7 @@ class LmsCourseMaterial(Base):
     uploaded_by = Column(Integer)
     uploaded_at = Column(TIMESTAMP, server_default=func.now())
 
-    section = relationship("LmsSection", back_populates="materials")
+    course = relationship("LmsCourse", back_populates="materials")
 
 
 class SisStudent(Base):

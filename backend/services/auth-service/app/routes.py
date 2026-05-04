@@ -113,9 +113,15 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
         from sqlalchemy import text
         db.execute(
             text(
-                "INSERT INTO sis_students (user_id, roll_no, program_id) VALUES (:uid, :roll, :pid)"
+                "INSERT INTO sis_students (user_id, roll_no, program_id, current_semester) "
+                "VALUES (:uid, :roll, :pid, :sem)"
             ),
-            {"uid": str(user.user_id), "roll": payload.roll_no, "pid": payload.program_id},
+            {
+                "uid": str(user.user_id),
+                "roll": payload.roll_no,
+                "pid": payload.program_id,
+                "sem": payload.current_semester,
+            },
         )
 
     # For faculty role: create sis_faculty record when complete profile fields are present

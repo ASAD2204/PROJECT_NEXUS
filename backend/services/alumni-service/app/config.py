@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 30
+    GATEWAY_URL: str = "http://api-gateway:80"
 
     class Config:
         env_file = ".env"

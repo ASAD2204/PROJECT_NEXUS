@@ -8,14 +8,37 @@ from sqlalchemy.orm import Session
 import csv
 import io
 import httpx
+import base64
+import logging
 from datetime import datetime, date
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
+from reportlab.lib.utils import ImageReader
 from pydantic import ValidationError
+
+logger = logging.getLogger(__name__)
 
 from app.database import get_db
 from app.dependencies import get_current_user, require_role
+from app.config import settings
+
+async def _get_global_settings() -> dict:
+    """Fetch global university settings from Operations Service."""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{settings.GATEWAY_URL}/api/v1/ops/settings",
+                timeout=2.0
+            )
+            if response.status_code == 200:
+                return response.json()
+    except Exception as exc:
+        logger.error("Failed to fetch global settings: %s", exc)
+    return {
+        "campusName": "PROJECT NEXUS",
+        "campusAddress": "University Campus"
+    }
 from app.models import (
     AlumniJob,
     AlumniRegistry,
@@ -821,7 +844,7 @@ def get_uploaded_image(filename: str):
 
 
 @router.get("/reports/pdf")
-def download_alumni_report(
+async def download_alumni_report(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_role(["admin"])),
 ):
@@ -830,45 +853,116 @@ def download_alumni_report(
     events = db.query(AlumniEvent).all()
     jobs = db.query(AlumniJob).filter(AlumniJob.status == "Approved").count()
 
+    campus_info = await _get_global_settings()
+    university_name = campus_info.get("campusName", "Punjab University Gujranwala Campus")
+    university_address = campus_info.get("campusAddress", "University Campus")
+    logo_data = campus_info.get("campusLogo")
+
+    # --- PROFESSIONAL ALUMNI REPORT REDESIGN (V2) ---
     buffer = io.BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
+    margin = 1.5 * cm
+    content_width = width - (2 * margin)
 
-    pdf.setFont("Helvetica-Bold", 18)
-    pdf.drawCentredString(width / 2, height - 2 * cm, "Project Nexus - Alumni Network Report")
+    # 1. Header (Dynamic Branding)
+    # Clean White Background
+    pdf.setFillColorRGB(1, 1, 1)
+    pdf.rect(0, height - 4.5 * cm, width, 4.5 * cm, fill=1, stroke=0)
     
-    y = height - 4 * cm
-    pdf.setFont("Helvetica", 12)
-    pdf.drawString(2 * cm, y, f"Total Registered Alumni: {total_alumni}")
-    y -= 0.6 * cm
-    pdf.drawString(2 * cm, y, f"Active Job Postings: {jobs}")
-    y -= 1.5 * cm
-    
+    # Logo Placement
+    logo_w = 2.2 * cm
+    header_text_x = margin
+    if logo_data and logo_data.startswith("data:image"):
+        try:
+            header_str, encoded = logo_data.split(",", 1)
+            img_data = base64.b64decode(encoded)
+            img = ImageReader(io.BytesIO(img_data))
+            # Draw logo slightly higher
+            pdf.drawImage(img, margin, height - 3.2 * cm, width=logo_w, preserveAspectRatio=True, mask='auto')
+            header_text_x = margin + logo_w + 0.4 * cm
+        except Exception as e:
+            logger.error("Failed to draw logo in Alumni: %s", e)
+
+    # University Info (Left Aligned)
+    pdf.setFillColorRGB(0, 0, 0) # Explicit Black
     pdf.setFont("Helvetica-Bold", 14)
-    pdf.drawString(2 * cm, y, "Upcoming Events")
-    y -= 0.8 * cm
+    # Ensure university name is not too long for the line
+    display_name = university_name.upper()
+    if len(display_name) > 50:
+        pdf.setFont("Helvetica-Bold", 11) # Scale down if very long
+    pdf.drawString(header_text_x, height - 2.0 * cm, display_name)
     
-    pdf.setFont("Helvetica-Bold", 10)
-    pdf.drawString(2 * cm, y, "Event Title")
-    pdf.drawString(8 * cm, y, "Date")
-    pdf.drawString(12 * cm, y, "Attendees")
-    
-    y -= 0.2 * cm
-    pdf.line(2 * cm, y, width - 2 * cm, y)
-    y -= 0.5 * cm
-    
+    pdf.setFont("Helvetica", 9)
+    pdf.setFillColorRGB(0.2, 0.2, 0.2)
+    pdf.drawString(header_text_x, height - 2.5 * cm, university_address[:100])
+    pdf.setFillColorRGB(0, 0, 0)
+
+    # Document Label (Right)
+    pdf.setFont("Helvetica-Bold", 18)
+    pdf.drawRightString(width - margin, height - 2.0 * cm, "ALUMNI REPORT")
     pdf.setFont("Helvetica", 10)
+    pdf.drawRightString(width - margin, height - 2.8 * cm, "Engagement & Network Activity")
+    pdf.drawRightString(width - margin, height - 3.3 * cm, f"DATE: {datetime.now().strftime('%d %b %Y')}")
+
+    # Separator Line
+    pdf.setStrokeColorRGB(0.8, 0.8, 0.8)
+    pdf.setLineWidth(0.5)
+    pdf.line(margin, height - 4.0 * cm, width - margin, height - 4.0 * cm)
+
+    # 2. Key Metrics Section
+    y = height - 5.0 * cm
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.setFillColorRGB(0.4, 0.4, 0.4)
+    pdf.drawString(margin, y, "NETWORK SNAPSHOT")
+
+    y -= 0.8 * cm
+    pdf.setFillColorRGB(0, 0, 0)
+    pdf.setFont("Helvetica", 10)
+    pdf.drawString(margin, y, f"Total Registered Alumni: {total_alumni}")
+    pdf.drawRightString(width - margin, y, f"Active Job Postings: {jobs}")
+
+    # 3. Events Table
+    y -= 1.5 * cm
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.setFillColorRGB(0.4, 0.4, 0.4)
+    pdf.drawString(margin, y, "UPCOMING EVENTS & ACTIVITY")
+
+    y -= 0.8 * cm
+    pdf.setFillColorRGB(0.3, 0.3, 0.3)
+    pdf.rect(margin, y - 0.2 * cm, content_width, 0.8 * cm, fill=1, stroke=0)
+    pdf.setFillColorRGB(1, 1, 1)
+
+    pdf.setFont("Helvetica-Bold", 10)
+    pdf.drawString(margin + 0.5 * cm, y + 0.1 * cm, "Event Title")
+    pdf.drawCentredString(width / 2 + 1 * cm, y + 0.1 * cm, "Date")
+    pdf.drawRightString(width - margin - 0.5 * cm, y + 0.1 * cm, "Attendees")
+
+    y -= 0.8 * cm
+    pdf.setFillColorRGB(0, 0, 0)
+    pdf.setFont("Helvetica", 9)
     for event in events:
         if y < 3 * cm:
             pdf.showPage()
             y = height - 2 * cm
-        
-        pdf.drawString(2 * cm, y, event.title[:30])
-        pdf.drawString(8 * cm, y, event.event_date.strftime("%Y-%m-%d"))
-        pdf.drawString(12 * cm, y, str(event.registered_count))
-        y -= 0.6 * cm
+            pdf.setFont("Helvetica", 9)
+
+        pdf.setStrokeColorRGB(0.9, 0.9, 0.9)
+        pdf.line(margin, y - 0.2 * cm, width - margin, y - 0.2 * cm)
+
+        pdf.drawString(margin + 0.5 * cm, y, event.title[:55])
+        pdf.drawCentredString(width / 2 + 1 * cm, y, event.event_date.strftime("%Y-%m-%d"))
+        pdf.drawRightString(width - margin - 0.5 * cm, y, str(event.registered_count))
+        y -= 0.7 * cm
+
+    # 4. Footer
+    pdf.setFillColorRGB(0.5, 0.5, 0.5)
+    pdf.setFont("Helvetica-Oblique", 8)
+    pdf.drawCentredString(width/2, margin, "This is a computer generated report and does not require a physical signature.")
+    pdf.drawCentredString(width/2, margin - 0.4 * cm, f"Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
     pdf.save()
+
     buffer.seek(0)
     return StreamingResponse(
         buffer,

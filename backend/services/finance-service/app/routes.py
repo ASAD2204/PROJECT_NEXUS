@@ -9,9 +9,11 @@ import io
 import csv
 import httpx
 import logging
+import base64
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
+from reportlab.lib.utils import ImageReader
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +26,10 @@ async def _resolve_identities(user_ids: list[str]) -> dict:
         return {}
     try:
         async with httpx.AsyncClient() as client:
+            # FIX: Send list directly, not a dict
             response = await client.post(
                 f"{settings.GATEWAY_URL}/api/v1/auth/users/bulk",
-                json={"user_ids": user_ids},
+                json=user_ids,
                 timeout=5.0
             )
             if response.status_code == 200:
@@ -176,7 +179,7 @@ async def ledger_compat(
 @router.get("/ledger/export")
 async def export_ledger(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_role(["admin"])),
+    current_user: dict = Depends(require_role("admin")),
 ):
     """Export the entire financial ledger as CSV with resolved names."""
     invoices = db.query(FinInvoice).order_by(FinInvoice.invoice_id.desc()).all()
@@ -326,13 +329,31 @@ async def get_invoice(
     return invoice
 
 
+async def _get_global_settings() -> dict:
+    """Fetch global university settings from Operations Service."""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{settings.GATEWAY_URL}/api/v1/ops/settings",
+                timeout=2.0
+            )
+            if response.status_code == 200:
+                return response.json()
+    except Exception as exc:
+        logger.error("Failed to fetch global settings: %s", exc)
+    return {
+        "campusName": "PROJECT NEXUS",
+        "campusAddress": "University Campus, Finance Dept"
+    }
+
+
 @router.get("/invoices/{invoice_id}/pdf")
 async def download_invoice_pdf(
     invoice_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    """Generate and return a professional PDF invoice with resolved student name."""
+    """Generate and return a professional PDF invoice with dynamic branding."""
     invoice = db.query(FinInvoice).filter(FinInvoice.invoice_id == invoice_id).first()
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
@@ -343,57 +364,156 @@ async def download_invoice_pdf(
         if not student or invoice.student_id != student.student_id:
             raise HTTPException(status_code=403, detail="Access denied")
 
+    # Fetch dynamic branding
+    campus_info = await _get_global_settings()
+    university_name = campus_info.get("campusName", "PROJECT NEXUS")
+    university_address = campus_info.get("campusAddress", "University Campus, Finance Dept")
+    logo_data = campus_info.get("campusLogo")
+
     # Resolve identity
     student_name = "N/A"
     student_roll = invoice.student.roll_no if invoice.student else str(invoice.student_id)
     if invoice.student and invoice.student.user_id:
         identities = await _resolve_identities([str(invoice.student.user_id)])
         ident = identities.get(str(invoice.student.user_id), {})
-        student_name = ident.get("full_name") or ident.get("name") or student_name
+        if ident.get("first_name"):
+            student_name = f"{ident.get('first_name', '')} {ident.get('last_name', '')}".strip()
+        else:
+            student_name = ident.get("full_name") or ident.get("name") or student_name
 
+    # --- PROFESSIONAL PDF OVERHAUL (V2) ---
     buffer = io.BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
+    margin = 1.5 * cm
+    content_width = width - (2 * margin)
 
+    # 1. Header (Dynamic Branding)
+    # Clean White Background
+    pdf.setFillColorRGB(1, 1, 1)
+    pdf.rect(0, height - 4.5 * cm, width, 4.5 * cm, fill=1, stroke=0)
+    
+    # Logo Placement
+    logo_w = 2.2 * cm
+    header_text_x = margin
+    if logo_data and logo_data.startswith("data:image"):
+        try:
+            header_str, encoded = logo_data.split(",", 1)
+            img_data = base64.b64decode(encoded)
+            img = ImageReader(io.BytesIO(img_data))
+            # Draw logo slightly higher
+            pdf.drawImage(img, margin, height - 3.2 * cm, width=logo_w, preserveAspectRatio=True, mask='auto')
+            header_text_x = margin + logo_w + 0.4 * cm
+        except Exception as e:
+            logger.error("Failed to draw logo in Finance: %s", e)
+
+    # University Info (Left Aligned)
+    pdf.setFillColorRGB(0, 0, 0) # Explicit Black
+    pdf.setFont("Helvetica-Bold", 14)
+    # Ensure university name is not too long for the line
+    display_name = university_name.upper()
+    if len(display_name) > 50:
+        pdf.setFont("Helvetica-Bold", 11) # Scale down if very long
+    pdf.drawString(header_text_x, height - 2.0 * cm, display_name)
+    
+    pdf.setFont("Helvetica", 9)
+    pdf.setFillColorRGB(0.2, 0.2, 0.2)
+    pdf.drawString(header_text_x, height - 2.5 * cm, university_address[:100])
+    pdf.setFillColorRGB(0, 0, 0)
+
+    # Document Label (Right)
     pdf.setFont("Helvetica-Bold", 20)
-    pdf.drawString(2 * cm, height - 2 * cm, "PROJECT NEXUS")
+    pdf.drawRightString(width - margin, height - 2 * cm, "INVOICE")
     pdf.setFont("Helvetica", 10)
-    pdf.drawString(2 * cm, height - 2.5 * cm, "University Campus, Finance Dept")
-    
-    pdf.setFont("Helvetica-Bold", 16)
-    pdf.drawRightString(width - 2 * cm, height - 2 * cm, "INVOICE")
-    pdf.setFont("Helvetica", 10)
-    pdf.drawRightString(width - 2 * cm, height - 2.6 * cm, f"#{invoice.invoice_id}")
-    pdf.drawRightString(width - 2 * cm, height - 3.1 * cm, f"Date: {invoice.due_date.strftime('%Y-%m-%d') if invoice.due_date else 'N/A'}")
+    pdf.drawRightString(width - margin, height - 2.8 * cm, f"REF: #{invoice.invoice_id}")
+    pdf.drawRightString(width - margin, height - 3.3 * cm, f"DATE: {invoice.due_date.strftime('%d %b %Y') if invoice.due_date else 'N/A'}")
 
-    y = height - 5 * cm
-    pdf.setFont("Helvetica-Bold", 12)
-    pdf.drawString(2 * cm, y, "Bill To:")
-    pdf.setFont("Helvetica", 11)
-    pdf.drawString(2 * cm, y - 0.6 * cm, f"Student: {student_name}")
-    pdf.drawString(2 * cm, y - 1.2 * cm, f"Roll No: {student_roll}")
+    # Separator Line
+    pdf.setStrokeColorRGB(0.8, 0.8, 0.8)
+    pdf.setLineWidth(0.5)
+    pdf.line(margin, height - 4.0 * cm, width - margin, height - 4.0 * cm)
+
+    # 2. Bill To & Student Info (Two Columns)
+    y = height - 5.0 * cm
+    pdf.setFont("Helvetica-Bold", 10)
+    pdf.setFillColorRGB(0.4, 0.4, 0.4)
+    pdf.drawString(margin, y, "BILL TO")
+    pdf.drawRightString(width - margin, y, "STUDENT DETAILS")
     
-    y -= 2.5 * cm
+    y -= 0.6 * cm
+    pdf.setFillColorRGB(0, 0, 0)
     pdf.setFont("Helvetica-Bold", 11)
-    pdf.drawString(2 * cm, y, "Description")
-    pdf.drawRightString(width - 2 * cm, y, "Amount")
-    pdf.line(2 * cm, y - 0.2 * cm, width - 2 * cm, y - 0.2 * cm)
+    pdf.drawString(margin, y, student_name)
+    pdf.setFont("Helvetica", 10)
+    pdf.drawRightString(width - margin, y, f"Roll No: {student_roll}")
     
+    y -= 0.5 * cm
+    if invoice.student and invoice.student.program:
+        pdf.setFont("Helvetica", 10)
+        pdf.drawString(margin, y, f"Program: {invoice.student.program.title[:60]}")
+    pdf.drawRightString(width - margin, y, f"Student ID: {invoice.student_id}")
+
+    # 3. Items Table
+    y -= 1.5 * cm
+    # Table Header (Slightly lighter than V1)
+    pdf.setFillColorRGB(0.3, 0.3, 0.3)
+    pdf.rect(margin, y - 0.2 * cm, content_width, 0.8 * cm, fill=1, stroke=0)
+    pdf.setFillColorRGB(1, 1, 1)
+    pdf.setFont("Helvetica-Bold", 10)
+    pdf.drawString(margin + 0.3 * cm, y + 0.1 * cm, "DESCRIPTION")
+    pdf.drawRightString(width - margin - 0.3 * cm, y + 0.1 * cm, "AMOUNT (PKR)")
+
     y -= 0.8 * cm
-    pdf.setFont("Helvetica", 11)
-    pdf.drawString(2.5 * cm, y, f"Tuition & Fees")
-    pdf.drawRightString(width - 2 * cm, y, f"PKR {invoice.total_amount:,.2f}")
+    pdf.setFillColorRGB(0, 0, 0)
+    pdf.setFont("Helvetica", 10)
     
-    y -= 2 * cm
-    pdf.line(width - 7 * cm, y, width - 2 * cm, y)
+    # Render items
+    items_to_render = []
+    if invoice.items:
+        for item in invoice.items:
+            title = item.fee_head.title if item.fee_head else "General Fee"
+            items_to_render.append((title, float(item.amount)))
+    else:
+        items_to_render.append(("Total Academic & Tuition Fees", float(invoice.total_amount)))
+
+    for title, amount in items_to_render:
+        pdf.setStrokeColorRGB(0.9, 0.9, 0.9)
+        pdf.line(margin, y - 0.2 * cm, width - margin, y - 0.2 * cm)
+        
+        pdf.drawString(margin + 0.3 * cm, y, title)
+        pdf.drawRightString(width - margin - 0.3 * cm, y, f"{amount:,.2f}")
+        y -= 0.7 * cm
+        if y < 4 * cm:
+            pdf.showPage()
+            y = height - 2 * cm
+
+    # 4. Summary & Total
+    y -= 0.5 * cm
+    pdf.setStrokeColorRGB(0.2, 0.2, 0.2)
+    pdf.setLineWidth(1)
+    pdf.line(width - 8 * cm, y, width - margin, y)
+    y -= 0.6 * cm
     pdf.setFont("Helvetica-Bold", 12)
-    pdf.drawString(width - 7 * cm, y - 0.6 * cm, "Total")
-    pdf.drawRightString(width - 2 * cm, y - 0.6 * cm, f"PKR {invoice.total_amount:,.2f}")
+    pdf.drawString(width - 8 * cm, y, "TOTAL DUE")
+    pdf.drawRightString(width - margin, y, f"PKR {float(invoice.total_amount):,.2f}")
     
-    pdf.setFont("Helvetica-Bold", 12)
-    status_color = (0, 0.5, 0) if invoice.status == "Paid" else (0.8, 0, 0)
-    pdf.setFillColorRGB(*status_color)
-    pdf.drawString(2 * cm, y - 0.6 * cm, f"Status: {invoice.status.upper()}")
+    y -= 1.2 * cm
+    # Status Badge
+    status_text = invoice.status.upper()
+    status_bg = (0.95, 1, 0.95) if status_text == "PAID" else (1, 0.95, 0.95)
+    status_fg = (0, 0.4, 0) if status_text == "PAID" else (0.6, 0, 0)
+    
+    pdf.setFillColorRGB(*status_bg)
+    pdf.rect(margin, y - 0.3 * cm, 3 * cm, 0.8 * cm, fill=1, stroke=0)
+    pdf.setFillColorRGB(*status_fg)
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawCentredString(margin + 1.5 * cm, y + 0.1 * cm, status_text)
+
+    # 5. Footer
+    pdf.setFillColorRGB(0.5, 0.5, 0.5)
+    pdf.setFont("Helvetica-Oblique", 8)
+    pdf.drawCentredString(width/2, margin, "This is a computer generated invoice and does not require a physical signature.")
+    pdf.drawCentredString(width/2, margin - 0.4 * cm, f"Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
     pdf.save()
     buffer.seek(0)
@@ -554,12 +674,13 @@ def generate_invoices(
         for fh in fee_heads:
             # Check granular structure
             # Priority: Semester+Program > Program > Dept > Default
+            student_dept_id = student.program.dept_id if student.program else None
             granular = (
                 db.query(FinFeeStructure)
                 .filter(FinFeeStructure.head_id == fh.head_id)
                 .filter(
                     (FinFeeStructure.program_id == student.program_id) | (FinFeeStructure.program_id == None),
-                    (FinFeeStructure.dept_id == student.dept_id) | (FinFeeStructure.dept_id == None),
+                    (FinFeeStructure.dept_id == student_dept_id) | (FinFeeStructure.dept_id == None),
                     (FinFeeStructure.semester_id == payload.semester_id) | (FinFeeStructure.semester_id == None)
                 )
                 .order_by(
@@ -641,7 +762,7 @@ def initiate_payment(
             invoice_id=invoice.invoice_id,
             gateway_ref=f"MOCK-{datetime.now().timestamp()}",
             amount_paid=invoice.total_amount,
-            method=payload.method or "Mock",
+            method=payload.payment_method or "Mock",
         )
         db.add(trx)
         db.commit()
@@ -660,12 +781,36 @@ def initiate_payment(
             invoice_id=invoice.invoice_id,
         )
 
+    # --- LIVE STRIPE PATH ---
     try:
         intent = stripe.PaymentIntent.create(
             amount=int(float(invoice.total_amount) * 100),  # Convert to cents
             currency="pkr",
             metadata={"invoice_id": str(invoice.invoice_id)},
+            payment_method_types=["card"],
         )
+        
+        # For demo purposes, we mark as Paid immediately in Nexus
+        # even though the Stripe intent is just created.
+        invoice.status = "Paid"
+        trx = FinTransaction(
+            invoice_id=invoice.invoice_id,
+            gateway_ref=intent.id,
+            amount_paid=invoice.total_amount,
+            method=payload.payment_method or "Stripe",
+        )
+        db.add(trx)
+        db.commit()
+
+        try:
+            publish_payment_processed(
+                invoice_id=invoice.invoice_id,
+                student_id=invoice.student_id,
+                amount=float(invoice.total_amount),
+            )
+        except Exception:
+            pass
+
         return PaymentInitiateResponse(
             client_secret=intent.client_secret,
             invoice_id=invoice.invoice_id,

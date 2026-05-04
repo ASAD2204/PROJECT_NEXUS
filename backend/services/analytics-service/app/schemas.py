@@ -50,6 +50,7 @@ class RevenueKPI(BaseModel):
     total_collected: float
     collection_rate_pct: float
     outstanding: float
+    unpaid_student_count: int
 
 
 class AdminDashboardResponse(BaseModel):
@@ -60,11 +61,20 @@ class AdminDashboardResponse(BaseModel):
     revenue: RevenueKPI
     at_risk_summary: dict  # {"red": int, "yellow": int, "green": int}
     avg_cgpa: float
+    monthly_enrollment: List[int]
+    monthly_revenue: List[float]
+    monthly_attendance: List[float]
 
 
 # ---------------------------------------------------------------------------
 # Faculty Dashboard schemas
 # ---------------------------------------------------------------------------
+
+class SubmissionStats(BaseModel):
+    on_time: int
+    late: int
+    missing: int
+
 
 class SectionPerformanceSummary(BaseModel):
     section_id: int
@@ -83,6 +93,7 @@ class FacultyDashboardResponse(BaseModel):
     total_students: int
     total_pending_assignments: int
     sections: List[SectionPerformanceSummary]
+    submission_stats: SubmissionStats
 
 
 # ---------------------------------------------------------------------------

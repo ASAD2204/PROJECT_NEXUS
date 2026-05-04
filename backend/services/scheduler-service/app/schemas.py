@@ -27,7 +27,7 @@ class ConstraintOut(BaseModel):
 
 
 class GenerateRequest(BaseModel):
-    section_ids: list[int]
+    course_ids: list[int]
     days_of_week: list[str] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
     slot_minutes: int = 60
     start_hour: int = 8
@@ -42,7 +42,7 @@ class GenerateRequest(BaseModel):
 
 
 class GeneratedSlot(BaseModel):
-    section_id: int
+    course_id: int
     day_of_week: str
     start_time: time
     end_time: time

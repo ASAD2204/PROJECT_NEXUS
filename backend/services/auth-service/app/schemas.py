@@ -16,6 +16,7 @@ class RegisterRequest(BaseModel):
     program_id: Optional[int] = None
     dept_id: Optional[int] = None
     designation: Optional[str] = None
+    current_semester: Optional[int] = None
 
 
 class LoginRequest(BaseModel):

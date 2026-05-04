@@ -12,4 +12,3 @@ Pillow
 python-multipart
 opencv-python-headless
 scipy
-face-recognition

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { Snackbar, Alert, Slide } from '@mui/material';
 import PropTypes from 'prop-types';
 
@@ -42,8 +42,10 @@ export const SnackbarProvider = ({ children }) => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   }, []);
 
+  const value = useMemo(() => ({ showSnackbar, hideSnackbar }), [showSnackbar, hideSnackbar]);
+
   return (
-    <SnackbarContext.Provider value={{ showSnackbar, hideSnackbar }}>
+    <SnackbarContext.Provider value={value}>
       {children}
       <Snackbar
         open={snackbar.open}

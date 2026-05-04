@@ -3,7 +3,7 @@ Pydantic schemas for request/response validation in the SIS service.
 """
 
 from datetime import date, datetime
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -54,14 +54,14 @@ class StudentUpdate(BaseModel):
 
 class EnrollmentCreate(BaseModel):
     student_id: int
-    section_id: int
+    course_id: int
     hod_approved: bool = False
 
 
 class EnrollmentOut(BaseModel):
     enrollment_id: int
     student_id: int
-    section_id: int
+    course_id: int
     status: Optional[str] = None
     final_grade_points: Optional[float] = None
 
@@ -110,6 +110,10 @@ class DepartmentOut(BaseModel):
     name: str
     code: str
     location: Optional[str] = None
+    students: Optional[int] = 0
+    faculty: Optional[int] = 0
+    courses: Optional[int] = 0
+    growth: Optional[int] = 0
 
     class Config:
         from_attributes = True
@@ -281,3 +285,20 @@ class NotificationOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# --------------------------------------------------------------------------- #
+#  Transfer Import Payloads
+# --------------------------------------------------------------------------- #
+
+class TransferCourseItem(BaseModel):
+    course_code: Optional[str] = None
+    course_id: Optional[int] = None
+    semester_id: int
+    final_grade_points: Optional[float] = None
+    credit_hours: Optional[int] = None
+
+
+class TransferImport(BaseModel):
+    student_id: int
+    academic_history: List[TransferCourseItem]

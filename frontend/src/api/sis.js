@@ -2,7 +2,7 @@
  * SIS (Student Information System) API Service
  * 
  * Calls: /sis/* endpoints — students, courses, departments, programs, faculty,
- *        enrollments, grades, sections, transcript
+ *        enrollments, grades, transcript
  */
 
 import client from './client';
@@ -20,27 +20,7 @@ export const sisAPI = {
   // ── Courses ──
   getCourses: (params) => client.get('/lms/courses', { params }),
   getCoursesAdmin: (params) => client.get('/lms/courses/admin/list', { params }),
-  getCourse: async (id) => {
-    try {
-      const sectionRes = await client.get(`/lms/sections/${id}`);
-      const s = sectionRes.data || {};
-      return {
-        data: {
-          ...s,
-          id: s.id || s.section_id || id,
-          code: s.code || s.course_code || (s.course_id ? `COURSE-${s.course_id}` : `SEC-${id}`),
-          name: s.name || s.title || s.course_title || `Section ${id}`,
-          title: s.title || s.name || s.course_title || `Section ${id}`,
-          students: s.students || s.enrolled_students || 0,
-        },
-      };
-    } catch {
-      const coursesRes = await client.get('/lms/courses');
-      const rows = coursesRes.data?.courses || coursesRes.data || [];
-      const c = (Array.isArray(rows) ? rows : []).find((item) => String(item.course_id || item.id) === String(id));
-      return { data: c || {} };
-    }
-  },
+  getCourse: (id) => client.get(`/lms/courses/${id}`),
   createCourse: (data) => client.post('/lms/courses', data),
   updateCourse: (id, data) => client.put(`/lms/courses/${id}`, data),
   deleteCourse: (id) => client.delete(`/lms/courses/${id}`),
@@ -71,7 +51,7 @@ export const sisAPI = {
   // ── Enrollments ──
   getMyEnrollments: () => client.get('/sis/enrollments/me'),
   getMyCourses: () => client.get('/lms/courses/my-courses'),
-  getSectionParticipants: (sectionId) => client.get(`/sis/sections/${sectionId}/participants`),
+  getCourseParticipants: (courseId) => client.get(`/sis/courses/${courseId}/participants`),
   enrollStudent: (data) => client.post('/sis/enrollments', data),
 
   // ── Grades ──
@@ -81,12 +61,6 @@ export const sisAPI = {
   // ── Transcript ──
   getTranscript: () => client.get('/sis/transcripts/me'),
   getMyTranscript: () => client.get('/sis/transcripts/me'),
-
-  // ── Sections ──
-  getSections: () => client.get('/lms/courses/my-courses'),
-  getAllSections: (params) => client.get('/lms/sections', { params }),
-  createSection: (data) => client.post('/lms/sections', data),
-  updateSection: (id, data) => client.put(`/lms/sections/${id}`, data),
 
   // ── Leaderboard ──
   getLeaderboard: (params) => {

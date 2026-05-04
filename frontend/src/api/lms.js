@@ -15,17 +15,17 @@ const toArray = (payload, keys = []) => {
   return [];
 };
 
-const getMySectionsInternal = async () => {
-  const sectionsRes = await client.get('/lms/courses/my-courses');
-  return toArray(sectionsRes.data, ['sections', 'courses']);
+const getMyCoursesInternal = async () => {
+  const res = await client.get('/lms/courses/my-courses');
+  return toArray(res.data, ['courses']);
 };
 
-const getSectionId = (section) => section?.section_id || section?.sectionId || section?.id;
+const getCourseId = (course) => course?.course_id || course?.courseId || course?.id;
 
-const getStudentSectionIds = async () => {
+const getStudentCourseIds = async () => {
   const enrollmentsRes = await client.get('/sis/enrollments/me');
   const enrollments = toArray(enrollmentsRes.data, ['enrollments']);
-  return [...new Set(enrollments.map((enrollment) => enrollment?.section_id || enrollment?.sectionId || enrollment?.id).filter(Boolean))];
+  return [...new Set(enrollments.map((enrollment) => enrollment?.course_id || enrollment?.courseId || enrollment?.id).filter(Boolean))];
 };
 
 const normalizeAssignmentStatus = (assignment, submission) => {
@@ -40,22 +40,18 @@ const normalizeAssignmentStatus = (assignment, submission) => {
   return 'Pending';
 };
 
-const normalizeStudentAssignment = (assignment, section, submission) => {
-  const sectionId = assignment?.section_id || assignment?.sectionId || section?.section_id || section?.sectionId || section?.id || null;
-  const course = section?.course || {};
+const normalizeStudentAssignment = (assignment, course, submission) => {
+  const courseId = assignment?.course_id || assignment?.courseId || course?.course_id || course?.courseId || course?.id || null;
   const courseTitle =
-    course.title ||
-    section?.title ||
-    section?.course_title ||
+    course?.title ||
     assignment?.course_title ||
     assignment?.courseTitle ||
-    `Section ${sectionId ?? assignment?.assignment_id ?? assignment?.id ?? ''}`.trim();
+    `Course ${courseId ?? assignment?.assignment_id ?? assignment?.id ?? ''}`.trim();
   const courseCode =
-    course.code ||
-    section?.code ||
+    course?.code ||
     assignment?.course_code ||
     assignment?.courseCode ||
-    (sectionId ? `SEC-${sectionId}` : '');
+    (courseId ? `C-${courseId}` : '');
   const dueDate = assignment?.due_date || assignment?.dueDate || null;
   const submittedDate = submission?.submitted_at || submission?.submittedAt || null;
   const obtainedMarks = submission?.marks_obtained ?? submission?.marksObtained ?? null;
@@ -64,8 +60,8 @@ const normalizeStudentAssignment = (assignment, section, submission) => {
   return {
     id: assignment?.assignment_id ?? assignment?.id,
     assignment_id: assignment?.assignment_id ?? assignment?.id,
-    section_id: sectionId,
-    sectionId,
+    course_id: courseId,
+    courseId,
     title: assignment?.title || 'Untitled Assignment',
     description: assignment?.description || '',
     total_marks: assignment?.total_marks ?? assignment?.totalMarks ?? 0,
@@ -105,29 +101,27 @@ const normalizeSubmission = (submission) => ({
 export const lmsAPI = {
   // ── Courses ──
   getCourses: (params) => client.get('/lms/courses', { params }),
+  getCoursesAdmin: (params) => client.get('/lms/courses/admin/list', { params }),
   getCourse: (id) => client.get(`/lms/courses/${id}`),
   createCourse: (data) => client.post('/lms/courses', data),
   updateCourse: (id, data) => client.put(`/lms/courses/${id}`, data),
-
-  // ── Sections ──
-  getAllSections: (params) => client.get('/lms/sections', { params }),
-  getMySections: () => client.get('/lms/courses/my-courses'),
-  getClassroomDetails: (sectionId) => client.get(`/lms/sections/${sectionId}/classroom`),
-
+  deleteCourse: (id) => client.delete(`/lms/courses/${id}`),
+  getMyCourses: () => client.get('/lms/courses/my-courses'),
+  getClassroomDetails: (courseId) => client.get(`/lms/courses/${courseId}/classroom`),
 
   // ── Assignments ──
   getAssignments: async (params = {}) => {
-    const sectionId = params.section_id || params.course_id || params.sectionId || params.courseId;
-    if (sectionId) {
-      return client.get(`/lms/assignments/section/${sectionId}`);
+    const courseId = params.course_id || params.courseId || params.id;
+    if (courseId) {
+      return client.get(`/lms/assignments/course/${courseId}`);
     }
 
-    const sections = await getMySectionsInternal();
+    const courses = await getMyCoursesInternal();
     const assignmentResponses = await Promise.all(
-      sections
-        .map((section) => getSectionId(section))
+      courses
+        .map((c) => getCourseId(c))
         .filter(Boolean)
-        .map((id) => client.get(`/lms/assignments/section/${id}`))
+        .map((id) => client.get(`/lms/assignments/course/${id}`))
     );
     const assignments = assignmentResponses.flatMap((res) => toArray(res.data, ['assignments']));
     return { data: assignments };
@@ -136,20 +130,21 @@ export const lmsAPI = {
   createAssignment: (data) => client.post('/lms/assignments', data),
   updateAssignment: (id, data) => client.put(`/lms/assignments/${id}`, data),
   deleteAssignment: (id) => client.delete(`/lms/assignments/${id}`),
+  
   getMyAssignments: async () => {
-    const sectionIds = await getStudentSectionIds();
-    if (!sectionIds.length) {
+    const courseIds = await getStudentCourseIds();
+    if (!courseIds.length) {
       return { data: { assignments: [] } };
     }
 
-    const [assignmentResponses, sectionResponses, submissionsRes] = await Promise.all([
-      Promise.all(sectionIds.map((id) => client.get(`/lms/assignments/section/${id}`).catch(() => ({ data: [] })))),
-      Promise.all(sectionIds.map((id) => client.get(`/lms/sections/${id}`).catch(() => ({ data: {} })))),
+    const [assignmentResponses, courseResponses, submissionsRes] = await Promise.all([
+      Promise.all(courseIds.map((id) => client.get(`/lms/assignments/course/${id}`).catch(() => ({ data: [] })))),
+      Promise.all(courseIds.map((id) => client.get(`/lms/courses/${id}`).catch(() => ({ data: {} })))),
       client.get('/lms/submissions/me').catch(() => ({ data: { submissions: [] } })),
     ]);
 
-    const sectionsById = new Map(
-      sectionIds.map((id, index) => [String(id), sectionResponses[index]?.data || {}])
+    const coursesById = new Map(
+      courseIds.map((id, index) => [String(id), courseResponses[index]?.data || {}])
     );
     const submissions = toArray(submissionsRes.data, ['submissions']).map(normalizeSubmission);
     const submissionByAssignmentId = new Map(
@@ -157,12 +152,12 @@ export const lmsAPI = {
     );
 
     const assignments = assignmentResponses.flatMap((res, index) => {
-      const sectionId = sectionIds[index];
-      const section = sectionsById.get(String(sectionId)) || {};
+      const courseId = courseIds[index];
+      const course = coursesById.get(String(courseId)) || {};
       const rows = toArray(res.data, ['assignments']);
       return rows.map((assignment) => {
         const submission = submissionByAssignmentId.get(String(assignment.assignment_id || assignment.id));
-        return normalizeStudentAssignment(assignment, section, submission);
+        return normalizeStudentAssignment(assignment, course, submission);
       });
     });
 
@@ -176,25 +171,11 @@ export const lmsAPI = {
   },
 
   // ── Submissions ──
-  submitAssignment: (assignmentId, formData) => {
-    // If formData is already a FormData object (as expected from AssignmentSubmit.jsx), 
-    // we send it directly to the new multipart upload endpoint.
-    if (formData instanceof FormData) {
-      if (!formData.has('assignment_id')) {
-        formData.append('assignment_id', assignmentId);
-      }
-      return client.post('/lms/submissions/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-    }
-
-    // Fallback for legacy JSON-style payload if needed
-    const payload = {
+  submitAssignment: (assignmentId, payload) => {
+    return client.post('/lms/submissions', {
       assignment_id: assignmentId,
-      file_ref_id: formData?.file_ref_id || '',
-      comments: formData?.comments || '',
-    };
-    return client.post('/lms/submissions', payload);
+      ...payload
+    });
   },
   getSubmissions: async (id, options = {}) => {
     if (options.type === 'quiz') {
@@ -219,17 +200,17 @@ export const lmsAPI = {
 
   // ── Quizzes ──
   getQuizzes: async (params = {}) => {
-    const sectionId = params.section_id || params.course_id || params.sectionId || params.courseId;
-    if (sectionId) {
-      return client.get(`/lms/quizzes/section/${sectionId}`);
+    const courseId = params.course_id || params.courseId || params.id;
+    if (courseId) {
+      return client.get(`/lms/quizzes/course/${courseId}`);
     }
 
-    const sections = await getMySectionsInternal();
+    const courses = await getMyCoursesInternal();
     const quizResponses = await Promise.all(
-      sections
-        .map((section) => getSectionId(section))
+      courses
+        .map((c) => getCourseId(c))
         .filter(Boolean)
-        .map((id) => client.get(`/lms/quizzes/section/${id}`))
+        .map((id) => client.get(`/lms/quizzes/course/${id}`))
     );
     const quizzes = quizResponses.flatMap((res) => toArray(res.data, ['quizzes']));
     return { data: { quizzes } };
@@ -242,27 +223,9 @@ export const lmsAPI = {
   submitQuiz: (id, data) => client.post(`/lms/quizzes/${id}/attempt`, data),
 
   // ── Course Materials ──
-  getMaterials: (sectionId) => client.get(`/lms/materials/section/${sectionId}`),
-  getCourseMaterials: (sectionId) => client.get(`/lms/materials/section/${sectionId}`),
-  uploadMaterial: (courseId, formData) =>
-    client.post(`/lms/materials/${courseId}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
-  uploadCourseMaterial: (courseId, formData) =>
-    client.post(`/lms/materials/${courseId}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
-
-  // Download file by file reference (compat with chat-service file URLs)
-  downloadFile: async (fileRef) => {
-    if (!fileRef) return Promise.reject(new Error('no file reference'));
-    let path = String(fileRef);
-    // strip absolute API prefix if present
-    if (path.startsWith('/api/v1')) path = path.replace('/api/v1', '');
-    // ensure leading slash for client (client.baseURL is /api/v1)
-    if (!path.startsWith('/')) path = `/${path}`;
-    return client.get(path, { responseType: 'blob' });
-  },
+  getMaterials: (courseId) => client.get(`/lms/materials/course/${courseId}`),
+  getCourseMaterials: (courseId) => client.get(`/lms/materials/course/${courseId}`),
+  uploadMaterial: (payload) => client.post('/lms/materials', payload),
 
   // ── Announcements ──
   getAnnouncements: (params) => client.get('/ops/announcements', { params }),
@@ -273,14 +236,14 @@ export const lmsAPI = {
   getAnnouncementComments: (announcementId) => client.get(`/ops/announcements/${announcementId}/comments`),
   createAnnouncementComment: (announcementId, data) => client.post(`/ops/announcements/${announcementId}/comments`, data),
 
-  // ── Assignments (course-scoped) ──
-  getCourseAssignments: (courseId) => client.get(`/lms/assignments/section/${courseId}`),
-
   // ── Feedback ──
   submitFeedback: (data) => client.post('/lms/feedback', data),
-  getCourseFeedback: (courseId) => client.get(`/lms/feedback/${courseId}`),
-  exportGradebook: (sectionId) => client.get(`/lms/sections/${sectionId}/grades/export`, { responseType: 'blob' }),
-  exportAttendance: (sectionId) => client.get(`/lms/sections/${sectionId}/attendance/export`, { responseType: 'blob' }),
+  getCourseFeedback: (courseId) => client.get(`/lms/feedback/course/${courseId}`),
+  exportGradebook: (courseId) => client.get(`/lms/courses/${courseId}/grades/export`, { responseType: 'blob' }),
+  exportAttendance: (courseId) => client.get(`/lms/courses/${courseId}/attendance/export`, { responseType: 'blob' }),
+  
+  // ── Grades ──
+  submitGrades: (data) => client.post('/lms/grades/submit', data),
 };
 
 export default lmsAPI;

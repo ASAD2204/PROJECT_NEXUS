@@ -735,9 +735,33 @@ const FinanceManagement = () => {
             <Grid size={12} component={motion.div} variants={fadeInUp}>
               <Card>
                 <CardContent>
-                  <Box sx={{ mb: 3 }}>
-                    <Typography variant="h6" fontWeight="bold">Manage Student Scholarships</Typography>
-                    <Typography variant="body2" color="text.secondary">Apply percentage-based discounts to current students across all departments and programs</Typography>
+                  <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box>
+                      <Typography variant="h6" fontWeight="bold">Manage Student Scholarships</Typography>
+                      <Typography variant="body2" color="text.secondary">Apply percentage-based discounts to current students across all departments and programs</Typography>
+                    </Box>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      startIcon={<Receipt />}
+                      disabled={filteredScholarshipStudents.length === 0}
+                      onClick={async () => {
+                        if (!window.confirm(`Generate invoices for ${filteredScholarshipStudents.length} students?`)) return;
+                        try {
+                          await financeAPI.generateInvoices({
+                            student_ids: filteredScholarshipStudents.map(s => s.student_id),
+                            semester_id: Number(scholarshipFilters.semester_id) || 1,
+                            due_date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                          });
+                          showSnackbar('Invoices generated successfully', 'success');
+                          await loadFinanceData();
+                        } catch (error) {
+                          showSnackbar(error.response?.data?.detail || 'Failed to generate invoices', 'error');
+                        }
+                      }}
+                    >
+                      Bulk Generate Invoices
+                    </Button>
                   </Box>
                   <Grid container spacing={2} sx={{ mb: 2 }}>
                     <Grid size={{ xs: 12, sm: 3 }}>

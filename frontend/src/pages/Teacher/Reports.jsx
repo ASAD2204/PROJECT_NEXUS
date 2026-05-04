@@ -196,13 +196,15 @@ const Reports = () => {
           }))
         );
 
-        const onTime = Math.round(avgAssignment);
-        const late = Math.max(0, Math.round((100 - onTime) * 0.6));
-        const missing = Math.max(0, 100 - onTime - late);
+        const onTime = toFiniteNumber(dashboard?.submission_stats?.on_time);
+        const late = toFiniteNumber(dashboard?.submission_stats?.late);
+        const missing = toFiniteNumber(dashboard?.submission_stats?.missing);
+        const totalSub = onTime + late + missing;
+
         setAssignmentStats([
-          { name: 'On Time', value: onTime, color: '#4caf50' },
-          { name: 'Late', value: late, color: '#ff9800' },
-          { name: 'Missing', value: missing, color: '#f44336' },
+          { name: 'On Time', value: totalSub > 0 ? Math.round((onTime / totalSub) * 100) : 0, color: '#4caf50' },
+          { name: 'Late', value: totalSub > 0 ? Math.round((late / totalSub) * 100) : 0, color: '#ff9800' },
+          { name: 'Missing', value: totalSub > 0 ? Math.round((missing / totalSub) * 100) : 0, color: '#f44336' },
         ]);
 
         const perfRows = [

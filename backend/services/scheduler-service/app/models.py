@@ -21,19 +21,13 @@ class LmsCourse(Base):
     __table_args__ = {"extend_existing": True}
     course_id = Column(Integer, primary_key=True)
     program_id = Column(Integer)
-
-
-class LmsSection(Base):
-    __tablename__ = "lms_sections"
-    __table_args__ = {"extend_existing": True}
-
-    section_id = Column(Integer, primary_key=True)
-    course_id = Column(Integer, ForeignKey("lms_courses.course_id"))
+    semester_id = Column(Integer)
     faculty_id = Column(Integer)
     room_no = Column(String(20))
-    semester_id = Column(Integer)
-
-    course = relationship("LmsCourse")
+    code = Column(String(20))
+    title = Column(String(100))
+    lectures_per_week = Column(Integer)
+    lecture_duration_minutes = Column(Integer)
 
 
 class LmsTimetableSlot(Base):
@@ -41,11 +35,13 @@ class LmsTimetableSlot(Base):
     __table_args__ = {"extend_existing": True}
 
     slot_id = Column(Integer, primary_key=True, autoincrement=True)
-    section_id = Column(Integer, ForeignKey("lms_sections.section_id"))
+    course_id = Column(Integer, ForeignKey("lms_courses.course_id"))
     day_of_week = Column(String(10))
     start_time = Column(Time)
     end_time = Column(Time)
     room_no = Column(String(20))
+    
+    course = relationship("LmsCourse")
 
 
 class SisClassroom(Base):

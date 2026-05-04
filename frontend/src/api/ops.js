@@ -49,6 +49,10 @@ export const opsAPI = {
   createSystemLog: (data) => client.post('/ops/system-logs', data),
   getSystemLogs: (params) => client.get('/ops/system-logs', { params }),
 
+  // ── Global Settings ──
+  getSettings: () => client.get('/ops/settings'),
+  updateSetting: (key, value) => client.put(`/ops/settings/${key}`, { value }),
+
   // ── Feature Flags ──
   setFeatureFlag: (name, data = {}) =>
     client.put(`/ops/feature-flags/${name}`, null, {
@@ -60,9 +64,13 @@ export const opsAPI = {
   getFeatureFlag: (name) => client.get(`/ops/feature-flags/${name}`),
   listFeatureFlags: () => client.get('/ops/feature-flags'),
   getFeatureFlags: async () => {
-    const res = await client.get('/ops/feature-flags');
-    const flags = Array.isArray(res.data) ? res.data : [];
-    const mapped = {};
+    // Merge feature flags AND global settings for the Settings page
+    const [flagsRes, settingsRes] = await Promise.all([
+      client.get('/ops/feature-flags'),
+      client.get('/ops/settings').catch(() => ({ data: {} })),
+    ]);
+    const flags = Array.isArray(flagsRes.data) ? flagsRes.data : [];
+    const mapped = { ...(settingsRes.data || {}) };
     flags.forEach((flag) => {
       if (flag?.feature) {
         mapped[flag.feature] = Boolean(flag.enabled);
@@ -70,9 +78,15 @@ export const opsAPI = {
     });
     return { data: mapped };
   },
-  updateFeatureFlags: async (flags) => {
-    const entries = Object.entries(flags || {}).filter(([, value]) => typeof value === 'boolean');
-    await Promise.all(entries.map(([name, enabled]) => opsAPI.setFeatureFlag(name, { enabled })));
+  updateFeatureFlags: async (values) => {
+    const entries = Object.entries(values || {});
+    await Promise.all(entries.map(([name, val]) => {
+      if (typeof val === 'boolean') {
+        return opsAPI.setFeatureFlag(name, { enabled: val });
+      } else {
+        return opsAPI.updateSetting(name, String(val));
+      }
+    }));
     return { data: { updated: entries.length } };
   },
   deleteFeatureFlag: (name) => client.delete(`/ops/feature-flags/${name}`),

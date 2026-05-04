@@ -220,15 +220,25 @@ class AssistantPipeline:
 
     async def _handle_general(self, query: str, role: str) -> str:
         """Handle casual chat / greetings."""
-        role_name = {"student": "student", "faculty": "professor", "admin": "admin"}.get(role, "user")
+        role_map = {
+            "student": "student",
+            "faculty": "professor",
+            "teacher": "professor",
+            "admin": "admin",
+            "superadmin": "admin",
+            "hod": "Head of Department",
+            "librarian": "librarian",
+            "alumni": "alumnus",
+        }
+        role_name = role_map.get(role.lower(), "user")
         try:
             return await llm_manager.generate(
                 system_prompt=(
                     f"You are Nexus AI, a friendly university assistant. "
                     f"You're chatting with a {role_name}. Be warm and helpful. "
                     f"Keep it brief (1-3 sentences). If they say hi, greet them "
-                    f"and mention you can help with academics, grades, attendance, "
-                    f"study help, and university info."
+                    f"and mention how you can specifically help their role "
+                    f"(e.g., academics for students, library resources for librarians, etc.)."
                 ),
                 user_message=query,
                 temperature=0.7,
@@ -240,6 +250,7 @@ class AssistantPipeline:
                 "I can help you with grades, attendance, study help, and more. "
                 "What would you like to know?"
             )
+
 
     async def _safe_cache_update(self, query: str, answer: str):
         """Cache an answer, silently ignoring errors."""

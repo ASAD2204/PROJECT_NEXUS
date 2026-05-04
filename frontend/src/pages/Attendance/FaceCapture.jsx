@@ -74,7 +74,8 @@ const FaceCapture = () => {
     } catch (e) {
       console.error(e);
       clearInterval(interval);
-      setError('Verification service error. Please try again.');
+      const detail = e.response?.data?.detail;
+      setError(detail || 'Verification service error. Please try again.');
     } finally {
       setVerifying(false);
     }
