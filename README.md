@@ -45,31 +45,39 @@ Nexus is engineered on a resilient, high-throughput microservices architecture. 
 
 ```mermaid
 graph TD
-    subgraph Client Application Layer
+    subgraph Client_Layer [Client Application Layer]
         React[React 19 SPA + Material UI 7]
     end
 
-    subgraph API Gateway & Security Layer
+    subgraph Gateway_Layer [API Gateway & Security Layer]
         NGINX[Nginx Gateway / SSL / Rate Limiting]
     end
 
-    subgraph Core Transactional Cluster
+    subgraph Core_Cluster [Core Transactional Cluster]
         Auth[Auth & RBAC Service]
         SIS[Student Information Service]
         LMS[Learning Management Service]
         Fin[Finance & Billing Service]
     end
 
-    subgraph Intelligence & Automation Cluster
+    subgraph Intelligence_Cluster [Intelligence & Automation Cluster]
         AI[AI CAG + RAG Assistant]
         Attendance[Biometric CV Service]
         Analytics[ML Risk Predictor]
     end
 
     React <--> NGINX
-    NGINX <--> Core Transactional Cluster
-    NGINX <--> Intelligence & Automation Cluster
+    
+    %% Gateway Connections
+    NGINX <--> Auth
+    NGINX <--> SIS
+    NGINX <--> LMS
+    NGINX <--> Fin
+    NGINX <--> AI
+    NGINX <--> Attendance
+    NGINX <--> Analytics
 
+    %% Event Stream
     LMS -- Grade Submitted Event --> Kafka{Apache Kafka Event Bus}
     Library[Library Service] -- Fine Generated Event --> Kafka
     Kafka --> SIS
