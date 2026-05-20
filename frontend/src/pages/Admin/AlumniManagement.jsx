@@ -59,6 +59,9 @@ import { alumniAPI } from '../../api/alumni';
 import { sisAPI } from '../../api/sis';
 import { authAPI } from '../../api/auth';
 
+const URL_REGEX = /^https?:\/\/.+/i;
+const MIN_PASSWORD_LENGTH = 8;
+
 const AlumniManagement = () => {
   const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
@@ -191,6 +194,23 @@ const AlumniManagement = () => {
         message: 'Please fill required fields (Student, Graduation Year)', 
         severity: 'error' 
       });
+      return;
+    }
+
+    if (!editMode && (!formData.password || String(formData.password).length < MIN_PASSWORD_LENGTH)) {
+      setSnackbar({
+        open: true,
+        message: `Password is required and must be at least ${MIN_PASSWORD_LENGTH} characters.`,
+        severity: 'error',
+      });
+      return;
+    }
+    if (formData.linkedin_url && !URL_REGEX.test(formData.linkedin_url)) {
+      setSnackbar({ open: true, message: 'LinkedIn URL must start with http:// or https://', severity: 'error' });
+      return;
+    }
+    if (formData.photo_url && !URL_REGEX.test(formData.photo_url)) {
+      setSnackbar({ open: true, message: 'Photo URL must start with http:// or https://', severity: 'error' });
       return;
     }
 
@@ -542,10 +562,12 @@ const AlumniManagement = () => {
                     fullWidth
                     label="Set Alumni Account Password"
                     type="password"
+                    required
                     value={formData.password}
                     onChange={handleFormFieldChange('password')}
                     placeholder="Provide a new password for the alumni account"
                     helperText="This will be the password the alumnus uses to login."
+                    inputProps={{ minLength: MIN_PASSWORD_LENGTH, maxLength: 128 }}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
@@ -608,9 +630,11 @@ const AlumniManagement = () => {
                 <TextField
                   fullWidth
                   label="LinkedIn Profile URL"
+                  type="url"
                   value={formData.linkedin_url}
                   onChange={handleFormFieldChange('linkedin_url')}
                   placeholder="https://linkedin.com/in/username"
+                  inputProps={{ maxLength: 255 }}
                 />
               </Grid>
               
@@ -618,9 +642,11 @@ const AlumniManagement = () => {
                 <TextField
                   fullWidth
                   label="Profile Photo URL"
+                  type="url"
                   value={formData.photo_url}
                   onChange={handleFormFieldChange('photo_url')}
                   placeholder="https://example.com/photo.jpg"
+                  inputProps={{ maxLength: 255 }}
                 />
               </Grid>
 
@@ -653,7 +679,16 @@ const AlumniManagement = () => {
             <Button onClick={handleCloseDialog} startIcon={<Cancel />}>
               Cancel
             </Button>
-            <Button variant="contained" onClick={handleSave} startIcon={<Save />}>
+            <Button
+              variant="contained"
+              onClick={handleSave}
+              startIcon={<Save />}
+              disabled={
+                !formData.student_id ||
+                !formData.grad_year ||
+                (!editMode && String(formData.password || '').length < MIN_PASSWORD_LENGTH)
+              }
+            >
               {editMode ? 'Update Alumni' : 'Complete Registration'}
             </Button>
           </DialogActions>

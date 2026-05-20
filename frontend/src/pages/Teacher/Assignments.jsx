@@ -54,6 +54,7 @@ import PageHeader from '../../components/Common/PageHeader';
 import StatCard from '../../components/Common/StatCard';
 import { fadeInUp, staggerContainer } from '../../utils/animations';
 import { teacherAPI } from '../../api/teacher';
+import { lmsAPI } from '../../api/lms';
 
 const toFiniteNumber = (value, fallback = 0) => {
   const numericValue = Number(value);
@@ -144,6 +145,20 @@ const Assignments = () => {
   const handleMenuClose = () => {
     setAnchorEl(null);
     setSelectedAssignment(null);
+  };
+
+  const handleDeleteAssignment = async () => {
+    if (!selectedAssignment) return;
+    if (!window.confirm('Are you sure you want to delete this assignment?')) return;
+
+    try {
+      await lmsAPI.deleteAssignment(selectedAssignment.id);
+      setAssignments(assignments.filter(a => a.id !== selectedAssignment.id));
+      handleMenuClose();
+    } catch (e) {
+      console.error('Failed to delete assignment', e);
+      alert('Failed to delete assignment');
+    }
   };
 
   const getStatusColor = (status) => {
@@ -470,7 +485,7 @@ const Assignments = () => {
           <Visibility fontSize="small" sx={{ mr: 1 }} />
           View Submissions
         </MenuItem>
-        <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>
+        <MenuItem onClick={handleDeleteAssignment} sx={{ color: 'error.main' }}>
           <Delete fontSize="small" sx={{ mr: 1 }} />
           Delete Assignment
         </MenuItem>

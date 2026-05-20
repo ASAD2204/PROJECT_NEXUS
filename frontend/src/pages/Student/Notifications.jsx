@@ -28,6 +28,7 @@ import {
 import PageHeader from '../../components/Common/PageHeader';
 import { fadeInUp, staggerContainer } from '../../utils/animations';
 import { studentAPI } from '../../api/student';
+import { useSnackbar } from '../../contexts/SnackbarContext';
 
 const getNotificationIcon = (notification) => {
   const key = String(notification?.iconKey || notification?.type || notification?.category || '').toLowerCase();
@@ -40,6 +41,7 @@ const getNotificationIcon = (notification) => {
 
 const Notifications = () => {
   const theme = useTheme();
+  const { showSnackbar } = useSnackbar();
 
   const [notifications, setNotifications] = useState([]);
 
@@ -48,10 +50,13 @@ const Notifications = () => {
       try {
         const res = await studentAPI.getNotifications();
         setNotifications(res.data?.notifications || res.data || []);
-      } catch (e) { console.error(e); }
+      } catch (e) { 
+        console.error(e);
+        showSnackbar('Failed to load notifications', 'error');
+      }
     };
     fetchNotifications();
-  }, []);
+  }, [showSnackbar]);
 
   const stats = {
     total: notifications.length,
@@ -65,20 +70,29 @@ const Notifications = () => {
         setNotifications(notifications.map(n =>
           n.id === id ? { ...n, read: true, is_read: true } : n
         ));
+        showSnackbar('Notification marked as read', 'success');
       })
-      .catch((error) => console.error(error));
+      .catch((error) => {
+        console.error(error);
+        showSnackbar('Failed to mark notification as read', 'error');
+      });
   };
 
   const handleMarkAllAsRead = () => {
     studentAPI.markAllNotificationsRead()
       .then(() => {
         setNotifications(notifications.map(n => ({ ...n, read: true, is_read: true })));
+        showSnackbar('All notifications marked as read', 'success');
       })
-      .catch((error) => console.error(error));
+      .catch((error) => {
+        console.error(error);
+        showSnackbar('Failed to mark all as read', 'error');
+      });
   };
 
   const handleDelete = (id) => {
     setNotifications(notifications.filter(n => n.id !== id));
+    showSnackbar('Notification removed', 'info');
   };
 
   return (

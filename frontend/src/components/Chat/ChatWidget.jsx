@@ -8,7 +8,7 @@
  * - Expandable chat window
  * - AI message history with timestamps
  * - Typing indicators
- * - AI-powered responses
+ * - AI-powered responses with Markdown/Table rendering
  * - Smooth animations
  * - Minimizable/expandable interface
  * 
@@ -25,19 +25,32 @@ import {
   Stack,
   Popover,
   useTheme,
+  Chip,
+  Tooltip,
+  Avatar,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Close,
   OpenInFull,
   Send,
   EmojiEmotions,
   SmartToy,
+  AutoAwesome,
+  LibraryBooks,
+  Assignment,
+  Security,
+  LocalLibrary,
+  Work,
+  School,
+  Person,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 import { aiAPI } from '../../api/ai';
+import MarkdownRenderer from '../Common/MarkdownRenderer';
 
 const ChatWidget = ({ open, onClose, greetingMessage }) => {
   const theme = useTheme();
@@ -53,6 +66,24 @@ const ChatWidget = ({ open, onClose, greetingMessage }) => {
   const [emojiAnchor, setEmojiAnchor] = useState(null);
 
   const EMOJI_LIST = ['😀', '😂', '😅', '😍', '🥰', '😎', '🤩', '😘', '😋', '😊', '😉', '😌', '🤔', '🤨', '😐', '😑', '😶', '🙄', '😏', '😣', '😥', '😮', '🤐', '😯', '😪', '😫', '🥱', '😴', '😌', '😛', '😜', '😝', '🤤', '😒', '😓', '😔', '😕', '🙃', '🤑', '😲', '☹️', '🙁', '😖', '😞', '😟', '😤', '😢', '😭', '😦', '😧', '😨', '😩', '🤯', '😬', '😰', '😱', '🥵', '🥶', '😳', '🤪', '😵', '😡', '😠', '🤬', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '😇', '🥳', '🥺', '🤠', '🤡', '🤥', '🤫', '🤭', '🧐', '🤓', '😈', '👿', '👍', '👎', '👏', '🤝', '🙌', '🎉', '🎊', '🔥', '✨', '🎈', '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '✅', '❌', '❓', '❕', '💯'];
+
+  // --- Role-Based Theme Logic ---
+  const getRoleTheme = (role) => {
+    switch (role?.toLowerCase()) {
+      case 'admin': return { primary: '#1E3A8A', secondary: '#1e40af', bubble: theme.palette.mode === 'dark' ? '#1a237e' : '#e3f2fd', icon: <Security />, label: 'Admin Assistant' };
+      case 'faculty': case 'teacher': return { primary: '#4C1D95', secondary: '#5b21b6', bubble: theme.palette.mode === 'dark' ? '#311b92' : '#f3e5f5', icon: <School />, label: 'Faculty Co-Pilot' };
+      case 'alumni': return { primary: '#92400E', secondary: '#b45309', bubble: theme.palette.mode === 'dark' ? '#3e2723' : '#fff8e1', icon: <Work />, label: 'Career Strategist' };
+      case 'librarian': return { primary: '#065F46', secondary: '#047857', bubble: theme.palette.mode === 'dark' ? '#004d40' : '#e0f2f1', icon: <LocalLibrary />, label: 'Librarian Nexus' };
+      default: return { primary: '#128C7E', secondary: '#075E54', bubble: theme.palette.mode === 'dark' ? '#1b5e20' : '#e8f5e9', icon: <Person />, label: 'Nexus AI Assistant' };
+    }
+  };
+
+  const roleTheme = getRoleTheme(user?.role);
+  const whatsappGreen = roleTheme.primary;
+  const whatsappDarkGreen = roleTheme.secondary;
+  const userBubbleColor = roleTheme.bubble;
+  const RoleIcon = roleTheme.icon;
+  const roleLabel = roleTheme.label;
 
   const handleEmojiClick = (emoji) => {
     setChatInput((prev) => prev + emoji);
@@ -73,11 +104,11 @@ const ChatWidget = ({ open, onClose, greetingMessage }) => {
     } catch (e) { console.error(e); }
   }, []);
 
-  const handleSendMessage = async () => {
-    const messageText = chatInput.trim();
+  const handleSendMessage = async (textOverride = null) => {
+    const messageText = textOverride || chatInput.trim();
     if (!messageText) return;
 
-    setChatInput('');
+    if (!textOverride) setChatInput('');
 
     const tempId = Date.now();
     setMessages(prev => [...prev, { id: tempId, sender: 'user', text: messageText, timestamp: 'Now' }]);
@@ -153,7 +184,7 @@ const ChatWidget = ({ open, onClose, greetingMessage }) => {
         {/* Header */}
         <Box
           sx={{
-            background: 'linear-gradient(135deg, #128C7E 0%, #075E54 100%)',
+            background: `linear-gradient(135deg, ${whatsappGreen} 0%, ${whatsappDarkGreen} 100%)`,
             color: 'white',
             p: { xs: 1.5, sm: 2 },
             display: 'flex',
@@ -162,10 +193,10 @@ const ChatWidget = ({ open, onClose, greetingMessage }) => {
           }}
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <SmartToy fontSize="small" />
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)', width: 32, height: 32, border: '1px solid rgba(255,255,255,0.3)' }}>{RoleIcon}</Avatar>
               <Typography variant={{ xs: 'body1', sm: 'subtitle1' }} fontWeight="bold">
-                Nexus AI Assistant
+                {roleLabel}
               </Typography>
             </Stack>
             <Stack direction="row" spacing={0.5}>
@@ -225,7 +256,7 @@ const ChatWidget = ({ open, onClose, greetingMessage }) => {
                     sx={{
                       maxWidth: '75%',
                       background: msg.sender === 'user'
-                        ? '#DCF8C6'
+                        ? userBubbleColor
                         : theme.palette.mode === 'dark' ? '#2A2F32' : '#FFFFFF',
                       color: theme.palette.mode === 'dark' && msg.sender !== 'user' ? 'white' : 'black',
                       px: 2,
@@ -234,9 +265,7 @@ const ChatWidget = ({ open, onClose, greetingMessage }) => {
                       boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
                     }}
                   >
-                    <Typography variant="body2" sx={{ fontSize: '0.9rem', wordBreak: 'break-word' }}>
-                      {msg.text}
-                    </Typography>
+                    <MarkdownRenderer text={msg.text} />
                     <Typography variant="caption" sx={{ opacity: 0.6, fontSize: '0.7rem', display: 'block', mt: 0.5, textAlign: 'right' }}>
                       {msg.timestamp}
                     </Typography>
@@ -246,9 +275,9 @@ const ChatWidget = ({ open, onClose, greetingMessage }) => {
             ))}
             {isTyping && (
               <Box sx={{ display: 'flex', gap: 0.5, px: 2, py: 1 }}>
-                <Box component={motion.div} animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0 }} sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#075E54' }} />
-                <Box component={motion.div} animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }} sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#075E54' }} />
-                <Box component={motion.div} animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }} sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#075E54' }} />
+                <Box component={motion.div} animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0 }} sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: whatsappDarkGreen }} />
+                <Box component={motion.div} animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }} sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: whatsappDarkGreen }} />
+                <Box component={motion.div} animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }} sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: whatsappDarkGreen }} />
               </Box>
             )}
             <div ref={messagesEndRef} />
@@ -305,14 +334,14 @@ const ChatWidget = ({ open, onClose, greetingMessage }) => {
             />
             <IconButton
               size="small"
-              onClick={handleSendMessage}
+              onClick={() => handleSendMessage()}
               disabled={!chatInput.trim()}
               sx={{
-                backgroundColor: chatInput.trim() ? '#128C7E' : 'transparent',
+                backgroundColor: chatInput.trim() ? whatsappGreen : 'transparent',
                 color: chatInput.trim() ? 'white' : 'text.disabled',
                 width: 36,
                 height: 36,
-                '&:hover': { backgroundColor: chatInput.trim() ? '#0F7A6F' : 'transparent' },
+                '&:hover': { backgroundColor: chatInput.trim() ? whatsappDarkGreen : 'transparent' },
                 transition: 'all 0.2s',
               }}
             >

@@ -73,6 +73,7 @@ import {
   LocalLibrary,
   AccountBalance,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import { libraryAPI } from '../../api/library';
 import StatCard from '../../components/Common/StatCard';
 import { GridSkeleton } from '../../components/Common/LoadingSkeleton';
@@ -80,6 +81,7 @@ import { pageTransition, staggerContainer, fadeInUp } from '../../utils/animatio
 
 const LibraryCatalog = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -311,6 +313,7 @@ const LibraryCatalog = () => {
                   size="small" 
                   startIcon={<Payment />}
                   sx={{ fontWeight: 600 }}
+                  onClick={() => navigate('/finance/invoices')}
                 >
                   Pay Fine
                 </Button>
@@ -739,6 +742,25 @@ const LibraryCatalog = () => {
                       >
                         View Details
                       </Button>
+                      
+                      {book.digitalLink && (
+                        <Button
+                          fullWidth
+                          variant="contained"
+                          size="small"
+                          color="success"
+                          onClick={() => window.open(book.digitalLink, '_blank')}
+                          startIcon={<AutoStories />}
+                          sx={{
+                            borderRadius: 2,
+                            fontWeight: 600,
+                            textTransform: 'none',
+                            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                          }}
+                        >
+                          Digital Access
+                        </Button>
+                      )}
                       {book.availableCopies > 0 ? (
                         <Button
                           fullWidth
@@ -1198,6 +1220,71 @@ const LibraryCatalog = () => {
       >
         <QrCodeScanner />
       </Fab>
+
+      {/* QR Scanner Dialog */}
+      <Dialog
+        open={qrScannerOpen}
+        onClose={() => setQrScannerOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        sx={{ '& .MuiDialog-paper': { borderRadius: 4 } }}
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <QrCodeScanner color="primary" />
+            <Typography variant="h6" fontWeight="bold">Scan ISBN / QR</Typography>
+          </Stack>
+          <IconButton onClick={() => setQrScannerOpen(false)}><Close /></IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ 
+            height: 240, 
+            bgcolor: 'black', 
+            borderRadius: 2, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            position: 'relative',
+            overflow: 'hidden',
+            border: '4px solid',
+            borderColor: 'primary.main',
+          }}>
+            {/* Animated Scanning Line */}
+            <motion.div 
+              animate={{ top: [0, 240, 0] }}
+              transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+              style={{ 
+                position: 'absolute', 
+                left: 0, 
+                right: 0, 
+                height: 2, 
+                backgroundColor: '#00e676',
+                boxShadow: '0 0 10px #00e676',
+                zIndex: 2
+              }} 
+            />
+            <Typography color="white" variant="caption" sx={{ zIndex: 1, opacity: 0.7 }}>
+              Align barcode/QR code within the frame
+            </Typography>
+          </Box>
+          <Typography variant="body2" sx={{ mt: 2, textAlign: 'center', color: 'text.secondary' }}>
+            Point your camera at a book's ISBN or student card QR code
+          </Typography>
+          
+          <Button
+            fullWidth
+            variant="outlined"
+            sx={{ mt: 3, borderRadius: 2 }}
+            onClick={() => {
+              setSearchQuery('978-0134685991');
+              setQrScannerOpen(false);
+              setSnackbar({ open: true, message: 'ISBN Detected: 978-0134685991', severity: 'success' });
+            }}
+          >
+            Simulate Scan (Demo)
+          </Button>
+        </DialogContent>
+      </Dialog>
 
       {/* Snackbar */}
       <Snackbar

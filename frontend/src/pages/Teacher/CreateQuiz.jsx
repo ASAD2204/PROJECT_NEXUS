@@ -83,6 +83,7 @@ const serializeQuestionForApi = (question) => ({
   correct_answer: Array.isArray(question.correctAnswer)
     ? question.correctAnswer.map((value) => safeText(value)).filter(Boolean).join(',')
     : safeText(question.correctAnswer, ''),
+  options: Array.isArray(question.options) ? question.options : [],
 });
 
 const CreateQuiz = () => {
@@ -120,19 +121,22 @@ const CreateQuiz = () => {
       try {
         const cRes = await teacherAPI.getMyCourses();
         const crs = cRes.data?.courses || cRes.data || [];
-        setCourses((Array.isArray(crs) ? crs : []).map((course) => ({
-          value: String(course.section_id ?? course.id),
-          sectionId: course.section_id ?? course.id,
-          courseId: course.course_id ?? course.course?.course_id ?? null,
-          label: `${safeText(course.course?.code || course.code || `SEC-${course.section_id ?? course.id}`)} - ${safeText(course.course?.title || course.name || course.title || 'Untitled Course')}`,
-        })));
+        setCourses((Array.isArray(crs) ? crs : []).map((course) => {
+          const courseId = course.course_id ?? course.course?.course_id ?? course.section_id ?? course.id;
+          return {
+            value: String(courseId),
+            sectionId: course.section_id ?? course.id,
+            courseId: courseId,
+            label: `${safeText(course.course?.code || course.code || `SEC-${course.section_id ?? course.id}`)} - ${safeText(course.course?.title || course.name || course.title || 'Untitled Course')}`,
+          };
+        }));
 
         if (isEdit) {
           const qRes = await lmsAPI.getQuiz(id);
           const q = qRes.data;
           setQuizInfo({
             title: q.title,
-            course: String(q.section_id),
+            course: String(q.course_id || q.section_id || ''),
             description: q.description || '',
             duration: q.duration_minutes,
             totalMarks: q.total_marks || 0,
@@ -196,18 +200,35 @@ const CreateQuiz = () => {
   };
 
   const calculateTotalMarks = () => {
-    return questions.reduce((sum, q) => sum + parseInt(q.marks || 0), 0);
+    return questions.reduce((sum, q) => sum + toFiniteNumber(q.marks, 0), 0);
   };
 
   const buildQuizPayload = (status) => ({
-    section_id: Number(quizInfo.course),
-    title: quizInfo.title,
+    course_id: toFiniteNumber(quizInfo.course, 0),
+    title: quizInfo.title.trim(),
     duration_minutes: toFiniteNumber(quizInfo.duration, 30),
     start_time: buildDateTime(quizInfo.startDate, quizInfo.startTime),
     end_time: buildDateTime(quizInfo.endDate, quizInfo.endTime),
     questions: questions.map(serializeQuestionForApi),
     status,
+    instructions: quizInfo.instructions,
+    shuffle_questions: quizInfo.shuffleQuestions,
+    show_results: quizInfo.showResults,
+    passing_marks: toFiniteNumber(quizInfo.passingMarks, 0),
+    total_marks: calculateTotalMarks(),
   });
+
+  const hasValidScheduleWindow = () => {
+    const hasStartPair = Boolean(quizInfo.startDate) && Boolean(quizInfo.startTime);
+    const hasEndPair = Boolean(quizInfo.endDate) && Boolean(quizInfo.endTime);
+
+    if (!hasStartPair && !hasEndPair) return true;
+    if (!hasStartPair || !hasEndPair) return false;
+
+    const start = new Date(`${quizInfo.startDate}T${quizInfo.startTime}:00`);
+    const end = new Date(`${quizInfo.endDate}T${quizInfo.endTime}:00`);
+    return Number.isFinite(start.getTime()) && Number.isFinite(end.getTime()) && end > start;
+  };
 
   const handleSaveDraft = async () => {
     try {
@@ -221,8 +242,12 @@ const CreateQuiz = () => {
   };
 
   const handlePublish = async () => {
-    if (!quizInfo.title || !quizInfo.course || questions.length === 0) {
+    if (!quizInfo.title?.trim() || !quizInfo.course || questions.length === 0) {
       alert('Please fill all required fields and add at least one question');
+      return;
+    }
+    if (!hasValidScheduleWindow()) {
+      alert('Please provide a valid schedule window. End date/time must be after start date/time.');
       return;
     }
     try {
@@ -236,8 +261,12 @@ const CreateQuiz = () => {
   };
 
   const handleNext = () => {
-    if (activeStep === 0 && (!quizInfo.title || !quizInfo.course)) {
+    if (activeStep === 0 && (!quizInfo.title?.trim() || !quizInfo.course)) {
       alert('Please fill required fields: Title and Course');
+      return;
+    }
+    if (activeStep === 0 && !hasValidScheduleWindow()) {
+      alert('Please provide a valid schedule window. End date/time must be after start date/time.');
       return;
     }
     if (activeStep === 1 && questions.length === 0) {
@@ -455,6 +484,7 @@ const CreateQuiz = () => {
                   value={quizInfo.title}
                   onChange={(e) => handleQuizInfoChange('title', e.target.value)}
                   placeholder="e.g., Data Structures Fundamentals Quiz"
+                  inputProps={{ minLength: 3, maxLength: 180 }}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
@@ -483,6 +513,7 @@ const CreateQuiz = () => {
                   value={quizInfo.description}
                   onChange={(e) => handleQuizInfoChange('description', e.target.value)}
                   placeholder="Brief description of the quiz content and objectives..."
+                  inputProps={{ maxLength: 1000 }}
                 />
               </Grid>
 
@@ -491,9 +522,10 @@ const CreateQuiz = () => {
                   fullWidth
                   label="Duration (minutes)"
                   type="number"
+                  required
                   value={quizInfo.duration}
                   onChange={(e) => handleQuizInfoChange('duration', e.target.value)}
-                  inputProps={{ min: 5 }}
+                  inputProps={{ min: 5, max: 300 }}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
@@ -503,7 +535,7 @@ const CreateQuiz = () => {
                   type="number"
                   value={quizInfo.passingMarks}
                   onChange={(e) => handleQuizInfoChange('passingMarks', e.target.value)}
-                  inputProps={{ min: 0 }}
+                  inputProps={{ min: 0, max: 1000 }}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>

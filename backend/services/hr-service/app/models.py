@@ -51,6 +51,8 @@ class SisFaculty(Base):
     dept_id = Column(Integer)
     employee_code = Column(String(20), unique=True)
     designation = Column(String(50))
+    casual_leave_balance = Column(Integer, default=20)
+    sick_leave_balance = Column(Integer, default=10)
     salary_tier_encrypted = Column(Text, nullable=True)
     profile_image_id = Column(String(100), nullable=True)
 

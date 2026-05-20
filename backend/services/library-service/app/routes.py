@@ -14,8 +14,10 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 
+from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_user, require_role
+from app.kafka_producer import publish_fine_generated
 from app.models import FinFine, LibBook, LibIssue, LibLibrarianProfile, LibReservation, SisStudent
 from app.models import FinInvoice
 from app.schemas import (
@@ -42,6 +44,7 @@ router = APIRouter(prefix="/library", tags=["Library"])
 FINE_PER_DAY = 50  # PKR 50 per day
 MAX_ACTIVE_ISSUES = 3
 LOAN_PERIOD_DAYS = 14
+MAX_FINE_CAP = 2000  # PKR 2000 Max Cap
 
 
 # ---------------------------------------------------------------------------
@@ -49,11 +52,12 @@ LOAN_PERIOD_DAYS = 14
 # ---------------------------------------------------------------------------
 
 def calculate_fine(due_date: date, return_date: date) -> float:
-    """Return the fine amount in PKR. Zero if returned on or before due date."""
+    """Return the fine amount in PKR. Zero if returned on or before due date. Capped at MAX_FINE_CAP."""
     if return_date <= due_date:
         return 0.0
     days_overdue = (return_date - due_date).days
-    return float(days_overdue * FINE_PER_DAY)
+    fine = float(days_overdue * FINE_PER_DAY)
+    return min(fine, float(MAX_FINE_CAP))
 
 
 def _serialize_issue(db: Session, issue: LibIssue) -> IssueDetailOut:
@@ -71,6 +75,7 @@ def _serialize_issue(db: Session, issue: LibIssue) -> IssueDetailOut:
         status=issue.status,
         fine_amount=float(issue.fine_amount or 0.0),
         days_overdue=issue.days_overdue or 0,
+        return_condition=issue.return_condition,
         created_at=getattr(issue, "created_at", None),
         updated_at=getattr(issue, "updated_at", None),
         book=issue.book,
@@ -256,6 +261,7 @@ def add_book(
         language=payload.language or "English",
         total_copies=payload.total_copies,
         available_copies=available,
+        digital_link=payload.digital_link,
         shelf_location=payload.shelf_location,
     )
     db.add(book)
@@ -440,61 +446,78 @@ async def return_book(
 
     today = date.today()
     issue.return_date = today
-    issue.status = "Returned"
 
-    # Increment available copies
+    condition = "Good"
+    if payload and "condition" in payload:
+        condition = str(payload.get("condition", "Good")).strip()
+
+    # Save condition to database
+    issue.return_condition = condition
+
+    # Determine condition-based fine
+    condition_fine = 0.0
+    if condition == "Worn":
+        condition_fine = 100.0
+        issue.status = "Returned"
+    elif condition == "Damaged":
+        condition_fine = 500.0
+        issue.status = "Returned"
+    elif condition == "Lost":
+        condition_fine = 1000.0
+        issue.status = "Lost"
+    else:
+        issue.status = "Returned"
+
+    # Handle book stock changes based on condition
     book = db.query(LibBook).filter(LibBook.book_id == issue.book_id).first()
     if book:
-        book.available_copies += 1
+        if condition == "Lost":
+            # Book is permanently lost, do NOT increment available copies.
+            # Decrement total_copies by 1 as the library catalog now has one copy fewer.
+            book.total_copies = max(0, book.total_copies - 1)
+        else:
+            book.available_copies += 1
 
-    # Fine calculation
-    fine_amount = calculate_fine(issue.due_date, today)
+    # Overdue fine calculation
+    overdue_fine = calculate_fine(issue.due_date, today)
     days_overdue = max(0, (today - issue.due_date).days)
+
+    # Combined fine amount (overdue fine + condition-based fine)
+    fine_amount = overdue_fine + condition_fine
     
     issue.fine_amount = fine_amount
     issue.days_overdue = days_overdue
     fine_status = None
 
-    if fine_amount > 0 and issue.student_id:
-        # Resolve an open invoice for the student
-        invoice = (
-            db.query(FinInvoice)
-            .filter(
-                FinInvoice.student_id == issue.student_id,
-                FinInvoice.status.in_(["Unpaid", "Overdue"]),
+    if fine_amount > 0:
+        # ── Refactored: Trigger Kafka Event for Ledger Sync ──
+        # This ensures the Finance service records the fine reliably.
+        # Works for both student_id and user_id (closing faculty loophole).
+        try:
+            publish_fine_generated(
+                student_id=issue.student_id,
+                user_id=str(issue.user_id) if issue.user_id else None,
+                days_overdue=days_overdue,
+                fine_amount=fine_amount,
+                book_title=book.title if book else "Library Book"
             )
-            .order_by(FinInvoice.due_date.asc().nullsfirst(), FinInvoice.invoice_id.desc())
-            .first()
-        )
-        
-        # ── Refactored: Call Finance Service via HTTP ──
-        FINANCE_SERVICE_URL = "http://finance-service:8000/api/v1/finance"
-        async with httpx.AsyncClient() as client:
-            try:
-                resp = await client.post(
-                    f"{FINANCE_SERVICE_URL}/fines",
-                    json={
-                        "invoice_id": invoice.invoice_id if invoice else None,
-                        "days_overdue": days_overdue,
-                        "fine_amount": fine_amount
-                    },
-                    timeout=5.0
-                )
-                if resp.status_code == 201:
-                    fine_status = "unpaid"
-            except Exception as e:
-                print(f"Finance Service fine application failed: {e}")
-                # Fallback: if service is down, we still committed the return.
-                # In a real prod env, we might want to queue this or retry.
+            fine_status = "event_published"
+        except Exception as e:
+            print(f"Failed to publish fine event: {e}")
 
     db.commit()
 
-    message = "Book returned successfully."
-    if fine_amount > 0:
-        message = (
-            f"Book returned {days_overdue} day(s) late. "
-            f"A fine of PKR {fine_amount:.2f} has been applied."
-        )
+    if condition == "Lost":
+        message = f"Book marked as Lost. A fine of PKR {fine_amount:.2f} has been applied (includes PKR {condition_fine:.2f} lost book penalty)."
+    elif condition_fine > 0:
+        message = f"Book returned in {condition} condition. A fine of PKR {fine_amount:.2f} has been applied (includes PKR {condition_fine:.2f} {condition.lower()} condition penalty)."
+    else:
+        message = "Book returned successfully."
+        if fine_amount > 0:
+            message = (
+                f"Book returned {days_overdue} day(s) late. "
+                f"A fine of PKR {fine_amount:.2f} has been applied."
+            )
 
     return ReturnOut(
         issue_id=issue.issue_id,

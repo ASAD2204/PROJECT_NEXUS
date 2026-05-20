@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { attendanceAPI } from '../../api/attendance';
+import { useAuth } from '../../contexts/AuthContext';
 import PageHeader from '../../components/Common/PageHeader';
 import StatusBadge from '../../components/Common/StatusBadge';
 import { Button } from '@mui/material';
@@ -24,19 +25,26 @@ import { pageTransition } from '../../utils/animations';
 
 const AttendanceHistory = () => {
   const navigate = useNavigate();
+  const { userType } = useAuth();
   const [loading, setLoading] = useState(true);
   const [attendance, setAttendance] = useState([]);
 
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const res = await attendanceAPI.getMyHistory();
-        setAttendance(res.data?.records || res.data || []);
-      } catch { /* empty */ }
+        const res = userType === 'teacher' || userType === 'admin'
+          ? await attendanceAPI.getHistory()
+          : await attendanceAPI.getMyHistory();
+        
+        const data = res.data?.records || res.data || [];
+        setAttendance(Array.isArray(data) ? data : []);
+      } catch (err) { 
+        console.error('Failed to fetch attendance history', err);
+      }
       setLoading(false);
     };
     fetchHistory();
-  }, []);
+  }, [userType]);
 
   const getCourseName = (courseId) => {
     return courseId; // Course name can be embedded in record from API

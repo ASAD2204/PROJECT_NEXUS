@@ -8,3 +8,4 @@ redis
 cryptography
 requests
 python-multipart
+kafka-python

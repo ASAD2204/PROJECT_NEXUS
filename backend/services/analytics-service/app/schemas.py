@@ -83,6 +83,7 @@ class SectionPerformanceSummary(BaseModel):
     avg_attendance_pct: float
     avg_quiz_score: float
     avg_assignment_score: float
+    avg_grade: float = 0.0
     at_risk_count: int
     pending_assignments: int
 

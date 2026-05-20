@@ -30,6 +30,7 @@ from app.schemas import (
     StudyHelpRequest,
     StudyHelpResponse,
     AIStatusResponse,
+    RecoveryChatRequest,
 )
 from app.config import settings
 from app.ai_assistant.pipeline import AssistantPipeline
@@ -110,6 +111,104 @@ async def chat(body: ChatRequest, user: dict = Depends(get_current_user)):
         intent=meta.get("intent"),
         sub_intent=meta.get("sub_intent"),
         source=meta.get("source"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# POST /ai/recovery/chat
+# ---------------------------------------------------------------------------
+
+@router.post("/recovery/chat", response_model=ChatResponse)
+async def recovery_chat(body: RecoveryChatRequest):
+    """Unauthenticated conversational endpoint for password recovery via AI Identity Guardian."""
+    session_id = body.session_id or str(uuid.uuid4())
+    pipeline = _get_pipeline()
+    pool = await pipeline.db_engine._pool()
+
+    # Base Context
+    system_prompt = (
+        "You are the **Nexus AI Identity Guardian**. Your job is to verify the user's identity "
+        "before releasing their password reset OTP.\n"
+    )
+
+    otp = None
+    if body.email:
+        otp_bytes = await redis_client.get(f"otp:{body.email}")
+        if otp_bytes:
+            otp = otp_bytes.decode('utf-8') if isinstance(otp_bytes, bytes) else otp_bytes
+            
+            # Fetch user info for verification
+            row = await pool.fetchrow("""
+                SELECT u.first_name, u.last_name, s.roll_no, s.guardian_name 
+                FROM auth_users u 
+                LEFT JOIN sis_students s ON s.user_id = u.user_id 
+                WHERE u.email = $1
+            """, body.email)
+
+            if row and row.get('roll_no'):
+                system_prompt += (
+                    f"The user is claiming the email {body.email}.\n"
+                    f"The true identity for this email is: Name: {row['first_name']} {row['last_name']}, "
+                    f"Roll No: {row['roll_no']}, Guardian: {row['guardian_name']}.\n"
+                    f"The active OTP is: {otp}.\n"
+                    "If the user has provided their Roll No AND Guardian Name matching the true identity, "
+                    "you MUST give them the OTP. If they haven't provided both, politely ask them to "
+                    "provide their Roll No and Guardian Name for verification. Do NOT reveal the true identity details."
+                )
+            else:
+                system_prompt += (
+                    f"The user is claiming the email {body.email}, but they are not a student or have no Roll No.\n"
+                    f"The active OTP is: {otp}.\n"
+                    "Ask them to confirm their full name to verify their identity. Once they do, provide the OTP."
+                )
+        else:
+            system_prompt += "There is no active OTP request for this email. Tell the user to go back and request an OTP first."
+    else:
+        system_prompt += "Ask the user to provide the email address they are trying to recover."
+
+    # Fetch history
+    history_text = ""
+    cursor = chat_messages.find({"session_id": session_id}).sort("timestamp", -1).limit(4)
+    history_docs = await cursor.to_list(length=4)
+    history_docs.reverse()
+    history_text = "\n".join([f"{('User' if h.get('role') == 'user' else 'Guardian')}: {h.get('content')}" for h in history_docs])
+
+    final_prompt = f"{system_prompt}\n\nCONVERSATION HISTORY:\n{history_text}"
+
+    answer = await llm_manager.generate(
+        system_prompt=final_prompt,
+        user_message=body.query,
+        temperature=0.2
+    )
+
+    now = datetime.now(timezone.utc).isoformat()
+    try:
+        await chat_messages.insert_one({
+            "session_id": session_id,
+            "user_id": "recovery_user",
+            "role": "user",
+            "content": body.query,
+            "timestamp": now,
+        })
+        await chat_messages.insert_one({
+            "session_id": session_id,
+            "user_id": "recovery_user",
+            "role": "assistant",
+            "content": answer,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "intent": "password_recovery",
+            "source": "llm"
+        })
+    except Exception as exc:
+        logger.error("Failed to persist recovery chat: %s", exc)
+
+    return ChatResponse(
+        response=answer,
+        session_id=session_id,
+        cached=False,
+        intent="password_recovery",
+        sub_intent=None,
+        source="llm"
     )
 
 

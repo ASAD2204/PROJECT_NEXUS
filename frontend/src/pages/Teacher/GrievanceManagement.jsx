@@ -107,7 +107,7 @@ const TeacherGrievanceManagement = () => {
   const handleAddNote = async () => {
     try {
       const gId = viewDialog.grievance.ticket_id || viewDialog.grievance.id;
-      await opsAPI.addGrievanceComment(gId, { comment: teacherNote });
+      await opsAPI.addGrievanceComment(gId, teacherNote);
       await opsAPI.updateGrievanceStatus(gId, { status: 'Under Review' });
       setGrievances(prev => prev.map(g =>
         (g.ticket_id || g.id) === gId

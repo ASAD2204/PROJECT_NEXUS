@@ -231,7 +231,7 @@ calculate_fine(due_date, return_date):
     else → days_overdue × PKR 50
 ```
 
-On return, if overdue, a `FinFine` record is **inserted directly** into the shared `fin_fines` table (cross-service write — no inter-service API call).
+On return, if a fine is generated (due to overdue days or non-Good book conditions like Worn, Damaged, or Lost), a decoupled `fine_generated` event is **published to Apache Kafka**, which the **Finance Service** consumes to dynamically record the fine on the student's ledger.
 
 ### Loan Period
 
@@ -291,4 +291,4 @@ Cannot delete a book that has active (status = `"Issued"`) issues — returns 40
 | Dependency | Direction | Description |
 |-----------|-----------|-------------|
 | `sis_students` | Read (PostgreSQL) | Resolves `user_id` → `student_id` for `/issues/me` and `/reservations/me` |
-| `fin_fines` | Write (PostgreSQL) | Inserts overdue fine records directly into the finance service table |
+| `Apache Kafka` | Publish (Event) | Publishes `fine_generated` events to decouple ledger sync for fines |

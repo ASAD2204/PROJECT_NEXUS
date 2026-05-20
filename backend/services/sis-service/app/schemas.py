@@ -31,6 +31,9 @@ class StudentOut(BaseModel):
     profile_image_id: Optional[str] = None
     full_name: Optional[str] = None
     email: Optional[str] = None
+    is_graduated: bool = False
+    graduation_date: Optional[date] = None
+    cgpa: Optional[float] = 0.0
 
     class Config:
         from_attributes = True
@@ -46,6 +49,8 @@ class StudentUpdate(BaseModel):
     guardian_phone: Optional[str] = None
     current_semester: Optional[int] = None
     scholarship_percentage: Optional[float] = None
+    is_graduated: Optional[bool] = None
+    graduation_date: Optional[date] = None
 
 
 # --------------------------------------------------------------------------- #
@@ -63,6 +68,7 @@ class EnrollmentOut(BaseModel):
     student_id: int
     course_id: int
     status: Optional[str] = None
+    is_historical: bool = False
     final_grade_points: Optional[float] = None
 
     class Config:
@@ -95,6 +101,8 @@ class SemesterOut(BaseModel):
     title: str
     start_date: Optional[date] = None
     end_date: Optional[date] = None
+    results_date: Optional[date] = None
+    status: Optional[str] = "Active"
     is_active: Optional[bool] = None
 
     class Config:

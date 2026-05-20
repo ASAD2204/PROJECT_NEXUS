@@ -651,6 +651,7 @@ const DepartmentManagement = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Bachelor of Science in Computer Science"
+                  inputProps={{ minLength: 2, maxLength: 100 }}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -672,6 +673,7 @@ const DepartmentManagement = () => {
                   onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                   placeholder="CS-001"
                   helperText="Unique identifier for the program"
+                  inputProps={{ maxLength: 20 }}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -734,6 +736,7 @@ const DepartmentManagement = () => {
                   onChange={(e) => setFormData({ ...formData, totalCredits: e.target.value })}
                   placeholder="132"
                   helperText="Total credit hours required for completion"
+                  inputProps={{ min: 1, max: 500 }}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -744,6 +747,7 @@ const DepartmentManagement = () => {
                   value={formData.semesters}
                   onChange={(e) => setFormData({ ...formData, semesters: e.target.value })}
                   placeholder="8"
+                  inputProps={{ min: 1, max: 16 }}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -754,6 +758,7 @@ const DepartmentManagement = () => {
                   onChange={(e) => setFormData({ ...formData, accreditation: e.target.value })}
                   placeholder="HEC Recognized"
                   helperText="Official accreditation status"
+                  inputProps={{ maxLength: 100 }}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -764,6 +769,7 @@ const DepartmentManagement = () => {
                   value={formData.startYear}
                   onChange={(e) => setFormData({ ...formData, startYear: e.target.value })}
                   helperText="Year this program was first offered"
+                  inputProps={{ min: 1950, max: 2100 }}
                 />
               </Grid>
 
@@ -781,6 +787,7 @@ const DepartmentManagement = () => {
                   value={formData.tuitionFee}
                   onChange={(e) => setFormData({ ...formData, tuitionFee: e.target.value })}
                   placeholder="450000"
+                  inputProps={{ min: 0, max: 99999999 }}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -872,19 +879,23 @@ const DepartmentManagement = () => {
               <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
+                  required
                   label="Department Name"
                   value={departmentForm.name}
                   onChange={(e) => setDepartmentForm({ ...departmentForm, name: e.target.value })}
                   placeholder="Computer Science"
+                  inputProps={{ minLength: 2, maxLength: 100 }}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
+                  required
                   label="Department Code"
                   value={departmentForm.code}
                   onChange={(e) => setDepartmentForm({ ...departmentForm, code: e.target.value })}
                   placeholder="CS"
+                  inputProps={{ minLength: 1, maxLength: 10 }}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -894,6 +905,7 @@ const DepartmentManagement = () => {
                   value={departmentForm.location}
                   onChange={(e) => setDepartmentForm({ ...departmentForm, location: e.target.value })}
                   placeholder="Main Campus"
+                  inputProps={{ maxLength: 100 }}
                 />
               </Grid>
             </Grid>

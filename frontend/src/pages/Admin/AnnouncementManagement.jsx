@@ -166,10 +166,17 @@ const AnnouncementManagement = () => {
   };
 
   const handleSaveAnnouncement = async () => {
+    const hasTitle = Boolean(formData.title?.trim());
+    const hasContent = Boolean(formData.content?.trim());
+    const hasSchedule = formData.publishNow || (Boolean(formData.scheduledDate) && Boolean(formData.scheduledTime));
+    if (!hasTitle || !hasContent || !hasSchedule) {
+      return;
+    }
+
     try {
       const payload = {
-        title: formData.title,
-        content: formData.content,
+        title: formData.title.trim(),
+        content: formData.content.trim(),
         target_audience: [formData.targetAudience || 'all'],
         priority: formData.priority || 'normal',
         is_pinned: selectedAnnouncement?.isPinned || false,
@@ -398,20 +405,24 @@ const AnnouncementManagement = () => {
               <TextField
                 label="Announcement Title"
                 fullWidth
+                required
                 value={formData.title}
                 onChange={(e) => handleChange('title', e.target.value)}
                 placeholder="Enter announcement title"
+                inputProps={{ maxLength: 150 }}
                 disabled={viewMode}
               />
 
               <TextField
                 label="Content"
                 fullWidth
+                required
                 multiline
                 rows={6}
                 value={formData.content}
                 onChange={(e) => handleChange('content', e.target.value)}
                 placeholder="Enter announcement content..."
+                inputProps={{ minLength: 10, maxLength: 5000 }}
                 disabled={viewMode}
               />
 
@@ -471,6 +482,7 @@ const AnnouncementManagement = () => {
                       label="Schedule Date"
                       type="date"
                       fullWidth
+                      required
                       value={formData.scheduledDate}
                       onChange={(e) => handleChange('scheduledDate', e.target.value)}
                       InputLabelProps={{ shrink: true }}
@@ -482,6 +494,7 @@ const AnnouncementManagement = () => {
                       label="Schedule Time"
                       type="time"
                       fullWidth
+                      required
                       value={formData.scheduledTime}
                       onChange={(e) => handleChange('scheduledTime', e.target.value)}
                       InputLabelProps={{ shrink: true }}
@@ -514,7 +527,7 @@ const AnnouncementManagement = () => {
                 variant="contained" 
                 startIcon={formData.publishNow ? <Check /> : <Schedule />}
                 onClick={handleSaveAnnouncement}
-                disabled={!formData.title || !formData.content}
+                disabled={!formData.title?.trim() || !formData.content?.trim() || (!formData.publishNow && (!formData.scheduledDate || !formData.scheduledTime))}
               >
                 {editMode ? 'Save Changes' : (formData.publishNow ? 'Publish Now' : 'Schedule')}
               </Button>

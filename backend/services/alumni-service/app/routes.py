@@ -47,6 +47,8 @@ from app.models import (
     AlumniMentorship,
     AlumniSuccessStory,
     SISStudent,
+    MentorshipRequest,
+    JobApplication,
 )
 from app.schemas import (
     AlumniOut,
@@ -61,6 +63,10 @@ from app.schemas import (
     MessageResponse,
     StoryCreate,
     StoryOut,
+    MentorshipRequestCreate,
+    MentorshipRequestOut,
+    JobApplicationCreate,
+    JobApplicationOut,
 )
 
 router = APIRouter(prefix="/alumni", tags=["Alumni"])
@@ -92,6 +98,43 @@ async def _save_uploaded_image(upload: UploadFile | None) -> Optional[str]:
     content = await upload.read()
     file_path.write_bytes(content)
     return _public_upload_url(filename)
+
+
+async def _verify_degree_eligibility(student_id: int) -> bool:
+    """Check SIS for Graduated status and Finance for zero balance."""
+    try:
+        async with httpx.AsyncClient() as client:
+            # 1. Check SIS Status
+            sis_url = f"{settings.GATEWAY_URL}/api/v1/sis/students/{student_id}"
+            sis_resp = await client.get(sis_url, timeout=5.0)
+            if sis_resp.status_code == 200:
+                sis_data = sis_resp.json()
+                # Verify "Graduated" status
+                if sis_data.get("status") != "Graduated":
+                    # Fallback check on semesters
+                    program = sis_data.get("program", {})
+                    total = program.get("total_semesters", 0)
+                    current = sis_data.get("current_semester", 0)
+                    if total == 0 or current < total:
+                        return False
+            else:
+                return False
+
+            # 2. Check Finance Balance
+            fin_url = f"{settings.GATEWAY_URL}/api/v1/finance/invoices/student/{student_id}"
+            fin_resp = await client.get(fin_url, timeout=5.0)
+            if fin_resp.status_code == 200:
+                invoices = fin_resp.json()
+                for inv in invoices:
+                    if inv.get("status") in ["Unpaid", "Overdue"]:
+                        return False
+            else:
+                return False
+            
+            return True
+    except Exception as e:
+        logger.error(f"Cross-service verification failed: {e}")
+        return False
 
 
 async def _read_payload(request: Request, file_field_name: str = "cover_image_file") -> tuple[dict, UploadFile | None]:
@@ -142,7 +185,7 @@ async def _resolve_alumni_identities(alumni_records: List[AlumniRegistry]) -> di
     status_code=status.HTTP_201_CREATED,
     summary="Register as alumni",
 )
-def register_alumni(
+async def register_alumni(
     body: AlumniRegisterRequest,
     current_user: dict = Depends(require_role(["admin", "alumni"])),
     db: Session = Depends(get_db),
@@ -179,9 +222,14 @@ def register_alumni(
             detail="Alumni record already exists for this student",
         )
 
+    # Perform cross-service verification
+    is_verified = await _verify_degree_eligibility(body.student_id)
+
     alumni = AlumniRegistry(
         student_id=body.student_id,
         grad_year=body.grad_year,
+        graduation_year=body.graduation_year or body.grad_year,
+        degree_verified=is_verified,
         degree=body.degree,
         current_employer=body.current_employer,
         current_position=body.current_position,
@@ -993,6 +1041,70 @@ def approve_story(
     story.status = "Approved"
     db.commit()
     return MessageResponse(message=f"Story {story_id} approved successfully")
+
+
+# ---------------------------------------------------------------------------
+# Mentorship Requests
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/mentorship-requests",
+    response_model=MentorshipRequestOut,
+    status_code=status.HTTP_201_CREATED,
+    summary="Submit a mentorship request",
+)
+def submit_mentorship_request(
+    body: MentorshipRequestCreate,
+    current_user: dict = Depends(require_role(["student"])),
+    db: Session = Depends(get_db),
+):
+    """A student requests mentorship from an alumnus."""
+    student = db.query(SISStudent).filter(SISStudent.user_id == current_user["user_id"]).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+
+    request = MentorshipRequest(
+        student_id=student.student_id,
+        alumni_id=body.alumni_id,
+        message=body.message,
+    )
+    db.add(request)
+    db.commit()
+    db.refresh(request)
+    return request
+
+
+# ---------------------------------------------------------------------------
+# Job Applications
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/jobs/apply",
+    response_model=JobApplicationOut,
+    status_code=status.HTTP_201_CREATED,
+    summary="Apply for a job",
+)
+def apply_for_job(
+    body: JobApplicationCreate,
+    current_user: dict = Depends(require_role(["student"])),
+    db: Session = Depends(get_db),
+):
+    """A student applies for a job posted by an alumnus."""
+    student = db.query(SISStudent).filter(SISStudent.user_id == current_user["user_id"]).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+
+    application = JobApplication(
+        job_id=body.job_id,
+        student_id=student.student_id,
+        resume_url=body.resume_url,
+    )
+    db.add(application)
+    db.commit()
+    db.refresh(application)
+    return application
 
 
 # ---------------------------------------------------------------------------

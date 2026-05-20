@@ -57,6 +57,16 @@ import StatCard from '../../components/Common/StatCard';
 import { pageTransition } from '../../utils/animations';
 import { alumniAPI } from '../../api/alumni';
 import { authAPI } from '../../api/auth';
+import {
+  NAME_REGEX,
+  EMAIL_REGEX,
+  PHONE_REGEX,
+  URL_REGEX,
+  filterName,
+  filterPhone,
+  filterAlphanumericDash,
+  filterYear,
+} from '../../utils/validation';
 
 const AlumniProfile = () => {
   const { user } = useAuth();
@@ -78,6 +88,7 @@ const AlumniProfile = () => {
     degree: '',
     currentCompany: '',
     position: '',
+    currentIndustry: '',
     location: '',
     linkedIn: '',
     phone: '',
@@ -112,10 +123,11 @@ const AlumniProfile = () => {
     degree: profile?.degree || '',
     currentCompany: profile?.current_employer || '',
     position: profile?.current_position || '',
+    currentIndustry: profile?.current_industry || '',
     location: profile?.location || '',
     linkedIn: profile?.linkedin_url || '',
     phone: u?.phone || '',
-    personalWebsite: '',
+    personalWebsite: profile?.personal_website || '',
     careerStart: '',
     rollNo: profile?.student_id || u?.student_id || '',
     cgpa: '',
@@ -161,6 +173,21 @@ const AlumniProfile = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const validateBeforeSave = () => {
+    if (!formData.name?.trim() || formData.name.trim().length < 2) return 'Full Name is required (min 2 chars).';
+    if (formData.name?.trim() && !NAME_REGEX.test(formData.name.trim())) return 'Name: only letters, spaces, hyphens, dots allowed.';
+    if (!profileExists && !formData.rollNo?.trim()) return 'Roll Number is required for registration.';
+    if (formData.email?.trim() && !EMAIL_REGEX.test(formData.email.trim())) return 'Invalid email format.';
+    if (formData.phone?.trim() && !PHONE_REGEX.test(formData.phone.trim())) return 'Phone: only digits, +, -, (, ) allowed (7-20 chars).';
+    if (formData.linkedIn?.trim() && !URL_REGEX.test(formData.linkedIn.trim())) return 'LinkedIn URL must start with http:// or https://';
+    if (formData.personalWebsite?.trim() && !URL_REGEX.test(formData.personalWebsite.trim())) return 'Personal Website URL must start with http:// or https://';
+    if (formData.graduationYear) {
+      const yr = parseInt(formData.graduationYear, 10);
+      if (isNaN(yr) || yr < 1950 || yr > 2100) return 'Graduation year must be between 1950 and 2100.';
+    }
+    return '';
+  };
+
   const handleAddAchievement = () => {
     if (newAchievement.trim()) {
       setFormData(prev => ({
@@ -181,6 +208,12 @@ const AlumniProfile = () => {
   };
 
   const handleSave = async () => {
+    const err = validateBeforeSave();
+    if (err) {
+      showSnackbar(err, 'error');
+      return;
+    }
+
     try {
       setSaving(true);
       const [first_name, ...lastParts] = (formData.name || '').trim().split(' ');
@@ -381,10 +414,11 @@ const AlumniProfile = () => {
                         fullWidth
                         label="Roll Number / Student ID"
                         value={formData.rollNo}
-                        onChange={(e) => handleFieldChange('rollNo', e.target.value)}
+                        onChange={(e) => handleFieldChange('rollNo', filterAlphanumericDash(e.target.value))}
                         disabled={!isEditing || profileExists}
                         required
-                        helperText={!profileExists ? "Verification required for first-time registration" : ""}
+                        inputProps={{ minLength: 1, maxLength: 20 }}
+                        helperText={!profileExists ? "Alphanumeric & hyphens only — required for registration" : "Alphanumeric & hyphens only"}
                       />
                       <TextField
                         fullWidth
@@ -393,14 +427,17 @@ const AlumniProfile = () => {
                         onChange={(e) => handleFieldChange('degree', e.target.value)}
                         disabled={!isEditing}
                         placeholder="e.g. BS Computer Science"
+                        inputProps={{ maxLength: 100 }}
                       />
                       <TextField
                         fullWidth
                         label="Graduation Year"
+                        type="number"
                         value={formData.graduationYear}
                         onChange={(e) => handleFieldChange('graduationYear', e.target.value)}
                         disabled={!isEditing}
                         placeholder="e.g. 2024"
+                        inputProps={{ min: 1950, max: 2100 }}
                       />
                     </Stack>
                   </CardContent>
@@ -415,16 +452,22 @@ const AlumniProfile = () => {
                       <TextField
                         fullWidth
                         label="Full Name"
+                        required
                         value={formData.name}
-                        onChange={(e) => handleFieldChange('name', e.target.value)}
+                        onChange={(e) => handleFieldChange('name', filterName(e.target.value))}
                         disabled={!isEditing}
+                        inputProps={{ minLength: 2, maxLength: 200 }}
+                        helperText={isEditing ? 'Only letters, spaces, hyphens, dots allowed' : ''}
                       />
                       <TextField
                         fullWidth
                         label="LinkedIn URL"
+                        type="url"
                         value={formData.linkedIn}
                         onChange={(e) => handleFieldChange('linkedIn', e.target.value)}
                         disabled={!isEditing}
+                        inputProps={{ maxLength: 255 }}
+                        placeholder="https://linkedin.com/in/your-profile"
                         InputProps={{ startAdornment: <InputAdornment position="start"><LinkedIn color="primary" /></InputAdornment> }}
                       />
                       <TextField
@@ -433,6 +476,7 @@ const AlumniProfile = () => {
                         value={formData.location}
                         onChange={(e) => handleFieldChange('location', e.target.value)}
                         disabled={!isEditing}
+                        inputProps={{ maxLength: 100 }}
                         InputProps={{ startAdornment: <InputAdornment position="start"><LocationOn color="error" /></InputAdornment> }}
                       />
                     </Stack>
@@ -458,6 +502,7 @@ const AlumniProfile = () => {
                       value={formData.currentCompany}
                       onChange={(e) => handleFieldChange('currentCompany', e.target.value)}
                       disabled={!isEditing}
+                      inputProps={{ maxLength: 100 }}
                       InputProps={{ startAdornment: <InputAdornment position="start"><Business /></InputAdornment> }}
                     />
                   </Grid>
@@ -468,6 +513,7 @@ const AlumniProfile = () => {
                       value={formData.position}
                       onChange={(e) => handleFieldChange('position', e.target.value)}
                       disabled={!isEditing}
+                      inputProps={{ maxLength: 100 }}
                       InputProps={{ startAdornment: <InputAdornment position="start"><Work /></InputAdornment> }}
                     />
                   </Grid>
@@ -506,6 +552,7 @@ const AlumniProfile = () => {
                     value={newAchievement}
                     onChange={(e) => setNewAchievement(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleAddAchievement()}
+                    inputProps={{ minLength: 2, maxLength: 200 }}
                   />
                   <Button variant="contained" onClick={handleAddAchievement} startIcon={<Add />}>Add</Button>
                 </Box>

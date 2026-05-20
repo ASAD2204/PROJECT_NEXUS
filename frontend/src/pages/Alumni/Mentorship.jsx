@@ -35,6 +35,7 @@ import {
   Email as EmailIcon,
   Star as StarIcon,
   VolunteerActivism as HeartIcon,
+  Send as SendIcon,
 } from '@mui/icons-material';
 import PageHeader from '../../components/Common/PageHeader';
 import StatCard from '../../components/Common/StatCard';
@@ -43,6 +44,57 @@ import { pageTransition } from '../../utils/animations';
 import { alumniAPI } from '../../api/alumni';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 import { useAuth } from '../../contexts/AuthContext';
+
+const MentorshipDialog = ({ open, onClose, onConfirm, mentorName, loading }) => {
+  const [requestData, setRequestData] = useState({
+    topic: '',
+    message: ''
+  });
+
+  const handleConfirm = () => {
+    if (!requestData.topic || !requestData.message) return;
+    onConfirm(`${requestData.topic}: ${requestData.message}`);
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Request Mentorship from {mentorName}</DialogTitle>
+      <DialogContent dividers>
+        <Stack spacing={3} sx={{ mt: 1 }}>
+          <TextField
+            fullWidth
+            label="Mentorship Topic"
+            placeholder="e.g. Career Advice, Mock Interview, Resume Review"
+            value={requestData.topic}
+            onChange={(e) => setRequestData({ ...requestData, topic: e.target.value })}
+            required
+          />
+          <TextField
+            fullWidth
+            label="Message"
+            multiline
+            rows={4}
+            placeholder="Tell the mentor about your background and what you hope to learn..."
+            value={requestData.message}
+            onChange={(e) => setRequestData({ ...requestData, message: e.target.value })}
+            required
+          />
+        </Stack>
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Button onClick={onClose} disabled={loading}>Cancel</Button>
+        <Button
+          variant="contained"
+          onClick={handleConfirm}
+          disabled={loading || !requestData.topic || !requestData.message}
+          startIcon={loading ? <CircularProgress size={20} /> : <SendIcon />}
+        >
+          Send Request
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
 
 const Mentorship = () => {
   const { user } = useAuth();
@@ -53,6 +105,8 @@ const Mentorship = () => {
   const [mentors, setMentors] = useState([]);
   const [stats, setStats] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
+  const [openRequestDialog, setOpenRequestDialog] = useState(false);
+  const [selectedMentor, setSelectedMentor] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [mentorshipData, setMentorshipData] = useState({
     specialization: '',
@@ -65,6 +119,7 @@ const Mentorship = () => {
 
   const normalizeMentor = (mentor) => ({
     id: mentor.mentorship_id || mentor.id,
+    alumni_id: mentor.alumni_id || mentor.alumni?.alumni_id,
     mentor_id: mentor.mentor_id,
     name: mentor.alumni?.full_name || mentor.alumni?.name || mentor.name || `Mentor ${mentor.mentor_id || mentor.id || ''}`,
     email: mentor.alumni?.email || '',
@@ -146,11 +201,27 @@ const Mentorship = () => {
     }
   };
 
-  const handleRequestMentorship = (mentor) => {
-    const subject = encodeURIComponent(`Mentorship Request - ${mentor.name}`);
-    const body = encodeURIComponent(`Dear ${mentor.name},\n\nI am interested in your mentorship regarding ${mentor.expertise}.\n\nMy Profile: ${window.location.origin}/profile\n\nBest regards,\n${user?.first_name || 'Alumnus'}`);
-    window.location.href = `mailto:${mentor.email || 'alumni@university.edu'}?subject=${subject}&body=${body}`;
-    showSnackbar(`Opening email client for ${mentor.name}`, 'info');
+  const handleOpenRequest = (mentor) => {
+    setSelectedMentor(mentor);
+    setOpenRequestDialog(true);
+  };
+
+  const handleConfirmRequest = async (message) => {
+    if (!selectedMentor) return;
+    try {
+      setSubmitting(true);
+      await alumniAPI.requestMentorship({
+        alumni_id: selectedMentor.alumni_id,
+        message: message
+      });
+      showSnackbar(`Mentorship request sent to ${selectedMentor.name}`, 'success');
+      setOpenRequestDialog(false);
+    } catch (err) {
+      console.error(err);
+      showSnackbar(err.response?.data?.detail || 'Failed to send mentorship request', 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -347,7 +418,7 @@ const Mentorship = () => {
                       fullWidth
                       startIcon={<PersonAddIcon />}
                       disabled={mentor.availability === 'Unavailable' || String(mentor.user_id) === String(user?.user_id)}
-                      onClick={() => handleRequestMentorship(mentor)}
+                      onClick={() => handleOpenRequest(mentor)}
                       sx={{ borderRadius: 2, fontWeight: 'bold' }}
                     >
                       {String(mentor.user_id) === String(user?.user_id) ? 'My Mentor Profile' : 'Request Mentorship'}
@@ -434,6 +505,17 @@ const Mentorship = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Mentorship Request Dialog */}
+        {selectedMentor && (
+          <MentorshipDialog
+            open={openRequestDialog}
+            onClose={() => setOpenRequestDialog(false)}
+            onConfirm={handleConfirmRequest}
+            mentorName={selectedMentor.name}
+            loading={submitting}
+          />
+        )}
       </Box>
     </motion.div>
   );

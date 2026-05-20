@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -32,8 +33,11 @@ import {
   Language,
   Email,
   People,
+  ChatBubbleOutline,
 } from '@mui/icons-material';
 import { alumniAPI } from '../../api/alumni';
+import { chatAPI } from '../../api/chat';
+import { useAuth } from '../../contexts/AuthContext';
 import PageHeader from '../../components/Common/PageHeader';
 import StatCard from '../../components/Common/StatCard';
 import PageTransition from '../../components/Common/PageTransition';
@@ -44,6 +48,8 @@ import { fadeInUp, staggerContainer } from '../../utils/animations';
 
 const AlumniNetwork = () => {
   const { showSnackbar } = useSnackbar();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedYear, setSelectedYear] = useState('all');
@@ -53,6 +59,7 @@ const AlumniNetwork = () => {
 
   const normalizeAlumni = (alum) => ({
     id: alum.alumni_id || alum.id,
+    user_id: alum.user_id,
     name: alum.name || alum.full_name || `Alumni ${alum.alumni_id || alum.id || ''}`,
     currentCompany: alum.currentCompany || alum.current_employer || '',
     position: alum.position || alum.current_position || '',
@@ -62,6 +69,7 @@ const AlumniNetwork = () => {
     photoUrl: alum.photoUrl || alum.photo_url || '',
     linkedIn: alum.linkedIn || alum.linkedin_url || '',
     companyLogo: alum.companyLogo || '',
+    email: alum.email || '',
     expertise: Array.isArray(alum.expertise)
       ? alum.expertise
       : typeof alum.expertise === 'string'
@@ -110,7 +118,7 @@ const AlumniNetwork = () => {
     }
 
     setFilteredAlumni(filtered);
-  }, [searchQuery, selectedYear, selectedMajor]);
+  }, [searchQuery, selectedYear, selectedMajor, alumni]);
 
   const handleConnect = async (alumnus) => {
     if (alumnus.linkedIn) {
@@ -118,6 +126,30 @@ const AlumniNetwork = () => {
       showSnackbar('Opening LinkedIn profile', 'success');
     } else {
       showSnackbar('No LinkedIn profile available', 'info');
+    }
+  };
+
+  const handleMessage = async (alumnus) => {
+    if (!alumnus.user_id) {
+      showSnackbar('This alumnus does not have an active chat profile', 'error');
+      return;
+    }
+    
+    if (alumnus.user_id === user?.user_id) {
+      showSnackbar('You cannot message yourself', 'info');
+      return;
+    }
+
+    try {
+      const res = await chatAPI.createSession({
+        participant_ids: [alumnus.user_id, user.user_id],
+        is_group: false
+      });
+      const session = res.data;
+      navigate('/chat', { state: { selectedSessionId: session.session_id } });
+    } catch (err) {
+      console.error(err);
+      showSnackbar('Failed to start a conversation', 'error');
     }
   };
 
@@ -368,9 +400,17 @@ const AlumniNetwork = () => {
                       >
                         Connect
                       </Button>
-                      <Tooltip title="Send Email">
+                      <Tooltip title="Send Message">
                         <IconButton
                           color="primary"
+                          onClick={() => handleMessage(alumnus)}
+                        >
+                          <ChatBubbleOutline />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Send Email">
+                        <IconButton
+                          color="secondary"
                           onClick={() => (window.location.href = `mailto:${alumnus.email}`)}
                         >
                           <Email />

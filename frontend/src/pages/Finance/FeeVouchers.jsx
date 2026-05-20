@@ -868,6 +868,7 @@ const FeeVouchers = () => {
                         value={cardNumber}
                         onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
                         sx={{ mb: 2 }}
+                        required
                         inputProps={{ maxLength: 19 }}
                       />
                       <TextField
@@ -877,6 +878,8 @@ const FeeVouchers = () => {
                         value={cardName}
                         onChange={(e) => setCardName(e.target.value.toUpperCase())}
                         sx={{ mb: 2 }}
+                        required
+                        inputProps={{ minLength: 2, maxLength: 100 }}
                       />
                       <Grid container spacing={2} sx={{ mb: 2 }}>
                         <Grid size={6}>

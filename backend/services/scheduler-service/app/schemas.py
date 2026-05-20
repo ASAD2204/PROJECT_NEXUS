@@ -68,3 +68,15 @@ class TimetableSetOut(BaseModel):
 
 class TimetableSetDetailOut(TimetableSetOut):
     created: list[GeneratedSlot]
+
+
+class TimetableSlotOut(BaseModel):
+    slot_id: int
+    course_id: int
+    course_code: str
+    course_title: str
+    day_of_week: str
+    start_time: time
+    end_time: time
+    room_no: Optional[str] = None
+    instructor_name: Optional[str] = None

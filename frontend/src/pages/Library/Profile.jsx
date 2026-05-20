@@ -28,6 +28,7 @@ import {
   Select,
   FormControl,
   InputLabel,
+  IconButton,
   CircularProgress,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
@@ -58,6 +59,9 @@ import StatCard from '../../components/Common/StatCard';
 import { pageTransition } from '../../utils/animations';
 import { libraryAPI } from '../../api/library';
 import { authAPI } from '../../api/auth';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_REGEX = /^[0-9+\-()\s]{7,20}$/;
 
 const LibrarianProfile = () => {
   const { user } = useAuth();
@@ -136,6 +140,16 @@ const LibrarianProfile = () => {
   };
 
   const handleSave = async () => {
+    const hasName = Boolean(formData.name?.trim());
+    const hasEmployeeId = Boolean(formData.employeeId?.trim());
+    const hasValidEmail = Boolean(formData.email?.trim()) && EMAIL_REGEX.test(formData.email.trim());
+    const hasValidPhone = !formData.phone?.trim() || PHONE_REGEX.test(formData.phone.trim());
+
+    if (!hasName || !hasEmployeeId || !hasValidEmail || !hasValidPhone) {
+      showSnackbar('Please provide valid profile details before saving.', 'error');
+      return;
+    }
+
     try {
       setSaving(true);
       const nameParts = formData.name.trim().split(/\s+/).filter(Boolean);
@@ -214,7 +228,9 @@ const LibrarianProfile = () => {
                 <Grid container spacing={3} alignItems="center">
                   <Grid item xs={12} sm={2}>
                     <Box sx={{ position: 'relative', width: 120, height: 120, mx: 'auto' }}>
-                      <Avatar sx={{ width: 120, height: 120, bgcolor: 'info.main' }}>{formData.name[0]}</Avatar>
+                      <Avatar sx={{ width: 120, height: 120, bgcolor: 'info.main' }}>
+  {formData.name ? formData.name[0] : <Person />}
+</Avatar>
                       <IconButton
                         onClick={() => setShowAvatarDialog(true)}
                         sx={{ position: 'absolute', bottom: 0, right: 0, bgcolor: 'background.paper', boxShadow: 2 }}
@@ -253,9 +269,9 @@ const LibrarianProfile = () => {
                 <Typography variant="h6" fontWeight="bold" gutterBottom>Basic Information</Typography>
                 <Divider sx={{ mb: 3 }} />
                 <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}><TextField fullWidth label="Full Name" value={formData.name} onChange={(e) => handleFieldChange('name', e.target.value)} disabled={!isEditing} /></Grid>
-                  <Grid item xs={12} md={6}><TextField fullWidth label="Employee ID" value={formData.employeeId} onChange={(e) => handleFieldChange('employeeId', e.target.value)} disabled={!isEditing} /></Grid>
-                  <Grid item xs={12} md={6}><TextField fullWidth label="Phone" value={formData.phone} onChange={(e) => handleFieldChange('phone', e.target.value)} disabled={!isEditing} /></Grid>
+                  <Grid item xs={12} md={6}><TextField fullWidth label="Full Name" required inputProps={{ minLength: 2, maxLength: 120 }} value={formData.name} onChange={(e) => handleFieldChange('name', e.target.value)} disabled={!isEditing} /></Grid>
+                  <Grid item xs={12} md={6}><TextField fullWidth label="Employee ID" required inputProps={{ minLength: 2, maxLength: 30 }} value={formData.employeeId} onChange={(e) => handleFieldChange('employeeId', e.target.value)} disabled={!isEditing} /></Grid>
+                  <Grid item xs={12} md={6}><TextField fullWidth label="Phone" inputProps={{ pattern: '[0-9+()\\-\\s]{7,20}', maxLength: 20 }} value={formData.phone} onChange={(e) => handleFieldChange('phone', e.target.value)} disabled={!isEditing} /></Grid>
                   <Grid item xs={12} md={6}><TextField fullWidth label="Qualification" value={formData.qualification} onChange={(e) => handleFieldChange('qualification', e.target.value)} disabled={!isEditing} /></Grid>
                 </Grid>
               </CardContent>

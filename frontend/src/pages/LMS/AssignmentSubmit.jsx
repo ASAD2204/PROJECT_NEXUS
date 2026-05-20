@@ -286,6 +286,12 @@ const AssignmentSubmit = () => {
     setFileError('');
   };
 
+  const handleDownload = (file) => {
+    const fileId = file.id || file.material_id || file.file_ref_id || file;
+    if (!fileId) return;
+    window.open(`/api/v1/lms/materials/download/${fileId}`, '_blank');
+  };
+
   // Handle submit
   const handleSubmit = async () => {
     setShowConfirmDialog(false);
@@ -294,7 +300,9 @@ const AssignmentSubmit = () => {
 
     try {
       const formData = new FormData();
-      formData.append('file', selectedFiles[0]);
+      selectedFiles.forEach((file) => {
+        formData.append('file', file);
+      });
       formData.append('comments', comments);
       await lmsAPI.submitAssignment(id, formData);
       setUploadProgress(100);
@@ -513,7 +521,7 @@ const AssignmentSubmit = () => {
                             <AttachFile color="primary" />
                           </ListItemIcon>
                           <ListItemText primary={file} />
-                          <IconButton size="small">
+                          <IconButton size="small" onClick={() => handleDownload(file)}>
                             <Download />
                           </IconButton>
                         </ListItem>
@@ -776,7 +784,7 @@ const AssignmentSubmit = () => {
                             primary={file.name || file}
                             secondary={file.size || ''}
                           />
-                          <IconButton size="small">
+                          <IconButton size="small" onClick={() => handleDownload(file.id || file.file_id || file)}>
                             <Download />
                           </IconButton>
                         </ListItem>
@@ -826,6 +834,7 @@ const AssignmentSubmit = () => {
                     <Button
                       variant="outlined"
                       startIcon={<Download />}
+                      onClick={() => handleDownload(assignment.submission_id || previousSubmissions[0]?.id)}
                     >
                       Download Your Submission
                     </Button>
@@ -932,6 +941,7 @@ const AssignmentSubmit = () => {
                     fullWidth
                     variant="outlined"
                     startIcon={<Download />}
+                    onClick={() => handleDownload(assignment.submission_id || previousSubmissions[0]?.id)}
                   >
                     Download Graded Submission
                   </Button>

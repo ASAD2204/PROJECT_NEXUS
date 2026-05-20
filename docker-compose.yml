@@ -300,6 +300,20 @@ services:
     deploy:
       <<: *deploy-default
 
+  sis-consumer:
+    image: nexus/sis-service:latest
+    depends_on:
+      - postgres
+      - kafka
+    restart: unless-stopped
+    command: python -m app.kafka_consumer
+    environment:
+      <<: *postgres-env
+      KAFKA_BROKER: kafka:9092
+    networks: [nexus-network]
+    deploy:
+      <<: *deploy-default
+
   lms-service:
     image: nexus/lms-service:latest
     build: ./backend/services/lms-service

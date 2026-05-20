@@ -6,15 +6,74 @@ from datetime import datetime, time
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from ortools.sat.python import cp_model
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, text
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_current_user, require_role
 from app.models import LmsTimetableSlot, SchedConstraint, LmsCourse, SisFacultyAvailability, SchedTimetableSet
-from app.schemas import ConstraintCreate, ConstraintOut, GenerateOut, GenerateRequest, GeneratedSlot, TimetableSetDetailOut, TimetableSetOut
+from app.schemas import ConstraintCreate, ConstraintOut, GenerateOut, GenerateRequest, GeneratedSlot, TimetableSetDetailOut, TimetableSetOut, TimetableSlotOut
 
 router = APIRouter(prefix="/scheduler", tags=["Scheduler"])
+
+
+@router.get("/my-timetable", response_model=list[TimetableSlotOut])
+def get_my_timetable(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    role = current_user["role"].lower()
+    user_id = current_user["user_id"]
+
+    if role == "student":
+        query = text("""
+            SELECT ts.slot_id, ts.course_id, c.code AS course_code, c.title AS course_title,
+                   ts.day_of_week, ts.start_time, ts.end_time, ts.room_no,
+                   CONCAT(u.first_name, ' ', u.last_name) AS instructor_name
+            FROM lms_timetable_slots ts
+            JOIN lms_courses c ON c.course_id = ts.course_id
+            JOIN sis_enrollments e ON e.course_id = c.course_id
+            JOIN sis_students s ON s.student_id = e.student_id
+            LEFT JOIN sis_faculty f ON f.faculty_id = c.faculty_id
+            LEFT JOIN auth_users u ON u.user_id = f.user_id
+            WHERE s.user_id = :user_id AND e.status = 'Enrolled'
+        """)
+    elif role in ("teacher", "faculty"):
+        query = text("""
+            SELECT ts.slot_id, ts.course_id, c.code AS course_code, c.title AS course_title,
+                   ts.day_of_week, ts.start_time, ts.end_time, ts.room_no,
+                   CONCAT(u.first_name, ' ', u.last_name) AS instructor_name
+            FROM lms_timetable_slots ts
+            JOIN lms_courses c ON c.course_id = ts.course_id
+            JOIN sis_faculty f ON f.faculty_id = c.faculty_id
+            JOIN auth_users u ON u.user_id = f.user_id
+            WHERE f.user_id = :user_id
+        """)
+    else:
+        # Admin or others see nothing here, they use /published
+        return []
+
+    rows = db.execute(query, {"user_id": user_id}).mappings().all()
+    return rows
+
+
+@router.get("/published", response_model=list[TimetableSlotOut])
+def get_published_timetable(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_role("admin", "hod")),
+):
+    query = text("""
+        SELECT ts.slot_id, ts.course_id, c.code AS course_code, c.title AS course_title,
+               ts.day_of_week, ts.start_time, ts.end_time, ts.room_no,
+               CONCAT(u.first_name, ' ', u.last_name) AS instructor_name
+        FROM lms_timetable_slots ts
+        JOIN lms_courses c ON c.course_id = ts.course_id
+        LEFT JOIN sis_faculty f ON f.faculty_id = c.faculty_id
+        LEFT JOIN auth_users u ON u.user_id = f.user_id
+        ORDER BY ts.day_of_week, ts.start_time
+    """)
+    rows = db.execute(query).mappings().all()
+    return rows
 
 
 def _serialize_slot(slot: GeneratedSlot) -> dict:
@@ -258,6 +317,24 @@ def generate_timetable(
                             day_vars.append(x[(cid, l_num, idx)])
                 if day_vars:
                     model.Add(sum(day_vars) <= payload.max_classes_per_day)
+
+    # --- SOFT CONSTRAINTS (OBJECTIVES) ---
+    # 1. Prefer morning slots (minimize hour index)
+    # 2. Minimize late slots (after 4 PM)
+    penalties = []
+    for (cid, l_num, idx), var in x.items():
+        day, s_min, e_min = candidate_slots[idx]
+        start_hour = s_min // 60
+        
+        # Heuristic: Earlier is better
+        # We multiply by 10 to give it higher priority than other soft constraints
+        penalties.append(var * (start_hour * 10))
+
+        # Extra penalty for slots after 4 PM (16:00)
+        if start_hour >= 16:
+            penalties.append(var * 100)
+
+    model.Minimize(sum(penalties))
 
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = 10.0

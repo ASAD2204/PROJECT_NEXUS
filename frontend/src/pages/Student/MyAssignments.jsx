@@ -18,6 +18,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useSnackbar } from '../../contexts/SnackbarContext';
 import {
   Box,
   Card,
@@ -48,6 +49,7 @@ import { lmsAPI } from '../../api/lms';
 const MyAssignments = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { showSnackbar } = useSnackbar();
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -68,11 +70,14 @@ const MyAssignments = () => {
           obtainedMarks: a.obtained_marks || a.obtainedMarks,
           description: a.description || '',
         })));
-      } catch { /* empty */ }
+      } catch (err) {
+        console.error(err);
+        showSnackbar('Failed to load assignments', 'error');
+      }
       setLoading(false);
     };
     fetchAssignments();
-  }, []);
+  }, [showSnackbar]);
 
   const stats = {
     total: assignments.length,

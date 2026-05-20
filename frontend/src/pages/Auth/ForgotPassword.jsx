@@ -93,6 +93,7 @@ const ForgotPassword = () => {
             sx={{ mb: 3 }}
             placeholder="your.email@university.edu"
             required
+            inputProps={{ maxLength: 255 }}
           />
 
           <Button

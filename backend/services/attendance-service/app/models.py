@@ -12,6 +12,8 @@ class AuthUser(Base):
 
     user_id = Column(UUID(as_uuid=True), primary_key=True)
     email = Column(String(255), unique=True)
+    first_name = Column(String(100), nullable=True)
+    last_name = Column(String(100), nullable=True)
     is_active = Column(Boolean, default=True)
 
 

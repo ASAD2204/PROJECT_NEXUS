@@ -61,17 +61,25 @@ async def get_file(file_id: str):
 
 async def _resolve_user_names(user_ids: List[str]) -> dict:
     """Helper to fetch multiple user names from auth-service."""
+    import uuid
     user_map = {}
     if not user_ids:
         return user_map
     
-    # Filter out None and ensure they are strings
-    valid_ids = [str(uid) for uid in user_ids if uid is not None]
+    # Filter out None, non-UUIDs (like MongoDB IDs or 'system') and ensure they are strings
+    valid_ids = []
+    for uid in user_ids:
+        if uid is None: continue
+        try:
+            # Check if it's a valid UUID
+            uuid.UUID(str(uid))
+            valid_ids.append(str(uid))
+        except (ValueError, TypeError):
+            # Not a UUID, skip calling auth-service for this ID
+            continue
+            
     if not valid_ids:
         return user_map
-
-    # Create lookup map for lowercase ID -> original ID
-    id_lookup = {uid.lower(): uid for uid in valid_ids}
     
     async with httpx.AsyncClient() as client:
         try:
@@ -83,11 +91,7 @@ async def _resolve_user_names(user_ids: List[str]) -> dict:
             if resp.status_code == 200:
                 for u_data in resp.json():
                     name = f"{u_data.get('first_name', '')} {u_data.get('last_name', '')}".strip() or u_data["email"]
-                    resp_id_low = str(u_data["user_id"]).lower()
-                    if resp_id_low in id_lookup:
-                        user_map[id_lookup[resp_id_low]] = name
-                    else:
-                        user_map[resp_id_low] = name
+                    user_map[str(u_data["user_id"])] = name
             else:
                 print(f"Auth service bulk lookup failed: {resp.status_code} - {resp.text}")
         except Exception as e:

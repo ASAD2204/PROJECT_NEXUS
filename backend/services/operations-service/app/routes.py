@@ -273,8 +273,55 @@ async def list_grievances(
     return out
 
 
+@router.post("/grievances/escalate-overdue", response_model=MessageResponse)
+async def escalate_overdue_grievances(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_role("admin", "hod")),
+):
+    """
+    Find all Open/In Progress grievances with high priority/urgent status 
+    created more than 48 hours ago and mark them as is_escalated=True.
+    """
+    from datetime import timedelta
+    cutoff = datetime.utcnow() - timedelta(hours=48)
+    
+    overdue_query = db.query(OpsGrievance).filter(
+        OpsGrievance.status.in_(["Open", "In Progress"]),
+        OpsGrievance.is_escalated == False,
+        (OpsGrievance.is_urgent == True) | (OpsGrievance.priority == "High"),
+        OpsGrievance.created_at <= cutoff
+    )
+    
+    overdue_tickets = overdue_query.all()
+    count = 0
+    for ticket in overdue_tickets:
+        ticket.is_escalated = True
+        ticket.priority = "Escalated"
+        count += 1
+        
+        # Optionally, push a notification to HOD
+        try:
+            async with httpx.AsyncClient() as client:
+                await client.post(
+                    f"{settings.NOTIFICATION_SERVICE_URL}/api/v1/notify/internal/notifications",
+                    json={
+                        "user_id": str(current_user["user_id"]), # Notify the triggerer or HOD
+                        "title": "Grievance Escalated",
+                        "message": f"Ticket #{ticket.ticket_id} has been escalated due to 48h inactivity.",
+                        "type": "escalation",
+                        "priority": "high"
+                    },
+                    headers={"X-Internal-Api-Key": settings.INTERNAL_API_KEY},
+                    timeout=2.0
+                )
+        except: pass
+
+    db.commit()
+    return MessageResponse(message=f"Successfully escalated {count} overdue grievances.")
+
+
 @router.put("/grievances/{ticket_id}/status", response_model=GrievanceOut)
-def update_grievance_status(
+async def update_grievance_status(
     ticket_id: int,
     payload: GrievanceStatusUpdate,
     db: Session = Depends(get_db),
@@ -296,6 +343,28 @@ def update_grievance_status(
 
     db.commit()
     db.refresh(grievance)
+
+    # Resolve Identities to prevent schema validation error
+    author_ids = [str(c.author_id) for c in grievance.comments]
+    identities = await _resolve_identities(list(set(author_ids)))
+    
+    for c in grievance.comments:
+        ident = identities.get(str(c.author_id), {})
+        c.author_name = ident.get("full_name") or ident.get("name") or "User"
+        c.author_avatar = ident.get("avatar")
+        c.user_id = str(c.author_id)
+        c.comment = c.text
+
+    # Resolve student info
+    student_data = db.query(SisStudent, AuthUser).join(
+        AuthUser, SisStudent.user_id == AuthUser.user_id
+    ).filter(SisStudent.student_id == grievance.student_id).first()
+    
+    if student_data:
+        s, u = student_data
+        grievance.student_name = f"{u.first_name or ''} {u.last_name or ''}".strip() or "Unknown Student"
+        grievance.student_roll_no = s.roll_no or "N/A"
+
     return grievance
 
 
@@ -520,11 +589,26 @@ async def update_announcement(
 @router.delete("/announcements/{announcement_id}", response_model=MessageResponse)
 async def delete_announcement(
     announcement_id: str,
-    current_user: dict = Depends(require_role("admin")),
+    current_user: dict = Depends(require_role("admin", "faculty")),
 ):
-    result = await announcements_collection.delete_one({"_id": ObjectId(announcement_id)})
+    try:
+        obj_id = ObjectId(announcement_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+
+    existing = await announcements_collection.find_one({"_id": obj_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Announcement not found")
+
+    # Authorize: Admin can delete anything, Faculty can delete only their own
+    if current_user["role"] == "faculty":
+        if str(existing.get("author_id")) != str(current_user["user_id"]):
+            raise HTTPException(status_code=403, detail="You can only delete your own announcements")
+
+    result = await announcements_collection.delete_one({"_id": obj_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Announcement not found")
+    
     await _invalidate_query_cache()
     return MessageResponse(message="Announcement deleted successfully")
 

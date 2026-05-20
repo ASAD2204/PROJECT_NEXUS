@@ -9,6 +9,8 @@ import client from './client';
 export const aiAPI = {
   chat: (message, sessionId, attachments = null) =>
     client.post('/ai/chat', { query: message, session_id: sessionId, attachments }),
+  recoveryChat: (message, email, sessionId) =>
+    client.post('/ai/recovery/chat', { query: message, email: email, session_id: sessionId }),
   getHistory: (sessionId) =>
     client.get('/ai/chat/history', {
       params: sessionId ? { session_id: sessionId } : undefined,

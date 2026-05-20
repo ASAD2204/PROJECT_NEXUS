@@ -491,6 +491,7 @@ const Grievances = () => {
                             placeholder="Type your reply here..."
                             value={replyText}
                             onChange={(e) => setReplyText(e.target.value)}
+                            inputProps={{ maxLength: 2000 }}
                             sx={{ 
                               '& .MuiOutlinedInput-root': {
                                 borderRadius: 2,
@@ -634,6 +635,7 @@ const Grievances = () => {
                 value={form.subject}
                 onChange={(e) => setForm({ ...form, subject: e.target.value })}
                 required
+                inputProps={{ minLength: 3, maxLength: 200 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
@@ -650,6 +652,8 @@ const Grievances = () => {
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 required
+                inputProps={{ minLength: 10, maxLength: 4000 }}
+                helperText={`${form.description.length}/4000 characters`}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,

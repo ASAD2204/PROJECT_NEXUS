@@ -112,8 +112,17 @@ const EnhancedGrievances = () => {
   };
 
   const handleSubmitGrievance = async () => {
+    const hasRequiredFields = Boolean(newGrievance.category) && Boolean(newGrievance.priority) && Boolean(newGrievance.subject?.trim()) && Boolean(newGrievance.description?.trim());
+    if (!hasRequiredFields) {
+      return;
+    }
+
     try {
-      await opsAPI.createGrievance(newGrievance);
+      await opsAPI.createGrievance({
+        ...newGrievance,
+        subject: newGrievance.subject.trim(),
+        description: newGrievance.description.trim(),
+      });
       const res = await opsAPI.getGrievances();
       setGrievances(res.data?.grievances || res.data || []);
       setOpenDialog(false);
@@ -407,7 +416,7 @@ const EnhancedGrievances = () => {
             <Stack spacing={3} sx={{ mt: 1 }}>
               <Grid container spacing={2}>
                 <Grid size={{ xs: 6 }}>
-                  <FormControl fullWidth>
+                  <FormControl fullWidth required>
                     <InputLabel>Category</InputLabel>
                     <Select
                       value={newGrievance.category}
@@ -425,7 +434,7 @@ const EnhancedGrievances = () => {
                   </FormControl>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
-                  <FormControl fullWidth>
+                  <FormControl fullWidth required>
                     <InputLabel>Priority</InputLabel>
                     <Select
                       value={newGrievance.priority}
@@ -447,10 +456,12 @@ const EnhancedGrievances = () => {
               <TextField
                 fullWidth
                 label="Subject"
+                required
                 value={newGrievance.subject}
                 onChange={(e) =>
                   setNewGrievance({ ...newGrievance, subject: e.target.value })
                 }
+                inputProps={{ minLength: 3, maxLength: 180 }}
               />
 
               <TextField
@@ -458,11 +469,13 @@ const EnhancedGrievances = () => {
                 multiline
                 rows={6}
                 label="Description"
+                required
                 placeholder="Describe your grievance in detail..."
                 value={newGrievance.description}
                 onChange={(e) =>
                   setNewGrievance({ ...newGrievance, description: e.target.value })
                 }
+                inputProps={{ minLength: 10, maxLength: 4000 }}
               />
 
               <Box>

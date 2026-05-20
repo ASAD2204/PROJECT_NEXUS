@@ -68,6 +68,14 @@ import { pageTransition } from '../../utils/animations';
 import { analyticsAPI } from '../../api/analytics';
 import { authAPI } from '../../api/auth';
 
+import {
+  EMAIL_REGEX,
+  PHONE_REGEX,
+  NAME_REGEX,
+  filterName,
+  filterPhone,
+} from '../../utils/validation';
+
 const AdminProfile = () => {
   const { user } = useAuth();
   const { showSnackbar } = useSnackbar();
@@ -164,6 +172,17 @@ const AdminProfile = () => {
   };
 
   const handleSave = async () => {
+    const hasName = Boolean(formData.name?.trim());
+    const hasValidEmail = Boolean(formData.email?.trim()) && EMAIL_REGEX.test(formData.email.trim());
+    const hasValidPhone = !formData.phone?.trim() || PHONE_REGEX.test(formData.phone.trim());
+
+    if (!hasName || !hasValidEmail || !hasValidPhone) {
+      if (!hasName) showSnackbar('Name is required and must contain only letters.', 'error');
+      else if (!hasValidEmail) showSnackbar('Please provide a valid email address.', 'error');
+      else if (!hasValidPhone) showSnackbar('Phone must contain only digits, +, -, (, ) — 7 to 20 chars.', 'error');
+      return;
+    }
+
     try {
       setSaving(true);
       const nameParts = formData.name.trim().split(/\s+/).filter(Boolean);
@@ -370,9 +389,12 @@ const AdminProfile = () => {
                     <TextField
                       fullWidth
                       label="Full Name"
+                      required
                       value={formData.name}
-                      onChange={(e) => handleFieldChange('name', e.target.value)}
+                      onChange={(e) => handleFieldChange('name', filterName(e.target.value))}
                       disabled={!isEditing}
+                      inputProps={{ minLength: 2, maxLength: 120 }}
+                      helperText={isEditing ? 'Only letters, spaces, hyphens, dots allowed' : ''}
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
@@ -410,8 +432,10 @@ const AdminProfile = () => {
                       fullWidth
                       label="Phone Number"
                       value={formData.phone}
-                      onChange={(e) => handleFieldChange('phone', e.target.value)}
+                      onChange={(e) => handleFieldChange('phone', filterPhone(e.target.value))}
                       disabled={!isEditing}
+                      inputProps={{ maxLength: 20 }}
+                      helperText={isEditing ? 'Digits, +, -, (, ) only — 7 to 20 chars' : ''}
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">

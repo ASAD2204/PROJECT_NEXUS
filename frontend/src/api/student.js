@@ -125,6 +125,7 @@ const normalizeCourse = (enrollment, course) => {
     capacity: course?.capacity ?? null,
     status: enrollment?.status || 'Enrolled',
     enrollmentStatus: enrollment?.status || 'Enrolled',
+    semesterId: course?.semester_id ?? course?.semesterId ?? enrollment?.semester_id ?? enrollment?.semesterId ?? null,
     finalGradePoints: enrollment?.final_grade_points ?? enrollment?.finalGradePoints ?? null,
     final_grade_points: enrollment?.final_grade_points ?? enrollment?.finalGradePoints ?? null,
     creditHours: course.credit_hours ?? course.creditHours ?? 0,

@@ -16,6 +16,19 @@ import {
   IconButton,
   alpha,
   Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Avatar,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import {
@@ -28,6 +41,7 @@ import {
   Print,
   Share,
   PictureAsPdf,
+  Notifications,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { 
@@ -49,6 +63,7 @@ import StatCard from '../../components/Common/StatCard';
 import { pageTransition } from '../../utils/animations';
 import { analyticsAPI } from '../../api/analytics';
 import { sisAPI } from '../../api/sis';
+import { opsAPI } from '../../api/ops';
 
 const AdminReports = () => {
   const theme = useTheme();
@@ -59,6 +74,17 @@ const AdminReports = () => {
   const [lastGeneratedAt, setLastGeneratedAt] = useState('');
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
   const [dashboardData, setDashboardData] = useState(null);
+  const [students, setStudents] = useState([]);
+  const [programs, setPrograms] = useState([]);
+  const [studentPage, setStudentPage] = useState(0);
+  const [studentRowsPerPage, setStudentRowsPerPage] = useState(5);
+
+  const [notifyDialogOpen, setNotifyDialogOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [notificationTitle, setNotificationTitle] = useState('');
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [notificationType, setNotificationType] = useState('info');
+  const [notificationPriority, setNotificationPriority] = useState('medium');
 
   const normalizeText = (value) => String(value || '').trim().toLowerCase();
 
@@ -111,9 +137,11 @@ const AdminReports = () => {
   };
 
   const fetchReports = async () => {
-    const [analyticsRes, deptRes] = await Promise.allSettled([
+    const [analyticsRes, deptRes, studentsRes, programsRes] = await Promise.allSettled([
       analyticsAPI.getAdminDashboard(),
       sisAPI.getDepartments(),
+      sisAPI.getStudents(),
+      sisAPI.getPrograms(),
     ]);
 
     const dashboard = analyticsRes.status === 'fulfilled' ? analyticsRes.value.data : null;
@@ -123,6 +151,15 @@ const AdminReports = () => {
 
     setDepartments(Array.isArray(departmentRows) ? departmentRows : []);
     setDashboardData(dashboard);
+
+    if (studentsRes.status === 'fulfilled') {
+      const sData = studentsRes.value.data?.students || studentsRes.value.data || [];
+      setStudents(sData);
+    }
+    if (programsRes.status === 'fulfilled') {
+      const pData = programsRes.value.data?.programs || programsRes.value.data || [];
+      setPrograms(pData);
+    }
 
     if (!dashboard) {
       setToast({ open: true, message: 'Unable to load analytics dashboard data.', severity: 'error' });
@@ -194,6 +231,60 @@ const AdminReports = () => {
     const failureCount = [analyticsRes, deptRes].filter((result) => result.status === 'rejected').length;
     if (failureCount > 0) {
       setToast({ open: true, message: 'Loaded report data with partial failures.', severity: 'warning' });
+    }
+  };
+
+  const getProgramName = (programId) => {
+    const prog = programs.find((p) => p.program_id === programId);
+    return prog ? (prog.name || prog.code) : 'N/A';
+  };
+
+  const handleOpenNotifyDialog = (student) => {
+    setSelectedStudent(student);
+    
+    let defaultTitle = 'Academic Alert';
+    let defaultMessage = `Dear ${student.full_name || student.name || 'Student'},\n\nI am writing to you from the administration office regarding your current academic standing. `;
+    let defaultType = 'info';
+    let defaultPriority = 'medium';
+
+    const risk = student.current_risk_status || student.riskStatus;
+    if (risk === 'Red') {
+      defaultTitle = 'Critical Academic Risk Warning';
+      defaultMessage = `Dear ${student.full_name || student.name || 'Student'},\n\nOur analytics systems have flagged your academic standing as Critical High Risk. Your recent assessment performance or attendance requires immediate intervention. Please schedule an appointment with your academic advisor or department head immediately to discuss a recovery strategy.\n\nSincerely,\nAdministration Office`;
+      defaultType = 'error';
+      defaultPriority = 'high';
+    } else if (risk === 'Yellow') {
+      defaultTitle = 'Academic Performance Warning';
+      defaultMessage = `Dear ${student.full_name || student.name || 'Student'},\n\nWe are reaching out to inform you that your academic standing is currently classified as Medium Risk due to a decline in attendance or quiz scores. We highly recommend visiting your department head or course instructors during office hours to prevent further issues.\n\nSincerely,\nAdministration Office`;
+      defaultType = 'warning';
+      defaultPriority = 'medium';
+    }
+
+    setNotificationTitle(defaultTitle);
+    setNotificationMessage(defaultMessage);
+    setNotificationType(defaultType);
+    setNotificationPriority(defaultPriority);
+    setNotifyDialogOpen(true);
+  };
+
+  const handleSendNotification = async () => {
+    if (!selectedStudent || !selectedStudent.user_id) {
+      setToast({ open: true, message: 'Cannot identify student user account. Unable to notify.', severity: 'error' });
+      return;
+    }
+    try {
+      await opsAPI.createNotification({
+        user_id: selectedStudent.user_id,
+        title: notificationTitle,
+        message: notificationMessage,
+        type: notificationType,
+        priority: notificationPriority
+      });
+      setToast({ open: true, message: `Notification successfully dispatched to ${selectedStudent.full_name}!`, severity: 'success' });
+      setNotifyDialogOpen(false);
+    } catch (e) {
+      console.error(e);
+      setToast({ open: true, message: 'Failed to send notification to student.', severity: 'error' });
     }
   };
 
@@ -442,6 +533,101 @@ const AdminReports = () => {
             </Grid>
           ))}
         </Grid>
+
+        {/* Academic Report - At-Risk Students Registry Table */}
+        {reportType === 'academic' && (
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Box>
+                  <Typography variant="h6" fontWeight="bold">
+                    At-Risk Students Registry
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    ML-predicted and rule-based academic risk indicators
+                  </Typography>
+                </Box>
+              </Box>
+
+              <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                <Table>
+                  <TableHead sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Student Name</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Roll Number</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Department/Program</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>CGPA</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Risk Level</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }} align="center">Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {students
+                      .filter(s => s.current_risk_status === 'Red' || s.current_risk_status === 'Yellow')
+                      .slice(studentPage * studentRowsPerPage, studentPage * studentRowsPerPage + studentRowsPerPage)
+                      .map((student) => {
+                        const isRed = student.current_risk_status === 'Red';
+                        return (
+                          <TableRow key={student.student_id} hover>
+                            <TableCell>{student.full_name || `Student #${student.student_id}`}</TableCell>
+                            <TableCell>{student.roll_no || 'N/A'}</TableCell>
+                            <TableCell>{getProgramName(student.program_id)}</TableCell>
+                            <TableCell>
+                              <Chip 
+                                label={student.cgpa ? Number(student.cgpa).toFixed(2) : '0.00'} 
+                                size="small" 
+                                variant="outlined"
+                                color="primary"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Chip 
+                                label={student.current_risk_status} 
+                                size="small" 
+                                color={isRed ? 'error' : 'warning'} 
+                                sx={{ fontWeight: 'bold' }}
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              <IconButton 
+                                color="primary" 
+                                onClick={() => handleOpenNotifyDialog(student)}
+                                title="Notify Student"
+                              >
+                                <Notifications />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    {students.filter(s => s.current_risk_status === 'Red' || s.current_risk_status === 'Yellow').length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            No at-risk students found.
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              <TablePagination
+                component="div"
+                count={students.filter(s => s.current_risk_status === 'Red' || s.current_risk_status === 'Yellow').length}
+                page={studentPage}
+                onPageChange={(e, newPage) => setStudentPage(newPage)}
+                rowsPerPage={studentRowsPerPage}
+                onRowsPerPageChange={(e) => {
+                  setStudentRowsPerPage(parseInt(e.target.value, 10));
+                  setStudentPage(0);
+                }}
+                rowsPerPageOptions={[5, 10, 25]}
+              />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Charts */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
@@ -809,6 +995,99 @@ const AdminReports = () => {
             </Stack>
           </CardContent>
         </Card>
+
+        {notifyDialogOpen && (
+          <Dialog
+            open={notifyDialogOpen}
+            onClose={() => setNotifyDialogOpen(false)}
+            maxWidth="sm"
+            fullWidth
+            PaperProps={{
+              sx: {
+                borderRadius: 3,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+                backdropFilter: 'blur(10px)',
+              }
+            }}
+          >
+            <DialogTitle sx={{ fontWeight: 'bold', pb: 1 }}>
+              Dispatch Warning Alert to Student
+            </DialogTitle>
+            <DialogContent>
+              {selectedStudent && (
+                <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, borderRadius: 2, bgcolor: alpha(theme.palette.primary.main, 0.08) }}>
+                    <Box>
+                      <Typography variant="subtitle2" fontWeight="bold">
+                        {selectedStudent.full_name}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {selectedStudent.roll_no} • CGPA: {selectedStudent.cgpa ? Number(selectedStudent.cgpa).toFixed(2) : '0.00'}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ ml: 'auto' }}>
+                      <Chip 
+                        label={`Risk: ${selectedStudent.current_risk_status}`} 
+                        size="small" 
+                        color={selectedStudent.current_risk_status === 'Red' ? 'error' : 'warning'} 
+                      />
+                    </Box>
+                  </Box>
+
+                  <TextField
+                    fullWidth
+                    label="Alert Title"
+                    variant="outlined"
+                    value={notificationTitle}
+                    onChange={(e) => setNotificationTitle(e.target.value)}
+                  />
+
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={6}
+                    label="Alert Message"
+                    variant="outlined"
+                    value={notificationMessage}
+                    onChange={(e) => setNotificationMessage(e.target.value)}
+                  />
+
+                  <Stack direction="row" spacing={2}>
+                    <FormControl size="small" fullWidth>
+                      <InputLabel>Type</InputLabel>
+                      <Select
+                        value={notificationType}
+                        label="Type"
+                        onChange={(e) => setNotificationType(e.target.value)}
+                      >
+                        <MenuItem value="info">Info</MenuItem>
+                        <MenuItem value="warning">Warning</MenuItem>
+                        <MenuItem value="error">Error</MenuItem>
+                        <MenuItem value="success">Success</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <FormControl size="small" fullWidth>
+                      <InputLabel>Priority</InputLabel>
+                      <Select
+                        value={notificationPriority}
+                        label="Priority"
+                        onChange={(e) => setNotificationPriority(e.target.value)}
+                      >
+                        <MenuItem value="low">Low</MenuItem>
+                        <MenuItem value="medium">Medium</MenuItem>
+                        <MenuItem value="high">High</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Stack>
+                </Box>
+              )}
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2 }}>
+              <Button onClick={() => setNotifyDialogOpen(false)} color="inherit">Cancel</Button>
+              <Button onClick={handleSendNotification} variant="contained" color="primary">Dispatch Warning</Button>
+            </DialogActions>
+          </Dialog>
+        )}
 
         {toast.open && (
           <Alert

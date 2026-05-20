@@ -15,6 +15,14 @@ class ChatRequest(BaseModel):
     attachments: Optional[list[dict]] = Field(None, description="List of file attachments")
 
 
+class RecoveryChatRequest(BaseModel):
+    """Incoming chat request for password recovery."""
+
+    query: str = Field(..., min_length=1, max_length=4000, description="User's question")
+    session_id: Optional[str] = Field(None, description="Existing session ID to continue a conversation")
+    email: Optional[str] = Field(None, description="Email the user is trying to recover")
+
+
 class ChatMessageOut(BaseModel):
     """Single message returned in a chat history response."""
 

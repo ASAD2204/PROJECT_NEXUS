@@ -252,6 +252,7 @@ const Login = () => {
                 fullWidth 
                 label="Email Address" 
                 type="email" 
+                required
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
                 sx={{ 
@@ -271,11 +272,13 @@ const Login = () => {
                   },
                 }} 
                 placeholder="user@university.edu" 
+                inputProps={{ maxLength: 254 }}
               />
               <TextField 
                 fullWidth 
                 label="Password" 
                 type="password" 
+                required
                 value={password} 
                 onChange={(e) => setPassword(e.target.value)} 
                 sx={{ 
@@ -295,6 +298,7 @@ const Login = () => {
                   },
                 }} 
                 placeholder="Enter your password" 
+                inputProps={{ minLength: 8, maxLength: 128 }}
               />
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>

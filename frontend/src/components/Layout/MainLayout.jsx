@@ -22,9 +22,11 @@ import {
   CssBaseline,
   Fab,
   Badge,
+  Tooltip,
 } from '@mui/material';
 import {
-  ChatBubbleOutline,
+  SmartToy,
+  AutoAwesome,
 } from '@mui/icons-material';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -39,15 +41,6 @@ const DRAWER_WIDTH = 260;
  * Top-level application layout used by the main route. Composes the persistent
  * `TopBar` and `Sidebar`, renders nested routes via `Outlet`, and provides a
  * small floating `ChatWidget` with contextual greeting messages.
- *
- * Responsibilities:
- * - Handle mobile drawer toggle state and chat widget open state.
- * - Compute a context-aware greeting for the chat widget based on current route.
- * - Provide the main content container where page routes mount (`<Outlet/>`).
- *
- * Notes:
- * - `DRAWER_WIDTH` controls the desktop sidebar width and is passed to `TopBar`/`Sidebar`.
- * - Chat widget is hidden when the user navigates to the full chat portal (`/chat`).
  */
 
 const MainLayout = () => {
@@ -101,37 +94,44 @@ const MainLayout = () => {
           overflowY: 'auto',
         }}
       >
-        {/* Primary route outlet: each page component mounts here via react-router */}
         <Outlet />
       </Box>
 
-      {/* Floating Chat Widget - Hidden on Chat Portal */}
+      {/* Floating AI Assistant FAB - Hidden on Chat Portal */}
       {!location.pathname.startsWith('/chat') && !chatOpen && (
-        <Badge
-          color="error"
-          badgeContent={unreadCount}
-          sx={{
-            position: 'fixed',
-            right: 24,
-            bottom: 24,
-            zIndex: 1300,
-          }}
-        >
-          <Fab
-            color="primary"
-            onClick={handleChatToggle}
+        <Tooltip title="Ask Nexus AI" placement="left">
+          <Badge
+            color="secondary"
+            overlap="circular"
+            badgeContent={<AutoAwesome sx={{ fontSize: 14 }} />}
             sx={{
-              '@keyframes pulse': {
-                '0%': { boxShadow: '0 0 0 0 rgba(25,118,210,0.4)' },
-                '70%': { boxShadow: '0 0 0 12px rgba(25,118,210,0)' },
-                '100%': { boxShadow: '0 0 0 0 rgba(25,118,210,0)' },
-              },
-              animation: unreadCount > 0 ? 'pulse 2s infinite' : 'none',
+              position: 'fixed',
+              right: 24,
+              bottom: 24,
+              zIndex: 1300,
             }}
           >
-            <ChatBubbleOutline />
-          </Fab>
-        </Badge>
+            <Fab
+              color="primary"
+              onClick={handleChatToggle}
+              sx={{
+                background: 'linear-gradient(135deg, #128C7E 0%, #075E54 100%)',
+                color: 'white',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #075E54 0%, #128C7E 100%)',
+                },
+                '@keyframes pulse': {
+                  '0%': { boxShadow: '0 0 0 0 rgba(18,140,126,0.4)' },
+                  '70%': { boxShadow: '0 0 0 15px rgba(18,140,126,0)' },
+                  '100%': { boxShadow: '0 0 0 0 rgba(18,140,126,0)' },
+                },
+                animation: unreadCount > 0 ? 'pulse 2s infinite' : 'none',
+              }}
+            >
+              <SmartToy />
+            </Fab>
+          </Badge>
+        </Tooltip>
       )}
 
       {/* Chat Widget */}

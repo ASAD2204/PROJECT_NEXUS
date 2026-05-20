@@ -114,10 +114,10 @@ def _compute_student_features(db: Session, student_id: int, course_id: int = Non
     cgpa = _student_cgpa(db, student_id)
 
     return StudentRiskFeatures(
-        attendance_pct=round(attendance_pct, 2),
-        avg_quiz_score=round(avg_quiz_score, 2),
-        assignment_submission_rate=round(submission_rate, 2),
-        cgpa=round(cgpa, 2),
+        attendance_pct=round(min(100.0, max(0.0, attendance_pct)), 2),
+        avg_quiz_score=round(min(100.0, max(0.0, avg_quiz_score)), 2),
+        assignment_submission_rate=round(min(100.0, max(0.0, submission_rate)), 2),
+        cgpa=round(min(4.0, max(0.0, cgpa)), 2),
     )
 
 
@@ -234,18 +234,16 @@ async def admin_dashboard(
     avg_cgpa = float(avg_cgpa_result) if avg_cgpa_result else 0.0
 
     # Monthly Enrollment (Current Year 2026)
-    # Note: sis_students doesn't have a created_at, using student_id as proxy or assuming data seeding is sequential.
-    # For correctness in a real system, we'd use a created_at column. 
-    # Here we will simulate a realistic distribution if timestamp is missing, 
-    # but try to query fin_transactions for revenue which HAS a timestamp.
-    
     monthly_enrollment = [0] * 6 # Jan to Jun
-    # Since sis_students lacks a timestamp, we'll use a semi-random but stable distribution 
-    # based on student_id to avoid hardcoding if possible, or leave as 0 if no better source.
-    # Actually, let's just use the total and distribute it for now to keep it "live".
-    base = total_students // 6
-    for i in range(6):
-        monthly_enrollment[i] = base + (i * 2)
+    enrollment_data = db.query(
+        func.extract('month', SisStudent.created_at).label('month'),
+        func.count(SisStudent.student_id).label('total')
+    ).filter(func.extract('year', SisStudent.created_at) == 2026).group_by('month').all()
+
+    for row in enrollment_data:
+        m = int(row.month)
+        if 1 <= m <= 6:
+            monthly_enrollment[m-1] = int(row.total or 0)
 
     monthly_revenue = [0.0] * 6
     revenue_data = db.query(
@@ -339,6 +337,14 @@ async def faculty_dashboard(
         pending_assign = db.query(LmsSubmission).join(LmsAssignment).filter(LmsAssignment.course_id == course.course_id, LmsSubmission.marks_obtained.is_(None)).count()
         total_pending += pending_assign
 
+        # Avg grade (exams)
+        exam_result = db.query(
+            func.avg((func.coalesce(SisEnrollment.midterm_marks, 0) + 
+                      func.coalesce(SisEnrollment.finalterm_marks, 0) + 
+                      func.coalesce(SisEnrollment.sessional_marks, 0)) / 3.0)
+        ).filter(SisEnrollment.course_id == course.course_id).scalar()
+        avg_exam = float(exam_result) if exam_result else 0.0
+
         # At-risk count
         risk_count = 0
         enrollments = db.query(SisEnrollment).filter(SisEnrollment.course_id == course.course_id).all()
@@ -355,6 +361,7 @@ async def faculty_dashboard(
                 avg_attendance_pct=round(avg_att, 2),
                 avg_quiz_score=round(avg_quiz, 2),
                 avg_assignment_score=round(avg_assign, 2),
+                avg_grade=round(avg_exam, 2),
                 at_risk_count=risk_count,
                 pending_assignments=pending_assign
             )

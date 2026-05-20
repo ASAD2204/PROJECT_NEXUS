@@ -149,9 +149,18 @@ class LLMManager:
         user_message: str,
         temperature: float = 0.3,
         max_tokens: int = 2048,
+        attachments: Optional[list[str]] = None,
     ) -> str:
-        """Generate text — tries Groq first, falls back to Gemini."""
-        # Try Groq
+        """Generate text — tries Groq first (text only), falls back to Gemini (multi-modal support)."""
+        # If there are attachments, Gemini is required for vision capabilities
+        if attachments:
+            if self._gemini_pool.size:
+                result = await self._try_gemini_gen(system_prompt, user_message, temperature, attachments)
+                if result:
+                    return result
+            return "Multi-modal analysis is currently unavailable (Gemini keys exhausted)."
+
+        # Try Groq for standard text
         if self._groq_pool.size:
             result = await self._try_groq(system_prompt, user_message, temperature, max_tokens)
             if result:
@@ -211,6 +220,7 @@ class LLMManager:
 
     async def _try_gemini_gen(
         self, system_prompt: str, user_message: str, temperature: float,
+        attachments: Optional[list[str]] = None,
     ) -> Optional[str]:
         for _attempt in range(min(self._gemini_pool.size, 3)):
             key = self._gemini_pool.next()
@@ -219,7 +229,7 @@ class LLMManager:
             try:
                 return await asyncio.to_thread(
                     self._gemini_generate_sync,
-                    key, system_prompt, user_message, temperature,
+                    key, system_prompt, user_message, temperature, attachments
                 )
             except Exception as exc:
                 err_str = str(exc).lower()
@@ -234,14 +244,34 @@ class LLMManager:
     @staticmethod
     def _gemini_generate_sync(
         api_key: str, system_prompt: str, user_message: str, temperature: float,
+        attachments: Optional[list[str]] = None,
     ) -> str:
         import google.generativeai as genai
+        import base64
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(
             "gemini-2.0-flash",
             generation_config={"temperature": temperature},
         )
-        response = model.generate_content([system_prompt, user_message])
+        
+        content_parts = [system_prompt, user_message]
+        
+        # Handle Multi-modal Attachments (Images)
+        if attachments:
+            for attach in attachments:
+                try:
+                    if attach.startswith("data:image"):
+                        # Handle Data URL
+                        header, encoded = attach.split(",", 1)
+                        mime_type = header.split(";")[0].split(":")[1]
+                        img_data = base64.b64decode(encoded)
+                        content_parts.append({"mime_type": mime_type, "data": img_data})
+                    elif attach.startswith(("http://", "https://")):
+                        content_parts.append(f"[Attached Image URL: {attach}]")
+                except Exception as e:
+                    logger.warning("Failed to process attachment: %s", e)
+
+        response = model.generate_content(content_parts)
         return response.text
 
     # -- Lightweight classify (for router) ----------------------------------

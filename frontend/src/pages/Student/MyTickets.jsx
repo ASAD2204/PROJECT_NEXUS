@@ -35,9 +35,11 @@ import PageHeader from '../../components/Common/PageHeader';
 import StatCard from '../../components/Common/StatCard';
 import { fadeInUp, staggerContainer } from '../../utils/animations';
 import { studentAPI } from '../../api/student';
+import { useSnackbar } from '../../contexts/SnackbarContext';
 
 const MyTickets = () => {
   const theme = useTheme();
+  const { showSnackbar } = useSnackbar();
   const [expanded, setExpanded] = useState(false);
   const [replyText, setReplyText] = useState('');
 
@@ -49,10 +51,13 @@ const MyTickets = () => {
       try {
         const res = await studentAPI.getTickets();
         setTickets(res.data?.grievances || res.data || []);
-      } catch (e) { console.error(e); }
+      } catch (e) { 
+        console.error(e);
+        showSnackbar('Failed to load tickets', 'error');
+      }
     };
     fetchTickets();
-  }, []);
+  }, [showSnackbar]);
 
   const stats = {
     total: tickets.length,
@@ -99,6 +104,7 @@ const MyTickets = () => {
   const handleReply = (ticketId) => {
     const comment = replyText.trim();
     if (!comment) {
+      showSnackbar('Reply cannot be empty', 'error');
       return;
     }
 
@@ -120,8 +126,12 @@ const MyTickets = () => {
             : ticket
         )));
         setReplyText('');
+        showSnackbar('Reply sent successfully', 'success');
       })
-      .catch((error) => console.error(error));
+      .catch((error) => {
+        console.error(error);
+        showSnackbar('Failed to send reply', 'error');
+      });
   };
 
   return (

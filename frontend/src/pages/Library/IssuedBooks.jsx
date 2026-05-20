@@ -96,12 +96,27 @@ const IssuedBooks = () => {
   };
 
   const confirmReturn = async () => {
+    const allowedConditions = new Set(['Good', 'Worn', 'Damaged', 'Lost']);
+    if (!returnDialog.issue || !allowedConditions.has(bookCondition)) {
+      setSnackbar({ open: true, message: 'Please select a valid return condition.', severity: 'error' });
+      return;
+    }
+
     try {
       setSubmitting(true);
-      await libraryAPI.returnBook(returnDialog.issue.id || returnDialog.issue.issue_id, { condition: bookCondition });
+      const returnRes = await libraryAPI.returnBook(returnDialog.issue.id || returnDialog.issue.issue_id, { condition: bookCondition });
+      const fineApplied = returnRes.data?.fine_amount ?? 0;
+      const successMsg = returnRes.data?.message || (fineApplied > 0
+        ? `Book returned. Fine of PKR ${fineApplied} has been applied!`
+        : 'Book returned successfully!');
+      
       const res = await libraryAPI.getIssues();
       setIssuedBooks(res.data?.issues || res.data || []);
-      setSnackbar({ open: true, message: 'Book returned successfully!', severity: 'success' });
+      setSnackbar({ 
+        open: true, 
+        message: successMsg, 
+        severity: fineApplied > 0 ? 'warning' : 'success' 
+      });
       setReturnDialog({ open: false, issue: null });
       setBookCondition('Good');
     } catch (e) {
@@ -126,8 +141,9 @@ const IssuedBooks = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusChip = (status, daysOverdue) => {
-    if (status === 'overdue') {
+  const getStatusChip = (status, daysOverdue, returnCondition) => {
+    const s = String(status || '').toLowerCase();
+    if (s === 'overdue') {
       return (
         <Chip
           label={`Overdue (${daysOverdue} days)`}
@@ -137,7 +153,28 @@ const IssuedBooks = () => {
         />
       );
     }
-    return <Chip label="Issued" size="small" color="success" icon={<CheckCircleIcon />} />;
+    if (s === 'returned') {
+      const label = returnCondition && returnCondition !== 'Good' ? `Returned (${returnCondition})` : 'Returned';
+      return (
+        <Chip
+          label={label}
+          size="small"
+          color="success"
+          icon={<CheckCircleIcon />}
+        />
+      );
+    }
+    if (s === 'lost') {
+      return (
+        <Chip
+          label="Lost"
+          size="small"
+          sx={{ bgcolor: '#374151', color: '#F3F4F6', fontWeight: 'bold' }}
+          icon={<WarningIcon style={{ color: '#F3F4F6' }} />}
+        />
+      );
+    }
+    return <Chip label="Issued" size="small" color="primary" variant="outlined" icon={<CheckCircleIcon />} />;
   };
 
   return (
@@ -246,17 +283,19 @@ const IssuedBooks = () => {
                         {issue.dueDate}
                       </Typography>
                     </TableCell>
-                    <TableCell>{getStatusChip(issue.status, issue.daysOverdue)}</TableCell>
+                    <TableCell>{getStatusChip(issue.status, issue.daysOverdue, issue.returnCondition)}</TableCell>
                     <TableCell align="center">
                       <Stack direction="row" spacing={1} justifyContent="center">
-                        <IconButton
-                          size="small"
-                          color="success"
-                          title="Return Book"
-                          onClick={() => handleReturn(issue)}
-                        >
-                          <ReturnIcon fontSize="small" />
-                        </IconButton>
+                        {(issue.status === 'issued' || issue.status === 'overdue') && (
+                          <IconButton
+                            size="small"
+                            color="success"
+                            title="Return Book"
+                            onClick={() => handleReturn(issue)}
+                          >
+                            <ReturnIcon fontSize="small" />
+                          </IconButton>
+                        )}
                         {issue.status === 'overdue' && (
                           <IconButton
                             size="small"
@@ -295,7 +334,7 @@ const IssuedBooks = () => {
                     <Typography variant="caption" display="block">Roll No: {returnDialog.issue.studentRollNo}</Typography>
                   </Box>
 
-                  <FormControl fullWidth sx={{ mt: 2 }}>
+                  <FormControl fullWidth required sx={{ mt: 2 }}>
                     <InputLabel>Return Condition</InputLabel>
                     <Select
                       value={bookCondition}
@@ -324,7 +363,7 @@ const IssuedBooks = () => {
                 onClick={confirmReturn} 
                 variant="contained" 
                 color="success" 
-                disabled={submitting}
+              disabled={submitting || !returnDialog.issue || !bookCondition}
                 startIcon={submitting && <CircularProgress size={20} color="inherit" />}
                 sx={{ fontWeight: 800 }}
             >

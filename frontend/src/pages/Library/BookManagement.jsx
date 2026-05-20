@@ -50,6 +50,7 @@ import StatCard from '../../components/Common/StatCard';
 import { motion } from 'framer-motion';
 import { pageTransition } from '../../utils/animations';
 import { libraryAPI } from '../../api/library';
+import { filterISBN } from '../../utils/validation';
 
 const BookManagement = () => {
   const theme = useTheme();
@@ -383,6 +384,7 @@ const BookManagement = () => {
                       error={!!formErrors.title}
                       helperText={formErrors.title}
                       required
+                      inputProps={{ minLength: 1, maxLength: 300 }}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
@@ -395,6 +397,7 @@ const BookManagement = () => {
                       error={!!formErrors.author}
                       helperText={formErrors.author}
                       required
+                      inputProps={{ minLength: 1, maxLength: 200 }}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
@@ -403,10 +406,11 @@ const BookManagement = () => {
                       label="ISBN"
                       placeholder="e.g. 978-0262033848"
                       value={formData.isbn}
-                      onChange={(e) => setFormData({...formData, isbn: e.target.value})}
+                      onChange={(e) => setFormData({...formData, isbn: filterISBN(e.target.value)})}
                       error={!!formErrors.isbn}
-                      helperText={formErrors.isbn}
+                      helperText={formErrors.isbn || 'Digits, hyphens, and X only'}
                       required
+                      inputProps={{ minLength: 1, maxLength: 20 }}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
@@ -431,6 +435,7 @@ const BookManagement = () => {
                       placeholder="e.g. MIT Press"
                       value={formData.publisher}
                       onChange={(e) => setFormData({...formData, publisher: e.target.value})}
+                      inputProps={{ maxLength: 100 }}
                     />
                   </Grid>
                 </Grid>
@@ -480,6 +485,7 @@ const BookManagement = () => {
                   placeholder="2024"
                   value={formData.publication_year}
                   onChange={(e) => setFormData({...formData, publication_year: e.target.value})}
+                  inputProps={{ min: 1000, max: 2100 }}
                 />
               </Grid>
               <Grid item xs={12} sm={4}>
@@ -489,6 +495,7 @@ const BookManagement = () => {
                   placeholder="English"
                   value={formData.language}
                   onChange={(e) => setFormData({...formData, language: e.target.value})}
+                  inputProps={{ maxLength: 30 }}
                 />
               </Grid>
               <Grid item xs={12} sm={4}>
@@ -499,6 +506,7 @@ const BookManagement = () => {
                   placeholder="500"
                   value={formData.pages}
                   onChange={(e) => setFormData({...formData, pages: e.target.value})}
+                  inputProps={{ min: 1, max: 99999 }}
                 />
               </Grid>
 
@@ -512,6 +520,7 @@ const BookManagement = () => {
                   error={!!formErrors.total_copies}
                   helperText={formErrors.total_copies}
                   required
+                  inputProps={{ min: 1, max: 99999 }}
                 />
               </Grid>
               <Grid item xs={12} sm={4}>
@@ -521,6 +530,7 @@ const BookManagement = () => {
                   type="number"
                   value={formData.available_copies}
                   onChange={(e) => setFormData({...formData, available_copies: parseInt(e.target.value) || 0})}
+                  inputProps={{ min: 0, max: 99999 }}
                 />
               </Grid>
               <Grid item xs={12} sm={4}>
@@ -530,6 +540,7 @@ const BookManagement = () => {
                   placeholder="A-102"
                   value={formData.shelf_location}
                   onChange={(e) => setFormData({...formData, shelf_location: e.target.value})}
+                  inputProps={{ maxLength: 50 }}
                 />
               </Grid>
 
@@ -542,6 +553,7 @@ const BookManagement = () => {
                   placeholder="Brief overview of the book contents..."
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  inputProps={{ maxLength: 2000 }}
                 />
               </Grid>
             </Grid>

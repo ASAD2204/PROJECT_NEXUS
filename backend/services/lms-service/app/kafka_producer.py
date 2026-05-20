@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Optional
 
 from kafka import KafkaProducer
 
@@ -36,13 +37,32 @@ def _publish(topic: str, payload: dict):
         logger.warning("Kafka publish failed for %s: %s", topic, exc)
 
 
-def publish_grade_submitted(student_id: int, section_id: int, grade_points: float):
-    _publish('grade_submitted', {
+def send_message(topic: str, payload: dict):
+    """Generic message publisher."""
+    _publish(topic, payload)
+
+
+def publish_grade_submitted(
+    student_id: int, 
+    section_id: int, 
+    grade_points: Optional[float] = None,
+    midterm_marks: Optional[float] = None,
+    finalterm_marks: Optional[float] = None,
+    sessional_marks: Optional[float] = None,
+    grading_type: Optional[str] = "final",
+):
+    payload = {
         "student_id": student_id,
         "section_id": section_id,
-        "grade_points": grade_points,
-        "event": "GRADE_SUBMITTED"
-    })
+        "event": "GRADE_SUBMITTED",
+        "grading_type": grading_type
+    }
+    if grade_points is not None: payload["grade_points"] = grade_points
+    if midterm_marks is not None: payload["midterm_marks"] = midterm_marks
+    if finalterm_marks is not None: payload["finalterm_marks"] = finalterm_marks
+    if sessional_marks is not None: payload["sessional_marks"] = sessional_marks
+
+    _publish('grade_submitted', payload)
 
 
 def publish_assignment_due(assignment_id: int, section_id: int):

@@ -30,6 +30,7 @@ import {
   ListItemText,
   ListItemIcon,
   CircularProgress,
+  Paper,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import {
@@ -63,6 +64,15 @@ import { analyticsAPI } from '../../api/analytics';
 import { teacherAPI } from '../../api/teacher';
 import { sisAPI } from '../../api/sis';
 import { authAPI } from '../../api/auth';
+
+import {
+  EMAIL_REGEX,
+  PHONE_REGEX,
+  NAME_REGEX,
+  URL_REGEX,
+  filterName,
+  filterPhone,
+} from '../../utils/validation';
 
 const TeacherProfile = () => {
   const { user } = useAuth();
@@ -115,23 +125,24 @@ const TeacherProfile = () => {
         sisAPI.getDepartments().catch(() => ({ data: [] }))
       ]);
       
+      let pData = {};
       if (profileRes.status === 'fulfilled') {
-        const p = profileRes.value.data || {};
+        pData = profileRes.value.data || {};
         setFormData(prev => ({
           ...prev,
-          designation: p.designation || '',
-          department: p.dept_id ?? '',
-          specialization: p.specialization || '',
-          officeLocation: p.office_location || '',
-          employmentStatus: p.employment_status || '',
-          joiningDate: p.joining_date || '',
-          qualification: p.qualification || '',
-          experience: p.experience || '',
-          researchInterests: p.research_interests || '',
-          publications: p.publications || '',
-          personalEmail: p.personal_email || '',
-          linkedIn: p.linkedin_url || '',
-          officeHours: p.office_hours || '',
+          designation: pData.designation || '',
+          department: pData.dept_id ?? '',
+          specialization: pData.specialization || '',
+          officeLocation: pData.office_location || '',
+          employmentStatus: pData.employment_status || '',
+          joiningDate: pData.joining_date || '',
+          qualification: pData.qualification || '',
+          experience: pData.experience || '',
+          researchInterests: pData.research_interests || '',
+          publications: pData.publications || '',
+          personalEmail: pData.personal_email || '',
+          linkedIn: pData.linkedin_url || '',
+          officeHours: pData.office_hours || '',
         }));
       }
       
@@ -140,7 +151,7 @@ const TeacherProfile = () => {
         setStats([
           { title: 'Active Courses', value: String(d?.total_sections || 0), icon: MenuBook, color: 'primary' },
           { title: 'Total Students', value: String(d?.total_students || 0), icon: Groups, color: 'success' },
-          { title: 'Publications', value: String(p?.publications || 0), icon: Assignment, color: 'info' },
+          { title: 'Publications', value: String(pData?.publications || 0), icon: Assignment, color: 'info' },
           { title: 'Avg Attendance', value: `${d?.avg_attendance || 0}%`, icon: TrendingUp, color: 'warning' },
         ]);
       }
@@ -168,6 +179,25 @@ const TeacherProfile = () => {
   };
 
   const handleSave = async () => {
+    const hasName = Boolean(formData.name?.trim());
+    const hasDesignation = Boolean(formData.designation?.trim());
+    const hasValidEmail = Boolean(formData.email?.trim()) && EMAIL_REGEX.test(formData.email.trim());
+    const hasValidPhone = !formData.phone?.trim() || PHONE_REGEX.test(formData.phone.trim());
+
+    if (!hasName || !hasDesignation || !hasValidEmail || !hasValidPhone) {
+      if (!hasName) showSnackbar('Name is required and must contain only letters.', 'error');
+      else if (!hasDesignation) showSnackbar('Designation is required.', 'error');
+      else if (!hasValidEmail) showSnackbar('Please provide a valid email address.', 'error');
+      else if (!hasValidPhone) showSnackbar('Phone must contain only digits, +, -, (, ) — 7 to 20 chars.', 'error');
+      return;
+    }
+
+    // Validate LinkedIn URL if provided
+    if (formData.linkedIn?.trim() && !URL_REGEX.test(formData.linkedIn.trim())) {
+      showSnackbar('LinkedIn URL must start with http:// or https://', 'error');
+      return;
+    }
+
     try {
       setSaving(true);
       const nameParts = formData.name.trim().split(/\s+/).filter(Boolean);
@@ -214,6 +244,15 @@ const TeacherProfile = () => {
   };
 
   const handleAddAvail = async () => {
+    if (!newAvail.day_of_week || !newAvail.start_time || !newAvail.end_time) {
+      showSnackbar('Please fill all availability fields.', 'error');
+      return;
+    }
+    if (newAvail.start_time >= newAvail.end_time) {
+      showSnackbar('Start time must be earlier than end time.', 'error');
+      return;
+    }
+
     try {
       await sisAPI.addAvailability(newAvail);
       const res = await sisAPI.getMyAvailability();
@@ -274,7 +313,9 @@ const TeacherProfile = () => {
                 <Grid container spacing={3} alignItems="center">
                   <Grid item xs={12} sm={2}>
                     <Box sx={{ position: 'relative', width: 120, height: 120, mx: 'auto' }}>
-                      <Avatar sx={{ width: 120, height: 120, bgcolor: 'primary.main' }}>{formData.name[0]}</Avatar>
+                      <Avatar sx={{ width: 120, height: 120, bgcolor: 'primary.main' }}>
+  {formData.name ? formData.name[0] : <Person />}
+</Avatar>
                       <IconButton
                         onClick={() => setShowAvatarDialog(true)}
                         sx={{ position: 'absolute', bottom: 0, right: 0, bgcolor: 'background.paper', boxShadow: 2 }}
@@ -312,7 +353,7 @@ const TeacherProfile = () => {
                 <Typography variant="h6" fontWeight="bold" gutterBottom>Professional Details</Typography>
                 <Divider sx={{ mb: 3 }} />
                 <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}><TextField fullWidth label="Designation" value={formData.designation} onChange={(e) => handleFieldChange('designation', e.target.value)} disabled={!isEditing} /></Grid>
+                  <Grid item xs={12} md={6}><TextField fullWidth label="Designation" required inputProps={{ minLength: 2, maxLength: 80 }} value={formData.designation} onChange={(e) => handleFieldChange('designation', e.target.value)} disabled={!isEditing} /></Grid>
                   <Grid item xs={12} md={6}>
                     <FormControl fullWidth disabled={!isEditing}>
                         <InputLabel>Department</InputLabel>
@@ -321,10 +362,10 @@ const TeacherProfile = () => {
                         </Select>
                     </FormControl>
                   </Grid>
-                  <Grid item xs={12} md={6}><TextField fullWidth label="Office Location" value={formData.officeLocation} onChange={(e) => handleFieldChange('officeLocation', e.target.value)} disabled={!isEditing} /></Grid>
-                  <Grid item xs={12} md={6}><TextField fullWidth label="Office Hours" value={formData.officeHours} onChange={(e) => handleFieldChange('officeHours', e.target.value)} disabled={!isEditing} /></Grid>
-                  <Grid item xs={12} md={6}><TextField fullWidth label="Phone" value={formData.phone} onChange={(e) => handleFieldChange('phone', e.target.value)} disabled={!isEditing} /></Grid>
-                  <Grid item xs={12} md={6}><TextField fullWidth label="Qualification" value={formData.qualification} onChange={(e) => handleFieldChange('qualification', e.target.value)} disabled={!isEditing} /></Grid>
+                  <Grid item xs={12} md={6}><TextField fullWidth label="Office Location" value={formData.officeLocation} onChange={(e) => handleFieldChange('officeLocation', e.target.value)} disabled={!isEditing} inputProps={{ maxLength: 100 }} /></Grid>
+                  <Grid item xs={12} md={6}><TextField fullWidth label="Office Hours" value={formData.officeHours} onChange={(e) => handleFieldChange('officeHours', e.target.value)} disabled={!isEditing} inputProps={{ maxLength: 100 }} placeholder="e.g. Mon-Wed 10:00-12:00" /></Grid>
+                  <Grid item xs={12} md={6}><TextField fullWidth label="Phone" inputProps={{ maxLength: 20 }} value={formData.phone} onChange={(e) => handleFieldChange('phone', filterPhone(e.target.value))} disabled={!isEditing} helperText={isEditing ? 'Digits, +, -, (, ) only' : ''} /></Grid>
+                  <Grid item xs={12} md={6}><TextField fullWidth label="Qualification" value={formData.qualification} onChange={(e) => handleFieldChange('qualification', e.target.value)} disabled={!isEditing} inputProps={{ maxLength: 100 }} /></Grid>
                 </Grid>
               </CardContent>
             </Card>
@@ -354,8 +395,8 @@ const TeacherProfile = () => {
             <CardContent>
               <Typography variant="h6" fontWeight="bold" gutterBottom>Research & Publications</Typography>
               <Divider sx={{ mb: 3 }} />
-              <TextField fullWidth multiline rows={4} label="Research Interests" value={formData.researchInterests} onChange={(e) => handleFieldChange('researchInterests', e.target.value)} disabled={!isEditing} sx={{ mb: 3 }} />
-              <TextField fullWidth multiline rows={4} label="Key Publications" value={formData.publications} onChange={(e) => handleFieldChange('publications', e.target.value)} disabled={!isEditing} />
+              <TextField fullWidth multiline rows={4} label="Research Interests" value={formData.researchInterests} onChange={(e) => handleFieldChange('researchInterests', e.target.value)} disabled={!isEditing} sx={{ mb: 3 }} inputProps={{ maxLength: 2000 }} />
+              <TextField fullWidth multiline rows={4} label="Key Publications" value={formData.publications} onChange={(e) => handleFieldChange('publications', e.target.value)} disabled={!isEditing} inputProps={{ maxLength: 2000 }} />
             </CardContent>
           </Card>
         )}
@@ -389,11 +430,11 @@ const TeacherProfile = () => {
           <DialogTitle>Add Availability</DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ mt: 1 }}>
-              <Select value={newAvail.day_of_week} onChange={(e) => setNewAvail({...newAvail, day_of_week: e.target.value})}>
+              <Select required value={newAvail.day_of_week} onChange={(e) => setNewAvail({...newAvail, day_of_week: e.target.value})}>
                 {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(d => <MenuItem key={d} value={d}>{d}</MenuItem>)}
               </Select>
-              <TextField type="time" label="Start" value={newAvail.start_time} onChange={(e) => setNewAvail({...newAvail, start_time: e.target.value})} InputLabelProps={{ shrink: true }} />
-              <TextField type="time" label="End" value={newAvail.end_time} onChange={(e) => setNewAvail({...newAvail, end_time: e.target.value})} InputLabelProps={{ shrink: true }} />
+              <TextField required type="time" label="Start" value={newAvail.start_time} onChange={(e) => setNewAvail({...newAvail, start_time: e.target.value})} InputLabelProps={{ shrink: true }} />
+              <TextField required type="time" label="End" value={newAvail.end_time} onChange={(e) => setNewAvail({...newAvail, end_time: e.target.value})} InputLabelProps={{ shrink: true }} />
             </Stack>
           </DialogContent>
           <DialogActions>

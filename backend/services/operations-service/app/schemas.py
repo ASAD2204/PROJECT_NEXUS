@@ -37,6 +37,7 @@ class GrievanceOut(BaseModel):
     updated_at: Optional[datetime] = None
     assigned_department: Optional[str] = None
     is_urgent: bool = False
+    is_escalated: bool = False
     priority: str = "Normal"
     resolution: Optional[str] = None
     satisfaction_rating: Optional[int] = None

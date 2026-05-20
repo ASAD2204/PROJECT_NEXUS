@@ -80,7 +80,7 @@ const CreateAssignment = () => {
         const crs = cRes.data?.courses || cRes.data || [];
         const normalizedCourses = (Array.isArray(crs) ? crs : []).map((course) => ({
           sectionId: course.section_id ?? course.id,
-          courseId: course.course_id ?? course.course?.course_id ?? null,
+          courseId: course.course_id ?? course.course?.course_id ?? course.section_id ?? course.id,
           code: safeText(course.course?.code || course.code || course.course_code || `SEC-${course.section_id ?? course.id}`),
           name: safeText(course.course?.title || course.name || course.title || `Section ${course.section_id ?? course.id}`),
           room: safeText(course.room_no, 'TBA'),
@@ -92,13 +92,13 @@ const CreateAssignment = () => {
           const a = aRes.data;
           setFormData({
             title: a.title,
-            course: String(a.section_id),
+            course: String(a.course_id || a.section_id || ''),
             description: a.description,
             dueDate: a.due_date ? a.due_date.split('T')[0] : '',
             dueTime: a.due_date ? a.due_date.split('T')[1]?.substring(0, 5) : '',
             totalMarks: a.total_marks,
             instructions: a.instructions || '',
-            attachments: [], // Existing attachments not easily editable here without more logic
+            attachments: [], 
           });
         }
       } catch (e) { console.error(e); }
@@ -115,8 +115,17 @@ const CreateAssignment = () => {
   };
 
   const handleSubmit = async () => {
+    if (!formData.title?.trim() || !formData.course || !formData.dueDate || !formData.dueTime || !formData.description?.trim()) {
+      alert('Please fill all required fields.');
+      return;
+    }
+    if (Number(formData.totalMarks) < 5 || Number(formData.totalMarks) > 100) {
+      alert('Total marks must be between 5 and 100.');
+      return;
+    }
+
     try {
-      const selectedCourse = courses.find((course) => String(course.sectionId) === String(formData.course));
+      const selectedCourse = courses.find((course) => String(course.courseId) === String(formData.course));
       if (!selectedCourse) {
         throw new Error('Please select a valid section');
       }
@@ -125,18 +134,19 @@ const CreateAssignment = () => {
       if (formData.attachments.length > 0) {
         const uploadedFile = formData.attachments[0];
         const uploadFormData = new FormData();
+        uploadFormData.append('course_id', selectedCourse.courseId);
         uploadFormData.append('title', `${formData.title} resource`);
         uploadFormData.append('description', formData.description || 'Assignment attachment');
         uploadFormData.append('material_type', uploadedFile.type || 'document');
-        uploadFormData.append('uploaded_file', uploadedFile);
-        const uploadRes = await lmsAPI.uploadMaterial(selectedCourse.courseId || selectedCourse.sectionId, uploadFormData);
+        uploadFormData.append('file', uploadedFile);
+        const uploadRes = await lmsAPI.uploadMaterial(uploadFormData);
         attachmentRefId = uploadRes.data?.file_ref_id || uploadRes.data?.material_id || null;
       }
 
       const payload = {
-        section_id: Number(formData.course),
-        title: formData.title,
-        description: formData.description,
+        course_id: Number(formData.course),
+        title: formData.title.trim(),
+        description: formData.description.trim(),
         total_marks: toFiniteNumber(formData.totalMarks, 10),
         due_date: buildDateTime(formData.dueDate, formData.dueTime),
         attachment_ref_id: attachmentRefId,
@@ -193,9 +203,11 @@ const CreateAssignment = () => {
                 <FormLabel sx={{ mb: 1, fontWeight: 600 }}>Assignment Title *</FormLabel>
                 <TextField
                   fullWidth
+                  required
                   placeholder="e.g., Database Design Project"
                   value={formData.title}
                   onChange={handleChange('title')}
+                  inputProps={{ minLength: 3, maxLength: 180 }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -215,13 +227,14 @@ const CreateAssignment = () => {
                     <TextField
                       select
                       fullWidth
+                      required
                       value={formData.course}
                       onChange={handleChange('course')}
                       placeholder="Select Course"
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                     >
                       {courses.map((course) => (
-                        <MenuItem key={course.sectionId} value={String(course.sectionId)}>
+                        <MenuItem key={course.courseId} value={String(course.courseId)}>
                           {course.code} - {course.name}{course.room ? ` • ${course.room}` : ''}
                         </MenuItem>
                       ))}
@@ -235,6 +248,7 @@ const CreateAssignment = () => {
                     <TextField
                       fullWidth
                       type="number"
+                      required
                       placeholder="e.g., 10 or 20"
                       value={formData.totalMarks}
                       onChange={handleChange('totalMarks')}
@@ -257,6 +271,7 @@ const CreateAssignment = () => {
                     <TextField
                       fullWidth
                       type="date"
+                      required
                       value={formData.dueDate}
                       onChange={handleChange('dueDate')}
                       InputProps={{
@@ -277,6 +292,7 @@ const CreateAssignment = () => {
                     <TextField
                       fullWidth
                       type="time"
+                      required
                       value={formData.dueTime}
                       onChange={handleChange('dueTime')}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
@@ -296,9 +312,11 @@ const CreateAssignment = () => {
                   fullWidth
                   multiline
                   rows={6}
+                  required
                   placeholder="Provide detailed assignment instructions, requirements, objectives, and submission guidelines..."
                   value={formData.description}
                   onChange={handleChange('description')}
+                  inputProps={{ minLength: 10, maxLength: 4000 }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1 }}>
@@ -359,7 +377,7 @@ const CreateAssignment = () => {
                   size="large"
                   startIcon={<Save />}
                   onClick={handleSubmit}
-                  disabled={!formData.title || !formData.course || !formData.dueDate || !formData.description}
+                  disabled={!formData.title?.trim() || !formData.course || !formData.dueDate || !formData.dueTime || !formData.description?.trim()}
                   sx={{
                     px: 4,
                     py: 1.2,

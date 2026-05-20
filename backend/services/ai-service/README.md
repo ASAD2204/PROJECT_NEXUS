@@ -70,23 +70,26 @@ ai-service/
 | `CAG_SIMILARITY_THRESHOLD` | `float` | `0.90` | Cosine similarity threshold for cache hits |
 | `CAG_TTL_SECONDS` | `int` | `86400` | Cache entry TTL (24 hours) |
 
-## Pipeline Architecture (9 Steps)
+## Pipeline Architecture & Intent Flow
 
 ```
-[1] CAG Cache Lookup ──hit──→ Return cached answer
-        │ miss
-[2] Built-in FAQ Check ──hit──→ Cache & return
-        │ miss
-[3] Intent Routing (keyword guards → LLM fallback)
+[0] Greeting Interception ──yes──→ Ultra-low latency single auth_users query, 
+                                   role-based specialist intro, short-circuit output
+        │ no
+[1] Intent Routing (keyword guards → LLM fallback)
         │
-[4] DB Query (if intent = db_query) ──→ Live PostgreSQL
-[5] RAG Retrieval (if intent = study_help/faq)
-[6] Study Resources (if study_help)
-[7] Handle general/system intents
+[2] CAG Cache Lookup (Bypassed if intent = db_query to prevent stale records)
+        │ cache miss
+[3] Context Gathering (Quick query & Redis cache for User Profile metadata)
         │
-[8] LLM Generation (Groq → Gemini fallback)
+[4] Intent Execution:
+    ├─► DB Query ────→ Live transactional database query (PostgreSQL)
+    ├─► Study Help ──→ RAG Vector lookup (ChromaDB) + BM25 Lexical search
+    └─► FAQ / General ──→ NLTK synonyms + local knowledge base / LLM
         │
-[9] Cache Update (store in CAG)
+[5] LLM Generation (Groq round-robin key rotation → Gemini fallback)
+        │
+[6] Semantic Cache Update (updates Redis CAG if not db_query)
 ```
 
 ## RAG Engine — 5-Stage Hybrid Retrieval

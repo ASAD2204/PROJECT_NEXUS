@@ -4,7 +4,7 @@ import logging
 import io
 import csv
 
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form, status
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form, status, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from sqlalchemy import and_, or_, func
 from sqlalchemy.orm import Session
@@ -27,6 +27,7 @@ from app.models import (
     SisFaculty,
     SisStudent,
     SisDepartment,
+    AuthUser,
 )
 import httpx
 from app.schemas import (
@@ -69,6 +70,13 @@ from app.schemas import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/lms", tags=["LMS"])
+
+
+def _resolve_student_id(db: Session, user_id: str) -> int:
+    student = db.query(SisStudent).filter(SisStudent.user_id == str(user_id)).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student record not found")
+    return student.student_id
 
 
 async def _resolve_identities(user_ids: List[str]) -> dict:
@@ -166,12 +174,14 @@ async def get_classroom_details(
         user_ids_to_resolve.append(str(faculty.user_id))
         
     student_id_map = {}
+    enrollment_map = {}
     for e in enrollments:
         s_rec = db.query(SisStudent).filter(SisStudent.student_id == e.student_id).first()
         if s_rec and s_rec.user_id:
             uid = str(s_rec.user_id)
             user_ids_to_resolve.append(uid)
             student_id_map[uid] = s_rec
+            enrollment_map[s_rec.student_id] = e
 
     # 6. Resolve identities in bulk
     identities = await _resolve_identities(list(set(user_ids_to_resolve)))
@@ -181,13 +191,35 @@ async def get_classroom_details(
     for uid, s_rec in student_id_map.items():
         ident = identities.get(uid, {})
         name = ident.get("full_name") or f"{ident.get('first_name', '')} {ident.get('last_name', '')}".strip() or f"Student {s_rec.student_id}"
+        enroll = enrollment_map.get(s_rec.student_id)
+        # Calculate average grade
+        avg_sum = 0.0
+        avg_count = 0
+        if enroll:
+            if enroll.midterm_marks is not None:
+                avg_sum += enroll.midterm_marks
+                avg_count += 1
+            if enroll.finalterm_marks is not None:
+                avg_sum += enroll.finalterm_marks
+                avg_count += 1
+            if enroll.sessional_marks is not None:
+                avg_sum += enroll.sessional_marks
+                avg_count += 1
+        
+        avg_grade = (avg_sum / avg_count) if avg_count > 0 else 0.0
+
         participants.append(ParticipantOut(
             student_id=s_rec.student_id,
             user_id=uid,
             name=name,
             roll_no=s_rec.roll_no,
             email=ident.get("email"),
-            avatar=ident.get("avatar")
+            avatar=ident.get("avatar"),
+            midterm_marks=enroll.midterm_marks if enroll else None,
+            finalterm_marks=enroll.finalterm_marks if enroll else None,
+            sessional_marks=enroll.sessional_marks if enroll else None,
+            final_grade_points=enroll.final_grade_points if enroll else None,
+            average_grade=round(avg_grade, 2)
         ))
         
     # 8. Build faculty info
@@ -240,6 +272,7 @@ def list_courses_admin(
             "cover_image": course.cover_image,
             "capacity": course.capacity or 50,
             "enrolled": enrolled_count,
+            "room_no": course.room_no,
             "lectures_per_week": course.lectures_per_week,
             "lecture_duration_minutes": course.lecture_duration_minutes,
         })
@@ -587,7 +620,7 @@ def my_assignments_v2(
             "courseId": a.course_id,
             "course": course.code if course else "N/A",
             "courseName": course.title if course else "N/A",
-            "status": "active" if a.due_date and a.due_date > datetime.now() else "completed",
+            "status": "active" if a.due_date and a.due_date > datetime.utcnow() else "completed",
             "type": "Assignment",
             "submissions": total_submissions,
             "graded": graded_submissions,
@@ -826,9 +859,53 @@ def grade_submission(
     submission = db.query(LmsSubmission).filter(LmsSubmission.sub_id == sub_id).first()
     if not submission:
         raise HTTPException(status_code=404, detail="Submission not found")
-    submission.marks_obtained = payload.marks_obtained
+    
+    # Handle marks from frontend (marks) or standard schema (marks_obtained)
+    if payload.marks is not None:
+        submission.marks_obtained = payload.marks
+    elif payload.marks_obtained is not None:
+        submission.marks_obtained = payload.marks_obtained
+    
+    # Handle feedback from frontend (feedback) or standard schema (comments)
+    if payload.feedback is not None:
+        submission.comments = payload.feedback
+    elif payload.comments is not None:
+        submission.comments = payload.comments
+
     db.commit()
     db.refresh(submission)
+
+    # Trigger automatic SIS synchronization via Kafka
+    try:
+        assignment = db.query(LmsAssignment).filter(LmsAssignment.assignment_id == submission.assignment_id).first()
+        if assignment:
+            # 1. Calculate total sessional marks for this course
+            assign_marks = db.query(func.sum(LmsSubmission.marks_obtained)).join(
+                LmsAssignment, LmsSubmission.assignment_id == LmsAssignment.assignment_id
+            ).filter(
+                LmsAssignment.course_id == assignment.course_id,
+                LmsSubmission.student_id == submission.student_id
+            ).scalar() or 0.0
+
+            # 2. Update LMS mirror enrollment table
+            enrollment = db.query(SisEnrollment).filter(
+                SisEnrollment.student_id == submission.student_id,
+                SisEnrollment.course_id == assignment.course_id
+            ).first()
+
+            if enrollment:
+                enrollment.sessional_marks = assign_marks
+                db.commit()
+
+                # 3. Publish to Kafka
+                publish_grade_submitted(
+                    student_id=submission.student_id,
+                    section_id=assignment.course_id,
+                    sessional_marks=assign_marks
+                )
+    except Exception as exc:
+        logger.error("Failed to sync assignment grade to SIS: %s", exc)
+
     return submission
 
 
@@ -912,7 +989,10 @@ def my_quizzes_v2(
             "courseId": q.course_id,
             "course": course.code if course else "N/A",
             "courseName": course.title if course else "N/A",
-            "status": "active" if q.start_time and q.start_time < datetime.now() < q.end_time else "completed" if q.end_time and q.end_time < datetime.now() else "draft",
+            "status": "active" if q.start_time and q.end_time and q.start_time <= datetime.utcnow() <= q.end_time 
+                      else "completed" if q.end_time and q.end_time < datetime.utcnow() 
+                      else "scheduled" if q.start_time and q.start_time > datetime.utcnow() 
+                      else "draft",
             "questions": len(q.questions),
             "attempts": total_attempts,
             "avgScore": round(float(avg_score_res or 0), 1),
@@ -1119,15 +1199,46 @@ def submit_grades(
             raise HTTPException(status_code=403, detail="Grades for this course are locked")
 
     for grade in payload.grades:
+        if grade.grade_points is not None and not (0.0 <= grade.grade_points <= 4.0):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid grade points {grade.grade_points} for student {grade.student_id}. Must be between 0.0 and 4.0."
+            )
+
         enrollment = db.query(SisEnrollment).filter(SisEnrollment.student_id == grade.student_id, SisEnrollment.course_id == payload.course_id).first()
         if enrollment:
             if enrollment.status == "GradeLocked" and requester_role != "admin":
                 continue
-            enrollment.final_grade_points = grade.grade_points
-            if payload.final_submit:
-                enrollment.status = "GradeLocked"
+            
+            if payload.grading_type == "midterm":
+                enrollment.midterm_marks = grade.midterm_marks
+            elif payload.grading_type == "finalterm":
+                enrollment.finalterm_marks = grade.finalterm_marks
+            elif payload.grading_type == "sessional":
+                enrollment.sessional_marks = grade.sessional_marks
+            elif payload.grading_type == "unified":
+                enrollment.midterm_marks = grade.midterm_marks
+                enrollment.finalterm_marks = grade.finalterm_marks
+                enrollment.sessional_marks = grade.sessional_marks
+                enrollment.final_grade_points = grade.grade_points
+                if payload.final_submit:
+                    enrollment.status = "GradeLocked"
+            else: # default to final grade points
+                enrollment.final_grade_points = grade.grade_points
+                if payload.final_submit:
+                    enrollment.status = "GradeLocked"
+
             try:
-                publish_grade_submitted(student_id=grade.student_id, section_id=payload.course_id, grade_points=grade.grade_points)
+                # pass all component marks to the publisher
+                publish_grade_submitted(
+                    student_id=grade.student_id, 
+                    section_id=payload.course_id, 
+                    grade_points=grade.grade_points,
+                    midterm_marks=grade.midterm_marks,
+                    finalterm_marks=grade.finalterm_marks,
+                    sessional_marks=grade.sessional_marks,
+                    grading_type=payload.grading_type
+                )
             except: pass
 
     db.commit()
@@ -1211,17 +1322,26 @@ def list_course_materials_compat(
 
 @router.post("/materials", response_model=CourseMaterialOut, status_code=status.HTTP_201_CREATED)
 def upload_course_material(
-    payload: CourseMaterialCreate,
+    course_id: int = Form(...),
+    title: str = Form(...),
+    description: Optional[str] = Form(None),
+    material_type: Optional[str] = Form("document"),
+    file: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_role("faculty", "admin")),
 ):
+    # Simulated file storage
+    file_ref = None
+    if file:
+        file_ref = f"mat_{int(datetime.utcnow().timestamp())}_{file.filename}"
+    
     faculty = db.query(SisFaculty).filter(SisFaculty.user_id == str(current_user["user_id"])).first()
     material = LmsCourseMaterial(
-        course_id=payload.course_id,
-        title=payload.title,
-        description=payload.description,
-        file_ref_id=payload.file_ref_id or payload.file_url,
-        material_type=payload.material_type,
+        course_id=course_id,
+        title=title,
+        description=description,
+        file_ref_id=file_ref,
+        material_type=material_type,
         uploaded_by=faculty.faculty_id if faculty else 0,
     )
     db.add(material)
@@ -1239,6 +1359,42 @@ def download_material(
     material = db.query(LmsCourseMaterial).filter(LmsCourseMaterial.material_id == material_id).first()
     if not material: raise HTTPException(status_code=404, detail="Material not found")
     return StreamingResponse(io.BytesIO(f"Simulated {material.title}".encode()), media_type="application/octet-stream", headers={"Content-Disposition": f"attachment; filename={material.file_ref_id or 'document.pdf'}"})
+
+
+@router.put("/materials/{material_id}", response_model=CourseMaterialOut)
+def update_course_material(
+    material_id: int,
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_role("faculty", "admin")),
+):
+    material = db.query(LmsCourseMaterial).filter(LmsCourseMaterial.material_id == material_id).first()
+    if not material:
+        raise HTTPException(status_code=404, detail="Material not found")
+    
+    allowed_fields = {"title", "description", "material_type"}
+    for field, value in payload.items():
+        if field in allowed_fields:
+            setattr(material, field, value)
+    
+    db.commit()
+    db.refresh(material)
+    return material
+
+
+@router.delete("/materials/{material_id}", response_model=MessageResponse)
+def delete_course_material(
+    material_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_role("faculty", "admin")),
+):
+    material = db.query(LmsCourseMaterial).filter(LmsCourseMaterial.material_id == material_id).first()
+    if not material:
+        raise HTTPException(status_code=404, detail="Material not found")
+    
+    db.delete(material)
+    db.commit()
+    return MessageResponse(message="Material deleted successfully")
 
 
 # ── Feedback & Plagiarism (Simplified) ───────────────────────────────────
@@ -1281,3 +1437,181 @@ async def faculty_feedback_summary(faculty_id: int, semester_id: Optional[int] =
 
 
 # Plagiarism check removed for brevity but would follow same course_id pattern.
+
+
+# ---------------------------------------------------------------------------
+# Gradebook & Results Management
+# ---------------------------------------------------------------------------
+
+@router.get("/courses/{course_id}/gradebook-data")
+def get_course_gradebook(
+    course_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_role("teacher", "faculty", "admin")),
+):
+    """
+    Returns a unified matrix of all assessments and student marks for a course.
+    """
+    course = db.query(LmsCourse).filter(LmsCourse.course_id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    # 1. Fetch all students enrolled
+    students = db.query(
+        SisStudent.student_id,
+        SisStudent.roll_no,
+        AuthUser.first_name,
+        AuthUser.last_name,
+        SisEnrollment.midterm_marks,
+        SisEnrollment.finalterm_marks,
+        SisEnrollment.sessional_marks,
+        SisEnrollment.final_grade_points
+    ).join(AuthUser, AuthUser.user_id == SisStudent.user_id) \
+     .join(SisEnrollment, SisEnrollment.student_id == SisStudent.student_id) \
+     .filter(SisEnrollment.course_id == course_id).all()
+
+    # 2. Fetch all assignments and quizzes for this course
+    assignments = db.query(LmsAssignment).filter(LmsAssignment.course_id == course_id).all()
+    quizzes = db.query(LmsQuiz).filter(LmsQuiz.course_id == course_id).all()
+
+    # 3. Fetch all marks for these assignments and quizzes
+    submissions = db.query(LmsSubmission).filter(
+        LmsSubmission.assignment_id.in_([a.assignment_id for a in assignments])
+    ).all() if assignments else []
+
+    quiz_answers = db.query(LmsAnswer).filter(
+        LmsAnswer.quiz_id.in_([q.quiz_id for q in quizzes])
+    ).all() if quizzes else []
+
+    # Format the matrix
+    assessment_columns = []
+    for a in assignments:
+        assessment_columns.append({"id": f"assign_{a.assignment_id}", "title": a.title, "total": a.total_marks, "type": "assignment"})
+    for q in quizzes:
+        assessment_columns.append({"id": f"quiz_{q.quiz_id}", "title": q.title, "total": q.total_marks, "type": "quiz"})
+
+    student_rows = []
+    for s in students:
+        marks = {}
+        # Fill assignment marks
+        for a in assignments:
+            sub = next((sub for sub in submissions if sub.student_id == s.student_id and sub.assignment_id == a.assignment_id), None)
+            marks[f"assign_{a.assignment_id}"] = sub.marks_obtained if sub else 0
+        
+        # Fill quiz marks
+        for q in quizzes:
+            # Group answers by student/quiz to get total score
+            scores = [ans.score_obtained for ans in quiz_answers if ans.student_id == s.student_id and ans.quiz_id == q.quiz_id]
+            marks[f"quiz_{q.quiz_id}"] = sum(scores) if scores else 0
+
+        student_rows.append({
+            "student_id": s.student_id,
+            "roll_no": s.roll_no,
+            "name": f"{s.first_name} {s.last_name}",
+            "marks": marks,
+            "midterm": s.midterm_marks or 0,
+            "finalterm": s.finalterm_marks or 0,
+            "sessional": s.sessional_marks or 0,
+            "final_grade_points": s.final_grade_points
+        })
+
+    return {
+        "course_title": course.title,
+        "columns": assessment_columns,
+        "students": student_rows
+    }
+
+
+@router.post("/courses/{course_id}/finalize")
+async def finalize_course_grades(
+    course_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_role("teacher", "faculty", "admin")),
+):
+    """
+    Calculates final grades and locks them for the semester.
+    Triggers institutional sync and notifies students.
+    """
+    course = db.query(LmsCourse).filter(LmsCourse.course_id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    enrollments = db.query(SisEnrollment).filter(SisEnrollment.course_id == course_id).all()
+    if not enrollments:
+        raise HTTPException(status_code=404, detail="No enrollments found for this course")
+
+    # Fetch student user IDs for notifications
+    student_ids = [e.student_id for e in enrollments]
+    students_map = {
+        s.student_id: str(s.user_id) 
+        for s in db.query(SisStudent).filter(SisStudent.student_id.in_(student_ids)).all()
+    }
+
+    for e in enrollments:
+        # Standard relative calculation: Mid(30%) + Final(50%) + Sessional(20%)
+        total_score = (e.midterm_marks or 0) + (e.finalterm_marks or 0) + (e.sessional_marks or 0)
+        
+        # Mapping 100-scale to 4.0 GP
+        if total_score >= 85: gp = 4.0
+        elif total_score >= 80: gp = 3.7
+        elif total_score >= 75: gp = 3.3
+        elif total_score >= 70: gp = 3.0
+        elif total_score >= 65: gp = 2.7
+        elif total_score >= 60: gp = 2.3
+        elif total_score >= 50: gp = 2.0
+        else: gp = 0.0
+        
+        e.final_grade_points = gp
+        e.status = "Completed"
+
+        # [ACTION] Emit Kafka Event
+        from app.kafka_producer import send_message
+        background_tasks.add_task(send_message, "grade_submitted", {
+            "student_id": e.student_id,
+            "section_id": course_id,
+            "grade_points": gp,
+            "midterm_marks": e.midterm_marks,
+            "finalterm_marks": e.finalterm_marks,
+            "sessional_marks": e.sessional_marks,
+            "status": "finalized",
+            "timestamp": datetime.utcnow().isoformat()
+        })
+
+        # [ACTION] Send Notification
+        user_id = students_map.get(e.student_id)
+        if user_id:
+            background_tasks.add_task(
+                _send_notification_internal,
+                user_id=user_id,
+                title="Grades Finalized",
+                message=f"Your final results for {course.code}: {course.title} have been published. GPA: {gp}",
+                action_url="/transcript"
+            )
+
+    db.commit()
+    return {"message": f"Results for {len(enrollments)} students finalized and submitted to Controller."}
+
+
+async def _send_notification_internal(user_id: str, title: str, message: str, action_url: str = None):
+    """Helper to push internal notifications to the Notification Service."""
+    try:
+        import httpx
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                f"{settings.GATEWAY_URL}/api/v1/notify/internal/notifications",
+                json={
+                    "user_id": user_id,
+                    "title": title,
+                    "message": message,
+                    "type": "academic",
+                    "priority": "high",
+                    "action_url": action_url
+                },
+                headers={"X-Internal-API-Key": "change-me-internal-key"}, # Match config.py
+                timeout=5.0
+            )
+    except Exception as exc:
+        logger.error("Failed to send internal notification to user %s: %s", user_id, exc)
+
+

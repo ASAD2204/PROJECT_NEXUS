@@ -1,5 +1,6 @@
 from datetime import datetime, date, time
 from typing import Optional, List
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
@@ -12,23 +13,29 @@ from pydantic import BaseModel, ConfigDict
 class AlumniRegisterRequest(BaseModel):
     student_id: int
     grad_year: int
+    graduation_year: Optional[int] = None
     degree: Optional[str] = None
     current_employer: Optional[str] = None
     current_position: Optional[str] = None
     location: Optional[str] = None
     photo_url: Optional[str] = None
     linkedin_url: Optional[str] = None
+    personal_website: Optional[str] = None
+    current_industry: Optional[str] = None
     achievements: Optional[str] = None  # JSON string
     expertise: Optional[str] = None     # JSON string
 
 
 class AlumniUpdateRequest(BaseModel):
     degree: Optional[str] = None
+    graduation_year: Optional[int] = None
     current_employer: Optional[str] = None
     current_position: Optional[str] = None
     location: Optional[str] = None
     photo_url: Optional[str] = None
     linkedin_url: Optional[str] = None
+    personal_website: Optional[str] = None
+    current_industry: Optional[str] = None
     achievements: Optional[str] = None
     expertise: Optional[str] = None
 
@@ -39,15 +46,20 @@ class AlumniOut(BaseModel):
     alumni_id: int
     student_id: int
     grad_year: int
+    graduation_year: Optional[int] = None
+    degree_verified: bool = False
     degree: Optional[str] = None
     current_employer: Optional[str] = None
     current_position: Optional[str] = None
     location: Optional[str] = None
     photo_url: Optional[str] = None
     linkedin_url: Optional[str] = None
+    personal_website: Optional[str] = None
+    current_industry: Optional[str] = None
     achievements: Optional[str] = None
     expertise: Optional[str] = None
     # Resolved fields
+    user_id: Optional[UUID] = None
     full_name: Optional[str] = None
     email: Optional[str] = None
 
@@ -172,6 +184,40 @@ class StoryOut(BaseModel):
     published_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     alumni: Optional[AlumniOut] = None
+
+
+class MentorshipRequestCreate(BaseModel):
+    alumni_id: int
+    message: str
+
+
+class MentorshipRequestOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    request_id: int
+    student_id: int
+    alumni_id: int
+    message: str
+    status: str
+    created_at: datetime
+    alumni: Optional[AlumniOut] = None
+
+
+class JobApplicationCreate(BaseModel):
+    job_id: int
+    resume_url: Optional[str] = None
+
+
+class JobApplicationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    application_id: int
+    job_id: int
+    student_id: int
+    resume_url: Optional[str] = None
+    status: str
+    applied_at: datetime
+    job: Optional[JobOut] = None
 
 
 # ---------------------------------------------------------------------------

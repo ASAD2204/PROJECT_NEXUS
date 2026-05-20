@@ -49,6 +49,7 @@ import { useSnackbar } from '../../contexts/SnackbarContext';
 import { pageTransition } from '../../utils/animations';
 import { teacherAPI } from '../../api/teacher';
 import { lmsAPI } from '../../api/lms';
+import { opsAPI } from '../../api/ops';
 
 const toFiniteNumber = (value, fallback = 0) => {
   const numericValue = Number(value);
@@ -127,6 +128,7 @@ const normalizeStudent = (student = {}) => {
   return {
     id: student.student_id ?? student.id,
     studentId: student.student_id ?? student.id,
+    userId: student.user_id ?? null,
     name: fullName,
     email: safeText(student.email, 'N/A'),
     phone: safeText(student.phone, 'N/A'),
@@ -155,6 +157,11 @@ const StudentManagement = () => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [filterCourse, setFilterCourse] = useState('all');
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [notifyDialogOpen, setNotifyDialogOpen] = useState(false);
+  const [notificationTitle, setNotificationTitle] = useState('');
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [notificationType, setNotificationType] = useState('info');
+  const [notificationPriority, setNotificationPriority] = useState('medium');
   const [students, setStudents] = useState([]);
   const [courses, setCourses] = useState([{ value: 'all', label: 'All Courses' }]);
 
@@ -203,6 +210,60 @@ const StudentManagement = () => {
   const handleViewDetails = () => {
     setDetailsDialogOpen(true);
     handleMenuClose();
+  };
+
+  const handleOpenNotifyDialog = () => {
+    if (!selectedStudent) return;
+    
+    let defaultTitle = 'Academic Update';
+    let defaultMessage = `Dear ${selectedStudent.name},\n\nI wanted to reach out regarding your academic progress in our course. `;
+    let defaultType = 'info';
+    let defaultPriority = 'medium';
+
+    if (selectedStudent.riskStatus === 'Red') {
+      defaultTitle = 'Urgent: Academic Performance Alert';
+      defaultMessage = `Dear ${selectedStudent.name},\n\nYour academic performance has been flagged as High Risk. Your attendance or assessment scores are currently below the required threshold. Please schedule a meeting with me as soon as possible to outline a remediation plan and ensure you stay on track.\n\nBest regards,\nYour Instructor`;
+      defaultType = 'warning';
+      defaultPriority = 'high';
+    } else if (selectedStudent.riskStatus === 'Yellow') {
+      defaultTitle = 'Academic Progress Advisory';
+      defaultMessage = `Dear ${selectedStudent.name},\n\nYour academic standing has been flagged as Medium Risk. We have noticed some decline in your grades or attendance. I encourage you to review your recent submissions and visit me during office hours so we can discuss how to support your learning.\n\nBest regards,\nYour Instructor`;
+      defaultType = 'warning';
+      defaultPriority = 'medium';
+    } else {
+      defaultTitle = 'Important Course Notification';
+      defaultMessage = `Dear ${selectedStudent.name},\n\nI am sending a quick update regarding your course enrollment. Keep up the good work and feel free to reach out if you have any questions.\n\nBest regards,\nYour Instructor`;
+      defaultType = 'info';
+      defaultPriority = 'medium';
+    }
+
+    setNotificationTitle(defaultTitle);
+    setNotificationMessage(defaultMessage);
+    setNotificationType(defaultType);
+    setNotificationPriority(defaultPriority);
+    setNotifyDialogOpen(true);
+    handleMenuClose();
+  };
+
+  const handleSendNotification = async () => {
+    if (!selectedStudent || !selectedStudent.userId) {
+      showSnackbar('Unable to identify student user account. Cannot send notification.', 'error');
+      return;
+    }
+    try {
+      await opsAPI.createNotification({
+        user_id: selectedStudent.userId,
+        title: notificationTitle,
+        message: notificationMessage,
+        type: notificationType,
+        priority: notificationPriority
+      });
+      showSnackbar(`Warning notification successfully sent to ${selectedStudent.name}!`, 'success');
+      setNotifyDialogOpen(false);
+    } catch (e) {
+      console.error(e);
+      showSnackbar('Failed to dispatch notification to student.', 'error');
+    }
   };
 
   const handleExportGradebook = async () => {
@@ -462,18 +523,7 @@ const StudentManagement = () => {
           >
             <Email fontSize="small" sx={{ mr: 1 }} /> Send Email
           </MenuItem>
-          <MenuItem
-            onClick={() => {
-              if (selectedStudent) {
-                const isAtRisk = selectedStudent.riskSeverity === 'warning' || selectedStudent.riskSeverity === 'error';
-                const message = isAtRisk
-                  ? `Warning notification sent to ${selectedStudent.name} based on SIS risk status`
-                  : `Notification sent to ${selectedStudent.name}`;
-                showSnackbar(message, isAtRisk ? 'warning' : 'info');
-              }
-              handleMenuClose();
-            }}
-          >
+          <MenuItem onClick={handleOpenNotifyDialog}>
             <CheckCircle fontSize="small" sx={{ mr: 1 }} /> Notify Student
           </MenuItem>
         </Menu>
@@ -568,6 +618,95 @@ const StudentManagement = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setDetailsDialogOpen(false)}>Close</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Notify Student Dialog */}
+        <Dialog
+          open={notifyDialogOpen}
+          onClose={() => setNotifyDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+              backdropFilter: 'blur(10px)',
+            }
+          }}
+        >
+          <DialogTitle sx={{ fontWeight: 'bold', pb: 1 }}>
+            Send Warning Alert to Student
+          </DialogTitle>
+          <DialogContent>
+            {selectedStudent && (
+              <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, borderRadius: 2, bgcolor: alpha(theme.palette.primary.main, 0.08) }}>
+                  <Avatar src={selectedStudent.avatar} size="small">{selectedStudent.initials}</Avatar>
+                  <Box>
+                    <Typography variant="subtitle2" fontWeight="bold">{selectedStudent.name}</Typography>
+                    <Typography variant="caption" color="text.secondary">{selectedStudent.rollNo} • {selectedStudent.email}</Typography>
+                  </Box>
+                  <Box sx={{ ml: 'auto' }}>
+                    <Chip 
+                      label={`Risk: ${selectedStudent.riskStatus}`} 
+                      size="small" 
+                      color={selectedStudent.riskSeverity} 
+                    />
+                  </Box>
+                </Box>
+
+                <TextField
+                  fullWidth
+                  label="Notification Title"
+                  variant="outlined"
+                  value={notificationTitle}
+                  onChange={(e) => setNotificationTitle(e.target.value)}
+                />
+
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={6}
+                  label="Message Body"
+                  variant="outlined"
+                  value={notificationMessage}
+                  onChange={(e) => setNotificationMessage(e.target.value)}
+                />
+
+                <Stack direction="row" spacing={2}>
+                  <FormControl size="small" fullWidth>
+                    <InputLabel>Type</InputLabel>
+                    <Select
+                      value={notificationType}
+                      label="Type"
+                      onChange={(e) => setNotificationType(e.target.value)}
+                    >
+                      <MenuItem value="info">Info</MenuItem>
+                      <MenuItem value="warning">Warning</MenuItem>
+                      <MenuItem value="error">Error</MenuItem>
+                      <MenuItem value="success">Success</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <FormControl size="small" fullWidth>
+                    <InputLabel>Priority</InputLabel>
+                    <Select
+                      value={notificationPriority}
+                      label="Priority"
+                      onChange={(e) => setNotificationPriority(e.target.value)}
+                    >
+                      <MenuItem value="low">Low</MenuItem>
+                      <MenuItem value="medium">Medium</MenuItem>
+                      <MenuItem value="high">High</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Stack>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={() => setNotifyDialogOpen(false)} color="inherit">Cancel</Button>
+            <Button onClick={handleSendNotification} variant="contained" color="primary">Send Notification</Button>
           </DialogActions>
         </Dialog>
       </Box>

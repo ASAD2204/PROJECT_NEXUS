@@ -43,6 +43,7 @@ export const alumniAPI = {
   getMentors: () => client.get('/alumni/mentorship'),
   createMentorship: (data) => client.post('/alumni/mentorship', data),
   deleteMentorship: (id) => client.delete(`/alumni/mentorship/${id}`),
+  requestMentorship: (data) => client.post('/alumni/mentorship-requests', data),
 
   // ── Success Stories ──
   getStories: () => client.get('/alumni/stories'),

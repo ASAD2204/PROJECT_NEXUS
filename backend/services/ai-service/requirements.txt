@@ -16,3 +16,6 @@ asyncpg
 numpy
 httpx
 python-multipart
+# --- Document Intelligence ---
+pymupdf
+python-docx

@@ -55,6 +55,7 @@ class CourseDetailOut(BaseModel):
     cover_image: Optional[str] = None
     capacity: int = 0
     enrolled: int = 0
+    room_no: Optional[str] = None
     lectures_per_week: int = 1
     lecture_duration_minutes: int = 60
 
@@ -139,9 +140,9 @@ class RecentSubmissionOut(BaseModel):
     sub_id: int
     assignment_id: int
     assignment_title: str
-    student_id: int
+    student_id: Optional[int] = None
     student_name: str
-    submitted_at: datetime
+    submitted_at: Optional[datetime] = None
     marks_obtained: Optional[float] = None
     course_id: int
     course_name: str
@@ -151,7 +152,10 @@ class RecentSubmissionOut(BaseModel):
 
 
 class GradeSubmission(BaseModel):
-    marks_obtained: float
+    marks_obtained: Optional[float] = None
+    marks: Optional[float] = None
+    comments: Optional[str] = None
+    feedback: Optional[str] = None
 
 
 # ── Quizzes ───────────────────────────────────────────────────────────────
@@ -161,6 +165,7 @@ class QuestionCreate(BaseModel):
     question_type: str = "MCQ"
     marks: float = 1.0
     correct_answer: Optional[str] = None
+    options: Optional[List[str]] = None
 
 
 class QuizCreate(BaseModel):
@@ -178,6 +183,7 @@ class QuestionOut(BaseModel):
     text: str
     question_type: str
     marks: float
+    options: Optional[List[str]] = None
 
     class Config:
         from_attributes = True
@@ -315,13 +321,17 @@ class AutoScheduleOut(BaseModel):
 
 class StudentGrade(BaseModel):
     student_id: int
-    grade_points: float
+    midterm_marks: Optional[float] = None
+    finalterm_marks: Optional[float] = None
+    sessional_marks: Optional[float] = None
+    grade_points: Optional[float] = None
 
 
 class GradeSubmitRequest(BaseModel):
     course_id: int
     grades: List[StudentGrade]
     final_submit: bool = False
+    grading_type: Optional[str] = "final"  # "midterm", "finalterm", "sessional", "final"
 
 
 # ── Course Materials ──────────────────────────────────────────────────────
@@ -358,6 +368,11 @@ class ParticipantOut(BaseModel):
     roll_no: Optional[str] = None
     email: Optional[str] = None
     avatar: Optional[str] = None
+    midterm_marks: Optional[float] = None
+    finalterm_marks: Optional[float] = None
+    sessional_marks: Optional[float] = None
+    final_grade_points: Optional[float] = None
+    average_grade: Optional[float] = None
 
 
 class QuizClassroomOut(QuizOut):

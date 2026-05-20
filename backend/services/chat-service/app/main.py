@@ -108,8 +108,8 @@ async def websocket_endpoint(
         await websocket.close(code=4003)
         return
 
-    await manager.connect(websocket, session_id)
     user_id = user["user_id"]
+    await manager.connect(websocket, session_id, user_id)
     sender_name = await _get_sender_name(user_id)
 
     # Mark the user as online in Redis (FYP Table 150 — 2-minute heartbeat TTL)
@@ -118,7 +118,60 @@ async def websocket_endpoint(
     try:
         while True:
             data = await websocket.receive_json()
+            msg_type = data.get("type", "message")
 
+            # 1. Heartbeat / Presence
+            if msg_type == "heartbeat":
+                await redis_client.set(f"chat:online:{user_id}", "online", ex=120)
+                continue
+
+            # 2. Typing Indicators (Transient - not persisted)
+            if msg_type == "typing":
+                await manager.broadcast_global({
+                    "type": "typing",
+                    "user_id": user_id,
+                    "session_id": session_id,
+                    "is_typing": data.get("is_typing", True)
+                }, session_id)
+                continue
+
+            # 3. Read Receipts
+            if msg_type == "read_receipt":
+                msg_id = data.get("message_id")
+                if msg_id:
+                    await chat_messages.update_one(
+                        {"_id": ObjectId(msg_id)},
+                        {"$set": {"is_read": True}}
+                    )
+                    await manager.broadcast_global({
+                        "type": "read_receipt",
+                        "message_id": msg_id,
+                        "session_id": session_id,
+                        "user_id": user_id
+                    }, session_id)
+                continue
+
+            # 4. Message Reactions
+            if msg_type == "reaction":
+                msg_id = data.get("message_id")
+                reaction = data.get("reaction") # e.g. "👍"
+                if msg_id and reaction:
+                    # Store reactions as a map: { emoji: [user_ids] }
+                    field = f"reactions.{reaction}"
+                    await chat_messages.update_one(
+                        {"_id": ObjectId(msg_id)},
+                        {"$addToSet": {field: user_id}}
+                    )
+                    await manager.broadcast_global({
+                        "type": "reaction",
+                        "message_id": msg_id,
+                        "reaction": reaction,
+                        "user_id": user_id,
+                        "session_id": session_id
+                    }, session_id)
+                continue
+
+            # 5. Standard Messages
             # Parse optional attachments [{file_url, file_type, file_size}]
             attachments = data.get("attachments", [])
             message_type = data.get("message_type", "text")
@@ -142,10 +195,12 @@ async def websocket_endpoint(
             broadcast_doc = {**message_doc}
             broadcast_doc["message_id"] = str(result.inserted_id)
             broadcast_doc["session_id"] = session_id
+            broadcast_doc["type"] = "message"
             broadcast_doc.pop("_id", None)
 
-            # Broadcast the message to every connection in this session
-            await manager.broadcast(broadcast_doc, session_id)
+            # Broadcast the message GLOBAL (all instances)
+            await manager.broadcast_global(broadcast_doc, session_id)
+            
     except WebSocketDisconnect:
-        manager.disconnect(websocket, session_id)
+        manager.disconnect(websocket, session_id, user_id)
         await redis_client.delete(f"chat:online:{user_id}")

@@ -1,6 +1,6 @@
 from sqlalchemy import (
     Column, Integer, String, Float, Boolean, Text, Date, Time,
-    ForeignKey, TIMESTAMP,
+    ForeignKey, TIMESTAMP, JSON
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -81,7 +81,7 @@ class LmsQuiz(Base):
 
     @property
     def total_marks(self):
-        return sum(q.marks for q in self.questions) if self.questions else 0.0
+        return sum((q.marks or 0.0) for q in self.questions) if self.questions else 0.0
 
     @property
     def questions_count(self):
@@ -97,6 +97,7 @@ class LmsQuestion(Base):
     question_type = Column(String(20))
     marks = Column(Float)
     correct_answer = Column(Text, nullable=True)
+    options = Column(JSON, nullable=True)
 
     quiz = relationship("LmsQuiz", back_populates="questions")
 
@@ -153,6 +154,9 @@ class SisEnrollment(Base):
     student_id = Column(Integer)
     course_id = Column(Integer, ForeignKey("lms_courses.course_id"))
     status = Column(String(20), default="Enrolled")
+    midterm_marks = Column(Float, nullable=True)
+    finalterm_marks = Column(Float, nullable=True)
+    sessional_marks = Column(Float, nullable=True)
     final_grade_points = Column(Float, nullable=True)
 
     course = relationship("LmsCourse", back_populates="enrollments")
@@ -201,3 +205,14 @@ class SisDepartment(Base):
     dept_id = Column(Integer, primary_key=True)
     name = Column(String(100))
     code = Column(String(10))
+
+
+class AuthUser(Base):
+    """Read-only mirror of auth_users."""
+    __tablename__ = "auth_users"
+    __table_args__ = {"extend_existing": True}
+
+    user_id = Column(UUID(as_uuid=True), primary_key=True)
+    first_name = Column(String(100))
+    last_name = Column(String(100))
+    email = Column(String(255))

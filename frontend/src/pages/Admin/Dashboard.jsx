@@ -60,6 +60,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
+import { useSnackbar } from '../../contexts/SnackbarContext';
 import StatCard from '../../components/Common/StatCard';
 import PageHeader from '../../components/Common/PageHeader';
 import { pageTransition } from '../../utils/animations';
@@ -71,6 +72,7 @@ import { hrAPI } from '../../api/hr';
 const AdminDashboard = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { showSnackbar } = useSnackbar();
   const [anchorEl, setAnchorEl] = useState(null);
 
   const [stats, setStats] = useState([
@@ -591,6 +593,7 @@ const AdminDashboard = () => {
                   <Button 
                     size="small" 
                     endIcon={<ArrowForward />}
+                    onClick={() => navigate('/notifications')}
                     sx={{ minWidth: { xs: 80, sm: 'auto' } }}
                   >
                     View All

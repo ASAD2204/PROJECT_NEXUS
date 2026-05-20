@@ -60,11 +60,13 @@ import {
   Person,
   Email,
   Phone,
+  Grade,
 } from '@mui/icons-material';
 import PageHeader from '../../components/Common/PageHeader';
 import { fadeInUp, staggerContainer } from '../../utils/animations';
 import { sisAPI } from '../../api/sis';
 import { lmsAPI } from '../../api/lms';
+import { teacherAPI } from '../../api/teacher';
 import { Snackbar, Alert } from '@mui/material';
 
 const toFiniteNumber = (value, fallback = 0) => {
@@ -110,7 +112,11 @@ const normalizeStudent = (student = {}) => ({
   phone: safeText(student.phone, ''),
   attendance: toFiniteNumber(student.attendance ?? student.attendance_percentage, 0),
   assignments: toFiniteNumber(student.assignments, 0),
-  avgGrade: safeText(student.avgGrade || student.avg_grade, '-'),
+  avgGrade: safeText(student.average_grade ?? student.avgGrade ?? student.avg_grade, '-'),
+  midterm_marks: student.midterm_marks ?? null,
+  finalterm_marks: student.finalterm_marks ?? null,
+  sessional_marks: student.sessional_marks ?? null,
+  final_grade_points: student.final_grade_points ?? null,
 });
 
 const normalizeAssignment = (assignment = {}) => ({
@@ -162,7 +168,7 @@ const CourseManagement = () => {
   const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
-  const [dialogType, setDialogType] = useState(''); // 'assignment', 'material', 'announcement', 'student'
+  const [dialogType, setDialogType] = useState(''); // 'assignment', 'material', 'announcement', 'student', 'grading'
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [studentDetailsOpen, setStudentDetailsOpen] = useState(false);
@@ -174,109 +180,156 @@ const CourseManagement = () => {
   const [quizzes, setQuizzes] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
 
-  const avgAttendance = students.length > 0
-    ? Math.round(students.reduce((sum, s) => sum + Number(s.attendance || s.attendance_percentage || 0), 0) / students.length) + '%'
-    : '0%';
+  const [gradingMarks, setGradingMarks] = useState({}); // student_id -> { midterm, finalterm, sessional, gp }
+  const [gradingType, setGradingType] = useState('unified'); // 'midterm', 'finalterm', 'sessional', 'final', 'unified'
+  const [finalSubmit, setFinalSubmit] = useState(false);
+  const [formFields, setFormFields] = useState({ title: '', content: '', priority: 'medium', file: null });
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+
+  const fetchCourseData = async () => {
+    try {
+      const [courseRes, studentsRes, assignmentsRes, materialsRes, quizRes, annRes] = await Promise.all([
+        teacherAPI.getCourse(id),
+        sisAPI.getSectionParticipants(id),
+        lmsAPI.getCourseAssignments(id),
+        lmsAPI.getCourseMaterials(id),
+        lmsAPI.getQuizzes({ course_id: id }),
+        lmsAPI.getCourseAnnouncements(id)
+      ]);
+
+      if (courseRes.data) {
+        const c = courseRes.data;
+        setCourse({
+          id: c.section_id || c.id,
+          code: c.course?.code || c.code || '',
+          name: c.course?.title || c.name || '',
+          semester: c.semester_id ? `Semester ${c.semester_id}` : '',
+          students: c.enrolled_students || 0,
+          schedule: c.schedule || 'TBA',
+          room: c.room_no || 'TBA',
+          creditHours: c.course?.credit_hours || 0,
+          description: c.course?.description || ''
+        });
+      }
+
+      setStudents(unwrapCollection(studentsRes.data, ['students']).map(normalizeStudent));
+      setAssignments(unwrapCollection(assignmentsRes.data, ['assignments']).map(normalizeAssignment));
+      setMaterials(unwrapCollection(materialsRes.data, ['materials']).map(normalizeMaterial));
+      setQuizzes(unwrapCollection(quizRes.data, ['quizzes']).map(normalizeQuiz));
+      setAnnouncements(unwrapCollection(annRes.data, ['announcements']).map(normalizeAnnouncement));
+    } catch (e) {
+      console.error('Failed to fetch course data', e);
+      setSnackbar({ open: true, message: 'Failed to load course details', severity: 'error' });
+    }
+  };
 
   useEffect(() => {
-    const fetchCourseData = async () => {
-      try {
-        const [courseRes, participantRes, assignRes, matRes, quizRes, annRes] = await Promise.allSettled([
-          sisAPI.getCourse(id),
-          sisAPI.getSectionParticipants(id),
-          lmsAPI.getCourseAssignments(id),
-          lmsAPI.getCourseMaterials(id),
-          lmsAPI.getQuizzes({ section_id: id }),
-          lmsAPI.getCourseAnnouncements(id),
-        ]);
-        if (courseRes.status === 'fulfilled') {
-          const c = courseRes.value.data || {};
-          const sectionCourse = c.course || {};
-          setCourse({
-            ...c,
-            id: c.section_id || c.id || id,
-            code: safeText(c.code || sectionCourse.code, `SEC-${id}`),
-            name: safeText(c.title || c.name || sectionCourse.title, `Section ${id}`),
-            semester: safeText(c.semester || c.semester_title || (c.semester_id ? `Semester ${c.semester_id}` : ''), ''),
-            students: toFiniteNumber(c.enrolled_students ?? c.students, 0),
-            schedule: safeText(c.schedule, '-'),
-            room: safeText(c.room_no || c.room || sectionCourse.room_no, 'TBA'),
-            creditHours: toFiniteNumber(c.credit_hours || sectionCourse.credit_hours, 0),
-            description: safeText(c.description || sectionCourse.description, ''),
-          });
-        }
-        if (courseRes.status === 'fulfilled') {
-          const c = courseRes.value.data || {};
-          const courseId = c.course_id || c.course?.course_id || null;
-          if ((!safeText(c.description || c.course?.description, '') && courseId) || !safeText(c.description, '')) {
-            const courseDetailsRes = await lmsAPI.getCourse(courseId).catch(() => null);
-            const courseDetails = courseDetailsRes?.data || {};
-            if (courseDetails && Object.keys(courseDetails).length > 0) {
-              setCourse((prev) => ({
-                ...prev,
-                code: safeText(prev.code || courseDetails.code, prev.code),
-                name: safeText(prev.name || courseDetails.title, prev.name),
-                creditHours: toFiniteNumber(prev.creditHours || courseDetails.credit_hours, prev.creditHours),
-                description: safeText(prev.description || courseDetails.description, prev.description),
-              }));
-            }
-          }
-        }
-        if (participantRes.status === 'fulfilled') {
-          const participants = participantRes.value.data || {};
-          const participantStudents = unwrapCollection(participants, ['students']).map(normalizeStudent);
-          setStudents(participantStudents);
-          setCourse((prev) => ({
-            ...prev,
-            students: participantStudents.length,
-          }));
-        }
-        if (assignRes.status === 'fulfilled') setAssignments(unwrapCollection(assignRes.value.data, ['assignments']).map(normalizeAssignment));
-        if (matRes.status === 'fulfilled') setMaterials(unwrapCollection(matRes.value.data, ['materials']).map(normalizeMaterial));
-        if (quizRes.status === 'fulfilled') setQuizzes(unwrapCollection(quizRes.value.data, ['quizzes']).map(normalizeQuiz));
-        if (annRes.status === 'fulfilled') setAnnouncements(unwrapCollection(annRes.value.data, ['announcements']).map(normalizeAnnouncement));
-      } catch (e) { console.error('Failed to load course data', e); }
-    };
     fetchCourseData();
   }, [id]);
 
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [formFields, setFormFields] = useState({ title: '', content: '', priority: 'medium', file: null });
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setFormFields({ title: '', content: '', priority: 'medium', file: null });
+    setFinalSubmit(false);
+  };
 
-  const handleOpenDialog = (type) => {
+  const handleExportStudents = () => {
+    const headers = ['Name', 'Roll No', 'Email', 'Attendance %', 'Avg Grade'];
+    const data = students.map(s => [s.name, s.rollNo, s.email, s.attendance, s.avgGrade]);
+    const csvContent = [headers, ...data].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${course.code}_students.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const calculateGPA = (mid, final, sess) => {
+    const total = (Number(mid) || 0) + (Number(final) || 0) + (Number(sess) || 0);
+    if (total >= 85) return 4.0;
+    if (total >= 80) return 3.7;
+    if (total >= 75) return 3.3;
+    if (total >= 70) return 3.0;
+    if (total >= 65) return 2.7;
+    if (total >= 60) return 2.3;
+    if (total >= 50) return 2.0;
+    return 0.0;
+  };
+
+  const handleOpenDialog = async (type) => {
+    if (type === 'grading') {
+      // Fetch actual gradebook data from LMS (has persisted marks)
+      // instead of relying on SIS participants (which has no grade fields)
+      try {
+        const res = await lmsAPI.getGradebookData(id);
+        const gradebookStudents = res.data?.students || [];
+        const initialMarks = {};
+        students.forEach(s => {
+          const gb = gradebookStudents.find(g => g.student_id === s.student_id);
+          const mid = gb?.midterm ?? s.midterm_marks ?? '';
+          const final = gb?.finalterm ?? s.finalterm_marks ?? '';
+          const sess = gb?.sessional ?? s.sessional_marks ?? '';
+          let gp = gb?.final_grade_points ?? s.final_grade_points ?? '';
+          
+          if (gp === '' || gp > 4.0 || (mid !== '' || final !== '' || sess !== '')) {
+            gp = calculateGPA(mid, final, sess);
+          }
+          
+          initialMarks[s.student_id] = {
+            midterm: mid,
+            finalterm: final,
+            sessional: sess,
+            gp: gp
+          };
+        });
+        setGradingMarks(initialMarks);
+      } catch (e) {
+        // Fallback to student data if gradebook fetch fails
+        console.error('Failed to fetch gradebook data for grading dialog', e);
+        const initialMarks = {};
+        students.forEach(s => {
+          const mid = s.midterm_marks ?? '';
+          const final = s.finalterm_marks ?? '';
+          const sess = s.sessional_marks ?? '';
+          let gp = s.final_grade_points ?? '';
+          
+          if (gp === '' || gp > 4.0 || (mid !== '' || final !== '' || sess !== '')) {
+            gp = calculateGPA(mid, final, sess);
+          }
+          
+          initialMarks[s.student_id] = {
+            midterm: mid,
+            finalterm: final,
+            sessional: sess,
+            gp: gp
+          };
+        });
+        setGradingMarks(initialMarks);
+      }
+    }
     setDialogType(type);
     setOpenDialog(true);
   };
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setDialogType('');
-    setFormFields({ title: '', content: '', priority: 'medium', file: null });
-  };
+  const handleMarkChange = (studentId, field, value) => {
+    const maxMarks = { midterm: 30, finalterm: 50, sessional: 20 };
+    let val = value === '' ? '' : Number(value);
+    
+    if (val !== '' && val > maxMarks[field]) {
+        val = maxMarks[field];
+    }
 
-  const handleExportStudents = () => {
-    const headers = ['Name', 'Roll No', 'Email', 'Phone', 'Attendance', 'Avg Grade'];
-    const rows = students.map(s => [
-      s.name,
-      s.rollNo,
-      s.email,
-      s.phone,
-      `${s.attendance || s.attendance_percentage || 0}%`,
-      s.avgGrade || 'N/A'
-    ]);
-
-    const csvContent = [headers.join(',')]
-      .concat(rows.map(r => r.map(val => `"${String(val ?? '').replace(/"/g, '""')}"`).join(',')))
-      .join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${course.code}_students_${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-    setSnackbar({ open: true, message: 'Student list exported successfully', severity: 'success' });
+    setGradingMarks(prev => {
+        const studentMarks = { ...prev[studentId], [field]: val };
+        const calculatedGP = calculateGPA(studentMarks.midterm, studentMarks.finalterm, studentMarks.sessional);
+        return {
+            ...prev,
+            [studentId]: { ...studentMarks, gp: calculatedGP }
+        };
+    });
   };
 
   const handleActionSubmit = async () => {
@@ -291,20 +344,36 @@ const CourseManagement = () => {
         // Refresh announcements
         const annRes = await lmsAPI.getCourseAnnouncements(id);
         setAnnouncements(unwrapCollection(annRes.data, ['announcements']).map(normalizeAnnouncement));
+      } else if (dialogType === 'grading') {
+        const grades = Object.entries(gradingMarks).map(([studentId, marks]) => ({
+          student_id: Number(studentId),
+          midterm_marks: Number(marks.midterm) || 0,
+          finalterm_marks: Number(marks.finalterm) || 0,
+          sessional_marks: Number(marks.sessional) || 0,
+          grade_points: marks.gp,
+        }));
+        
+        await lmsAPI.submitGrades({
+          course_id: Number(id),
+          grades,
+          final_submit: finalSubmit,
+          grading_type: 'unified'
+        });
+        setSnackbar({ open: true, message: `Grades updated successfully with auto-GPA calculation`, severity: 'success' });
+        fetchCourseData();
       } else if (dialogType === 'material') {
-        // Mock upload logic as lmsAPI.uploadMaterial might need FormData
         const formData = new FormData();
+        formData.append('course_id', id);
         formData.append('title', formFields.title);
         formData.append('description', formFields.content);
         if (formFields.file) formData.append('file', formFields.file);
         
-        await lmsAPI.uploadCourseMaterial(id, formData);
+        await lmsAPI.uploadMaterial(formData);
         setSnackbar({ open: true, message: 'Material uploaded successfully!', severity: 'success' });
         // Refresh materials
         const matRes = await lmsAPI.getCourseMaterials(id);
         setMaterials(unwrapCollection(matRes.data, ['materials']).map(normalizeMaterial));
       } else if (dialogType === 'student') {
-        // Mock add student
         setSnackbar({ open: true, message: 'Student added successfully!', severity: 'success' });
       }
       handleCloseDialog();
@@ -316,12 +385,12 @@ const CourseManagement = () => {
 
   const handleDownloadMaterial = async (material) => {
     try {
-      const ref = material.file_ref_id || material.fileRefId || material.file_url || material.fileUrl;
-      if (!ref) {
+      const materialId = material.id || material.material_id;
+      if (!materialId) {
         setSnackbar({ open: true, message: 'No downloadable file available for this material', severity: 'error' });
         return;
       }
-      const res = await lmsAPI.downloadFile(ref);
+      const res = await lmsAPI.downloadFile(materialId);
       const blob = new Blob([res.data], { type: res.headers['content-type'] || 'application/octet-stream' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -335,6 +404,18 @@ const CourseManagement = () => {
     } catch (e) {
       console.error(e);
       setSnackbar({ open: true, message: 'Failed to download file', severity: 'error' });
+    }
+  };
+
+  const handleDeleteMaterial = async (materialId) => {
+    if (!window.confirm('Are you sure you want to delete this material?')) return;
+    try {
+      await lmsAPI.deleteMaterial(materialId);
+      setMaterials(materials.filter(m => m.id !== materialId));
+      setSnackbar({ open: true, message: 'Material deleted successfully', severity: 'success' });
+    } catch (e) {
+      console.error(e);
+      setSnackbar({ open: true, message: 'Failed to delete material', severity: 'error' });
     }
   };
 
@@ -358,6 +439,9 @@ const CourseManagement = () => {
   };
 
   const courseDescription = course.description || course.course?.description || '';
+  const avgAttendance = students.length 
+    ? (students.reduce((sum, s) => sum + (s.attendance || 0), 0) / students.length).toFixed(1) + '%'
+    : '0%';
 
   return (
     <Box className="page-container">
@@ -612,6 +696,15 @@ const CourseManagement = () => {
                     Export
                   </Button>
                   <Button
+                    startIcon={<Grade />}
+                    variant="outlined"
+                    size="small"
+                    color="primary"
+                    onClick={() => handleOpenDialog('grading')}
+                  >
+                    Manage Grades
+                  </Button>
+                  <Button
                     startIcon={<Add />}
                     variant="contained"
                     size="small"
@@ -821,7 +914,10 @@ const CourseManagement = () => {
                             >
                               <Visibility fontSize="small" />
                             </IconButton>
-                            <IconButton size="small">
+                            <IconButton 
+                              size="small"
+                              onClick={() => navigate(`/teacher/assignment/${assignment.id}/edit`)}
+                            >
                               <Edit fontSize="small" />
                             </IconButton>
                           </Stack>
@@ -895,7 +991,11 @@ const CourseManagement = () => {
                           >
                             Download
                           </Button>
-                          <IconButton size="small" color="error">
+                          <IconButton 
+                            size="small" 
+                            color="error"
+                            onClick={() => handleDeleteMaterial(material.id)}
+                          >
                             <Delete fontSize="small" />
                           </IconButton>
                         </Stack>
@@ -1049,13 +1149,107 @@ const CourseManagement = () => {
       </Card>
 
       {/* DIALOGS */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
           {dialogType === 'material' && 'Upload Course Material'}
           {dialogType === 'announcement' && 'Post Announcement'}
           {dialogType === 'student' && 'Add Student'}
+          {dialogType === 'grading' && 'Manage Course Grades'}
         </DialogTitle>
         <DialogContent>
+          {dialogType === 'grading' && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                Unified Assessment Matrix
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Enter marks for each component. GPA is auto-calculated based on: Midterm (30), Final (50), and Sessional (20).
+              </Typography>
+
+              <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 500 }}>
+                <Table size="small" stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ minWidth: 150 }}>Student</TableCell>
+                      <TableCell align="center">Midterm (30)</TableCell>
+                      <TableCell align="center">Final (50)</TableCell>
+                      <TableCell align="center">Sessional (20)</TableCell>
+                      <TableCell align="center" sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>GPA</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {students.map((student) => (
+                      <TableRow key={student.id}>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Avatar src={student.avatar} sx={{ width: 24, height: 24 }} />
+                            <Box>
+                                <Typography variant="body2" fontWeight="bold">{student.name}</Typography>
+                                <Typography variant="caption" color="text.secondary">{student.rollNo}</Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+                        <TableCell align="center">
+                          <TextField
+                            size="small"
+                            type="number"
+                            sx={{ width: 80 }}
+                            value={gradingMarks[student.student_id]?.midterm ?? ''}
+                            onChange={(e) => handleMarkChange(student.student_id, 'midterm', e.target.value)}
+                            inputProps={{ max: 30, min: 0 }}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <TextField
+                            size="small"
+                            type="number"
+                            sx={{ width: 80 }}
+                            value={gradingMarks[student.student_id]?.finalterm ?? ''}
+                            onChange={(e) => handleMarkChange(student.student_id, 'finalterm', e.target.value)}
+                            inputProps={{ max: 50, min: 0 }}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <TextField
+                            size="small"
+                            type="number"
+                            sx={{ width: 80 }}
+                            value={gradingMarks[student.student_id]?.sessional ?? ''}
+                            onChange={(e) => handleMarkChange(student.student_id, 'sessional', e.target.value)}
+                            inputProps={{ max: 20, min: 0 }}
+                          />
+                        </TableCell>
+                        <TableCell align="center" sx={{ bgcolor: alpha(theme.palette.primary.main, 0.02) }}>
+                          <Chip 
+                            label={gradingMarks[student.student_id]?.gp ? Number(gradingMarks[student.student_id].gp).toFixed(1) : '0.0'} 
+                            size="small"
+                            color={Number(gradingMarks[student.student_id]?.gp) >= 2.0 ? "success" : "default"}
+                            sx={{ fontWeight: 'bold' }}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              <Box sx={{ mt: 3, display: 'flex', alignItems: 'center', gap: 1, p: 2, bgcolor: alpha(theme.palette.warning.main, 0.1), borderRadius: 2 }}>
+                <input 
+                  type="checkbox" 
+                  checked={finalSubmit} 
+                  onChange={(e) => setFinalSubmit(e.target.checked)} 
+                />
+                <Box>
+                    <Typography variant="body2" fontWeight="bold">
+                        Finalize & Push to SIS
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                        This will notify students of their results and update their permanent transcripts.
+                    </Typography>
+                </Box>
+              </Box>
+            </Box>
+          )}
           {dialogType === 'material' && (
             <Stack spacing={2} sx={{ mt: 2 }}>
               <TextField 
@@ -1122,6 +1316,7 @@ const CourseManagement = () => {
             {dialogType === 'material' && 'Upload'}
             {dialogType === 'announcement' && 'Post'}
             {dialogType === 'student' && 'Add'}
+            {dialogType === 'grading' && 'Save Grades'}
           </Button>
         </DialogActions>
       </Dialog>

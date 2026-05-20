@@ -30,6 +30,7 @@ import {
   LinearProgress,
   IconButton,
   alpha,
+  Tooltip,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import {
@@ -42,9 +43,11 @@ import {
   ArrowForward,
   Notifications,
   MoreVert,
+  Feedback,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
+import { useSnackbar } from '../../contexts/SnackbarContext';
 import StatCard from '../../components/Common/StatCard';
 import PageHeader from '../../components/Common/PageHeader';
 import { pageTransition } from '../../utils/animations';
@@ -90,6 +93,7 @@ const normalizeSectionSummary = (section = {}) => {
     avgAttendancePct: clampPercent(section.avg_attendance_pct),
     avgQuizScore: clampPercent(section.avg_quiz_score),
     avgAssignmentScore: clampPercent(section.avg_assignment_score),
+    avgGrade: clampPercent(section.avg_grade),
     atRiskCount: toFiniteNumber(section.at_risk_count),
     pendingAssignments: toFiniteNumber(section.pending_assignments),
   };
@@ -131,6 +135,7 @@ const normalizeAssignmentCard = (assignment = {}) => ({
 const TeacherDashboard = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { showSnackbar } = useSnackbar();
 
   const [stats, setStats] = useState([
     { title: 'Total Students', value: '—', subtitle: '', icon: People, color: 'primary', tooltip: '' },
@@ -143,7 +148,7 @@ const TeacherDashboard = () => {
   const [recentSubmissions, setRecentSubmissions] = useState([]);
 
   useEffect(() => {
-    const fetchDashboard = async () => {
+    const fetchData = async () => {
       try {
         const [dashRes, coursesRes, assignmentRes, recentSubRes] = await Promise.allSettled([
           analyticsAPI.getFacultyDashboard(),
@@ -162,12 +167,16 @@ const TeacherDashboard = () => {
           const avgAttendance = sectionStats.length
             ? sectionStats.reduce((sum, section) => sum + section.avgAttendancePct, 0) / sectionStats.length
             : 0;
+          
+          const avgCourseScore = sectionStats.length
+            ? sectionStats.reduce((sum, section) => sum + section.avgGrade, 0) / sectionStats.length
+            : 0;
 
           setStats([
             { title: 'My Courses', value: String(toFiniteNumber(d?.total_sections)), subtitle: 'Assigned sections', icon: School, color: 'primary', tooltip: 'Sections assigned to you' },
             { title: 'Total Students', value: String(toFiniteNumber(d?.total_students)), subtitle: 'Across all sections', icon: People, color: 'success', tooltip: 'Total students enrolled' },
             { title: 'Avg Attendance', value: formatPercent(avgAttendance), subtitle: 'Across all sections', icon: CheckCircle, color: 'info', tooltip: 'Average attendance across your sections' },
-            { title: 'Pending Assignments', value: String(toFiniteNumber(d?.total_pending_assignments)), subtitle: 'Needs review', icon: Assignment, color: 'warning', tooltip: 'Submissions awaiting your feedback' },
+            { title: 'Avg Course Score', value: formatPercent(avgCourseScore), subtitle: 'Exam average', icon: TrendingUp, color: 'warning', tooltip: 'Average exam score (Midterm/Final/Sessional)' },
           ]);
         }
 
@@ -256,10 +265,12 @@ const TeacherDashboard = () => {
         chatAPI.syncContacts().catch(() => {});
       } catch (e) {
         console.error(e);
+        showSnackbar('Failed to load some dashboard statistics.', 'warning');
       }
     };
-    fetchDashboard();
-  }, []);
+
+    fetchData();
+  }, [showSnackbar]);
 
   return (
     <motion.div {...pageTransition}>
@@ -308,6 +319,7 @@ const TeacherDashboard = () => {
                     <Paper
                       key={course.id}
                       elevation={0}
+                      onClick={() => navigate(`/teacher/courses/${course.id}/classroom`)}
                       sx={{
                         p: 2.5,
                         border: 1,
@@ -315,12 +327,20 @@ const TeacherDashboard = () => {
                         borderRadius: 2,
                         cursor: 'pointer',
                         transition: 'all 0.3s',
+                        position: 'relative',
                         '&:hover': {
                           borderColor: theme.palette.primary.main,
                           backgroundColor: alpha(theme.palette.primary.main, 0.02),
                         },
                       }}
                     >
+                      <IconButton 
+                        size="small" 
+                        onClick={(e) => { e.stopPropagation(); navigate(`/teacher/feedback/${course.id}`); }}
+                        sx={{ position: 'absolute', top: 8, right: 8, color: 'text.secondary' }}
+                      >
+                        <Tooltip title="View Feedback"><Feedback fontSize="small" /></Tooltip>
+                      </IconButton>
                       <Grid container spacing={2} alignItems="center">
                         <Grid size={{ xs: 12, md: 5 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -390,6 +410,7 @@ const TeacherDashboard = () => {
                   <Button 
                     size="small" 
                     endIcon={<ArrowForward />}
+                    onClick={() => navigate('/teacher/assignments')}
                     sx={{ minWidth: { xs: 75, sm: 'auto' } }}
                   >
                     View All

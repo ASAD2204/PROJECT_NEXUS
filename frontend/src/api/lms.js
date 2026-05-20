@@ -96,6 +96,7 @@ const normalizeSubmission = (submission) => ({
   submittedAt: submission?.submitted_at || submission?.submittedAt || null,
   marks_obtained: submission?.marks_obtained ?? submission?.marksObtained ?? null,
   marksObtained: submission?.marks_obtained ?? submission?.marksObtained ?? null,
+  status: submission?.status || (submission?.marks_obtained !== null ? 'graded' : 'pending'),
 });
 
 export const lmsAPI = {
@@ -126,6 +127,7 @@ export const lmsAPI = {
     const assignments = assignmentResponses.flatMap((res) => toArray(res.data, ['assignments']));
     return { data: assignments };
   },
+  getCourseAssignments: (courseId) => client.get(`/lms/assignments/course/${courseId}`),
   getAssignment: (id) => client.get(`/lms/assignments/${id}`),
   createAssignment: (data) => client.post('/lms/assignments', data),
   updateAssignment: (id, data) => client.put(`/lms/assignments/${id}`, data),
@@ -172,6 +174,13 @@ export const lmsAPI = {
 
   // ── Submissions ──
   submitAssignment: (assignmentId, payload) => {
+    // If payload is FormData, we shouldn't wrap it in a plain object
+    if (payload instanceof FormData) {
+      if (!payload.has('assignment_id')) {
+        payload.append('assignment_id', assignmentId);
+      }
+      return client.post('/lms/submissions', payload);
+    }
     return client.post('/lms/submissions', {
       assignment_id: assignmentId,
       ...payload
@@ -226,6 +235,7 @@ export const lmsAPI = {
   getMaterials: (courseId) => client.get(`/lms/materials/course/${courseId}`),
   getCourseMaterials: (courseId) => client.get(`/lms/materials/course/${courseId}`),
   uploadMaterial: (payload) => client.post('/lms/materials', payload),
+  downloadFile: (id) => client.get(`/lms/materials/download/${id}`, { responseType: 'blob' }),
 
   // ── Announcements ──
   getAnnouncements: (params) => client.get('/ops/announcements', { params }),
@@ -242,7 +252,13 @@ export const lmsAPI = {
   exportGradebook: (courseId) => client.get(`/lms/courses/${courseId}/grades/export`, { responseType: 'blob' }),
   exportAttendance: (courseId) => client.get(`/lms/courses/${courseId}/attendance/export`, { responseType: 'blob' }),
   
+  // ── Materials ──
+  deleteMaterial: (id) => client.delete(`/lms/materials/${id}`),
+  updateMaterial: (id, data) => client.put(`/lms/materials/${id}`, data),
+  
   // ── Grades ──
+  getGradebookData: (courseId) => client.get(`/lms/courses/${courseId}/gradebook-data`),
+  finalizeResults: (courseId) => client.post(`/lms/courses/${courseId}/finalize`),
   submitGrades: (data) => client.post('/lms/grades/submit', data),
 };
 

@@ -27,6 +27,13 @@ export const sisAPI = {
 
   // ── Semesters ──
   getSemesters: () => client.get('/sis/semesters'),
+  createSemester: (data) => client.post('/sis/semesters', data),
+  updateSemester: (id, data) => client.put(`/sis/semesters/${id}`, data),
+  closeSemester: (id) => client.post(`/sis/semesters/${id}/close`),
+
+  // ── History & Seeding ──
+  fastForwardStudent: (id, targetSemester) => client.post(`/sis/students/${id}/fast-forward?target_semester=${targetSemester}`),
+  importStudentHistory: (id, data) => client.post(`/sis/students/${id}/import-history`, data),
 
   // ── Departments ──
   getDepartments: () => client.get('/sis/departments'),
@@ -52,6 +59,7 @@ export const sisAPI = {
   getMyEnrollments: () => client.get('/sis/enrollments/me'),
   getMyCourses: () => client.get('/lms/courses/my-courses'),
   getCourseParticipants: (courseId) => client.get(`/sis/courses/${courseId}/participants`),
+  getSectionParticipants: (sectionId) => client.get(`/sis/courses/${sectionId}/participants`),
   enrollStudent: (data) => client.post('/sis/enrollments', data),
 
   // ── Grades ──

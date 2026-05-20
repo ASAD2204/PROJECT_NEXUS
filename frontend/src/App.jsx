@@ -30,6 +30,7 @@ import MainLayout from './components/Layout/MainLayout';
 import Login from './pages/Auth/Login';
 import ForgotPassword from './pages/Auth/ForgotPassword';
 import OTP from './pages/Auth/OTP';
+import ResetPassword from './pages/Auth/ResetPassword';
 
 // Student Pages
 import Dashboard from './pages/Student/Dashboard';
@@ -39,6 +40,7 @@ import MyAssignments from './pages/Student/MyAssignments';
 import MyTickets from './pages/Student/MyTickets';
 import Notifications from './pages/Student/Notifications';
 import AlumniDirectory from './pages/Student/AlumniDirectory';
+import StudentTimetable from './pages/Student/Timetable';
 
 // Admin Pages
 import AdminDashboard from './pages/Admin/Dashboard';
@@ -53,11 +55,13 @@ import AlumniManagement from './pages/Admin/AlumniManagement';
 import DepartmentManagement from './pages/Admin/DepartmentManagement';
 import AnnouncementManagement from './pages/Admin/AnnouncementManagement';
 import TimetableManagement from './pages/Admin/TimetableManagement';
+import SemesterPromotion from './pages/Admin/SemesterPromotion';
 
 // Teacher Pages
 import TeacherDashboard from './pages/Teacher/Dashboard';
 import TeacherProfile from './pages/Teacher/Profile';
 import TeacherCourses from './pages/Teacher/MyCourses';
+import TeacherGradebook from './pages/Teacher/GradeManagement';
 import StudentManagement from './pages/Teacher/StudentManagement';
 import TeacherReports from './pages/Teacher/Reports';
 import TeacherCourseManagement from './pages/Teacher/CourseManagement';
@@ -67,6 +71,7 @@ import ViewSubmissions from './pages/Teacher/ViewSubmissions';
 import Assignments from './pages/Teacher/Assignments';
 import Quizzes from './pages/Teacher/Quizzes';
 import TeacherAttendance from './pages/Teacher/TeacherAttendance';
+import TeacherTimetable from './pages/Teacher/Timetable';
 
 // Attendance Pages
 import SmartAttendance from './pages/Attendance/SmartAttendance';
@@ -108,6 +113,7 @@ import Mentorship from './pages/Alumni/Mentorship';
 import SuccessStories from './pages/Alumni/SuccessStories';
 import TeacherGrievanceManagement from './pages/Teacher/GrievanceManagement';
 import HelpSupport from './pages/Support/HelpSupport';
+import LeaveManagement from './pages/Common/LeaveManagement';
 
 /**
  * Protected Route Component
@@ -206,6 +212,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/otp" element={<OTP />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* ============================================
           PROTECTED ROUTES - Authentication required
@@ -229,6 +236,7 @@ function App() {
         <Route path="profile" element={<RoleRoute allowedRoles={['student']}><StudentProfile /></RoleRoute>} />
         <Route path="student/profile" element={<RoleRoute allowedRoles={['student']}><StudentProfile /></RoleRoute>} />
         <Route path="transcript" element={<RoleRoute allowedRoles={['student']}><Transcript /></RoleRoute>} />
+        <Route path="student/timetable" element={<RoleRoute allowedRoles={['student']}><StudentTimetable /></RoleRoute>} />
         <Route path="notifications" element={<RoleRoute allowedRoles={['student']}><Notifications /></RoleRoute>} />
         
         {/* =====================================
@@ -244,7 +252,9 @@ function App() {
         <Route path="admin/finance" element={<RoleRoute allowedRoles={['admin']}><AdminFinance /></RoleRoute>} />
         <Route path="admin/grievances" element={<RoleRoute allowedRoles={['admin']}><AdminGrievanceManagement /></RoleRoute>} />
         <Route path="admin/announcements" element={<RoleRoute allowedRoles={['admin']}><AnnouncementManagement /></RoleRoute>} />
+        <Route path="admin/promotion" element={<RoleRoute allowedRoles={['admin']}><SemesterPromotion /></RoleRoute>} />
         <Route path="admin/scheduler" element={<RoleRoute allowedRoles={['admin']}><TimetableManagement /></RoleRoute>} />
+
         <Route path="admin/settings" element={<RoleRoute allowedRoles={['admin']}><AdminSettings /></RoleRoute>} />
         
         {/* =====================================
@@ -253,6 +263,7 @@ function App() {
         <Route path="teacher/dashboard" element={<RoleRoute allowedRoles={['teacher']}><TeacherDashboard /></RoleRoute>} />
         <Route path="teacher/profile" element={<RoleRoute allowedRoles={['teacher']}><TeacherProfile /></RoleRoute>} />
         <Route path="teacher/courses" element={<RoleRoute allowedRoles={['teacher']}><TeacherCourses /></RoleRoute>} />
+        <Route path="teacher/gradebook" element={<RoleRoute allowedRoles={['teacher']}><TeacherGradebook /></RoleRoute>} />
         <Route path="teacher/students" element={<RoleRoute allowedRoles={['teacher']}><StudentManagement /></RoleRoute>} />
         <Route path="teacher/course/:id" element={<RoleRoute allowedRoles={['teacher', 'student']}><CourseClassroom /></RoleRoute>} />
         <Route path="teacher/course/:id/manage" element={<RoleRoute allowedRoles={['teacher']}><TeacherCourseManagement /></RoleRoute>} />
@@ -265,6 +276,7 @@ function App() {
         <Route path="teacher/quiz/:id/edit" element={<RoleRoute allowedRoles={['teacher']}><CreateQuiz /></RoleRoute>} />
         <Route path="teacher/quiz/:id/results" element={<RoleRoute allowedRoles={['teacher']}><ViewSubmissions /></RoleRoute>} />
         <Route path="teacher/attendance" element={<RoleRoute allowedRoles={['teacher']}><TeacherAttendance /></RoleRoute>} />
+        <Route path="teacher/timetable" element={<RoleRoute allowedRoles={['teacher']}><TeacherTimetable /></RoleRoute>} />
         <Route path="teacher/reports" element={<RoleRoute allowedRoles={['teacher']}><TeacherReports /></RoleRoute>} />
         <Route path="teacher/grievances" element={<RoleRoute allowedRoles={['teacher']}><TeacherGrievanceManagement /></RoleRoute>} />
         
@@ -344,6 +356,11 @@ function App() {
             GRIEVANCE ROUTES
             ===================================== */}
         <Route path="grievances" element={<Grievances />} />
+        
+        {/* =====================================
+            LEAVE MANAGEMENT ROUTES
+            ===================================== */}
+        <Route path="leaves" element={<LeaveManagement />} />
       </Route>
 
       {/* ============================================

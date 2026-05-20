@@ -46,6 +46,8 @@ const normalizeBook = (book = {}) => {
     total_copies: totalCopies,
     availableCopies,
     available_copies: availableCopies,
+    digitalLink: book.digital_link ?? book.digitalLink ?? null,
+    digital_link: book.digital_link ?? book.digitalLink ?? null,
     shelfLocation: book.shelfLocation ?? book.shelf_location ?? '',
     shelf_location: book.shelf_location ?? book.shelfLocation ?? '',
     ratings: toNumber(book.ratings ?? book.rating, 0),
@@ -58,12 +60,15 @@ const normalizeIssue = (issue = {}) => {
   const issueDate = issue.issue_date ?? issue.issueDate ?? issue.issuedOn ?? '';
   const dueDate = issue.due_date ?? issue.dueDate ?? '';
   const returnDate = issue.return_date ?? issue.returnDate ?? '';
-  const status = String(issue.status ?? '').toLowerCase();
+  const baseStatus = String(issue.status ?? '').toLowerCase();
   const studentRollNo = issue.student_roll_no ?? issue.studentRollNo ?? '';
   const studentLabel = studentRollNo ? `Roll ${studentRollNo}` : issue.student_id ? `Student ${issue.student_id}` : 'Student';
-  const daysOverdue = dueDate && status === 'issued'
+  const daysOverdue = dueDate && baseStatus === 'issued'
     ? Math.max(0, Math.ceil((new Date() - new Date(dueDate)) / (1000 * 60 * 60 * 24)))
-    : toNumber(issue.daysOverdue, 0);
+    : toNumber(issue.daysOverdue ?? issue.days_overdue, 0);
+
+  const status = (baseStatus === 'issued' && daysOverdue > 0) ? 'overdue' : baseStatus;
+  const fineAmount = toNumber(issue.fine_amount ?? issue.fineAmount ?? issue.fine, 0);
 
   return {
     ...issue,
@@ -82,6 +87,10 @@ const normalizeIssue = (issue = {}) => {
     returnDate,
     status,
     daysOverdue,
+    fineAmount,
+    fine_amount: fineAmount,
+    fine: fineAmount,
+    returnCondition: issue.return_condition ?? issue.returnCondition ?? '',
     book,
   };
 };
@@ -305,6 +314,7 @@ const mapBookPayload = (data = {}) => ({
     if (val === undefined || val === '') return undefined;
     return toNumber(val, 0);
   })(),
+  digital_link: data.digital_link ?? data.digitalLink ?? null,
   shelf_location: data.shelf_location ?? data.shelfLocation ?? null,
 });
 

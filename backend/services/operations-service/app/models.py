@@ -16,6 +16,7 @@ class OpsGrievance(Base):
     status = Column(String(20), default="Open")
     priority = Column(String(20), default="Normal")
     is_urgent = Column(Boolean, default=False)
+    is_escalated = Column(Boolean, default=False)
     assigned_department = Column(String(100), nullable=True)
     resolution = Column(Text, nullable=True)
     satisfaction_rating = Column(Integer, nullable=True)

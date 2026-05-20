@@ -63,15 +63,17 @@ def get_current_user(
             FROM auth_users u
             LEFT JOIN auth_user_roles ur ON ur.user_id = u.user_id
             LEFT JOIN auth_roles r ON r.role_id = ur.role_id
-            WHERE u.user_id = :user_id
+            WHERE u.user_id = CAST(:user_id AS uuid)
             """
         ),
         {"user_id": user_id},
     ).mappings().first()
+
     if not row:
+        print(f"DEBUG: User {user_id} not found in Scheduler DB mirror")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
+            detail="User record not found in service database",
         )
     if not row["is_active"]:
         raise HTTPException(

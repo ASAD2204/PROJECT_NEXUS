@@ -30,11 +30,11 @@ export const opsAPI = {
   createAnnouncementComment: (id, data) => client.post(`/ops/announcements/${id}/comments`, data),
 
   // ── Notifications ──
-  getNotifications: (params) => client.get('/ops/notifications/me', { params }),
-  createNotification: (data) => client.post('/ops/notifications', data),
-  getMyNotifications: (params) => client.get('/ops/notifications/me', { params }),
-  markNotificationRead: (id) => client.put(`/ops/notifications/${id}/read`),
-  markAllNotificationsRead: () => client.put('/ops/notifications/read-all'),
+  getNotifications: (params) => client.get('/notify/notifications/me', { params }),
+  createNotification: (data) => client.post('/notify/notifications', data),
+  getMyNotifications: (params) => client.get('/notify/notifications/me', { params }),
+  markNotificationRead: (id) => client.put(`/notify/notifications/${id}/read`),
+  markAllNotificationsRead: () => client.put('/notify/notifications/read-all'),
 
   // ── Audit Trails ──
   createAuditTrail: (data) => client.post('/ops/audit-trails', data),

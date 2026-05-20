@@ -3,7 +3,7 @@ Kafka consumer for the SIS service.
 
 Listens to the ``grade_submitted`` topic.  When a grade event arrives the
 consumer:
-  1. Updates ``final_grade_points`` on the matching ``sis_enrollments`` row.
+  1. Updates ``final_grade_points`` and component marks on the matching ``sis_enrollments`` row.
   2. Recalculates the semester SGPA from all graded enrollments in that
      semester.
   3. Recalculates the cumulative CGPA across every semester.
@@ -17,13 +17,15 @@ Run this file as a standalone process alongside the FastAPI application:
 import json
 import logging
 import time
+import httpx
+import asyncio
 
 from kafka import KafkaConsumer
 from sqlalchemy import func as sa_func
 
 from app.config import settings
 from app.database import SessionLocal
-from app.models import SisEnrollment, SisTranscript, LmsSection
+from app.models import SisEnrollment, SisTranscript, LmsCourse, SisStudent
 
 logging.basicConfig(
     level=logging.INFO,
@@ -35,6 +37,26 @@ logger = logging.getLogger("sis.kafka_consumer")
 # --------------------------------------------------------------------------- #
 #  Helpers
 # --------------------------------------------------------------------------- #
+
+async def _send_notification_internal(user_id: str, title: str, message: str):
+    """Push notification to the Notification Service via internal API."""
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                f"{settings.GATEWAY_URL}/api/v1/notify/internal/notifications",
+                json={
+                    "user_id": user_id,
+                    "title": title,
+                    "message": message,
+                    "type": "academic",
+                    "priority": "high"
+                },
+                headers={"X-Internal-API-Key": "change-me-internal-key"},
+                timeout=5.0
+            )
+    except Exception as exc:
+        logger.error("Failed to send notification to %s: %s", user_id, exc)
+
 
 def _get_consumer() -> KafkaConsumer:
     """Create a KafkaConsumer with retry logic for broker availability."""
@@ -59,42 +81,48 @@ def _get_consumer() -> KafkaConsumer:
 
 def _recalculate_transcript(db, student_id: int, semester_id: int) -> None:
     """
-    Recalculate SGPA for the given semester and CGPA across all semesters,
-    then upsert the transcript row.
+    Recalculate weighted SGPA for the given semester and CGPA across all 
+    semesters, then upsert the transcript row.
     """
 
-    # -- Semester SGPA ------------------------------------------------------ #
-    semester_grades = (
-        db.query(SisEnrollment.final_grade_points)
-        .join(LmsSection, SisEnrollment.section_id == LmsSection.section_id)
+    # -- Semester SGPA (Weighted) ------------------------------------------- #
+    semester_enrollments = (
+        db.query(SisEnrollment.final_grade_points, LmsCourse.credit_hours)
+        .join(LmsCourse, SisEnrollment.course_id == LmsCourse.course_id)
         .filter(
             SisEnrollment.student_id == student_id,
-            LmsSection.semester_id == semester_id,
+            LmsCourse.semester_id == semester_id,
             SisEnrollment.final_grade_points.isnot(None),
-            SisEnrollment.status != "Withdrawn",
+            SisEnrollment.status.in_(["Completed", "Graded"]),
         )
         .all()
     )
 
-    if not semester_grades:
+    if not semester_enrollments:
         return
 
-    sgpa = round(
-        sum(g.final_grade_points for g in semester_grades) / len(semester_grades), 2
-    )
+    sem_quality_points = sum((e.final_grade_points or 0.0) * (e.credit_hours or 0) for e in semester_enrollments)
+    sem_credits = sum(e.credit_hours or 0 for e in semester_enrollments)
+    
+    sgpa = round(sem_quality_points / sem_credits, 2) if sem_credits > 0 else 0.0
 
-    # -- Cumulative CGPA ---------------------------------------------------- #
-    all_transcripts = (
-        db.query(SisTranscript)
+    # -- Cumulative CGPA (Weighted) ------------------------------------------ #
+    # We fetch ALL completed enrollments across ALL semesters to get an accurate weighted CGPA
+    all_enrollments = (
+        db.query(SisEnrollment.final_grade_points, LmsCourse.credit_hours)
+        .join(LmsCourse, SisEnrollment.course_id == LmsCourse.course_id)
         .filter(
-            SisTranscript.student_id == student_id,
-            SisTranscript.semester_id != semester_id,
+            SisEnrollment.student_id == student_id,
+            SisEnrollment.final_grade_points.isnot(None),
+            SisEnrollment.status.in_(["Completed", "Graded"]),
         )
         .all()
     )
-    all_sgpas = [t.sgpa for t in all_transcripts if t.sgpa is not None]
-    all_sgpas.append(sgpa)
-    cgpa = round(sum(all_sgpas) / len(all_sgpas), 2)
+
+    total_quality_points = sum((e.final_grade_points or 0.0) * (e.credit_hours or 0) for e in all_enrollments)
+    total_credits = sum(e.credit_hours or 0 for e in all_enrollments)
+    
+    cgpa = round(total_quality_points / total_credits, 2) if total_credits > 0 else 0.0
 
     # -- Upsert transcript row ---------------------------------------------- #
     transcript = (
@@ -118,11 +146,6 @@ def _recalculate_transcript(db, student_id: int, semester_id: int) -> None:
             cgpa=cgpa,
         )
         db.add(transcript)
-
-    # Update CGPA on all previous transcripts so every row reflects the
-    # latest cumulative average.
-    for t in all_transcripts:
-        t.cgpa = cgpa
 
     db.commit()
     logger.info(
@@ -148,10 +171,10 @@ def consume():
         logger.info("Received grade_submitted event: %s", data)
 
         student_id = data.get("student_id")
-        section_id = data.get("section_id")
+        course_id = data.get("section_id") # Note: LMS sends course_id as section_id
         grade_points = data.get("grade_points")
 
-        if student_id is None or section_id is None or grade_points is None:
+        if student_id is None or course_id is None:
             logger.warning("Malformed message, skipping: %s", data)
             continue
 
@@ -162,7 +185,7 @@ def consume():
                 db.query(SisEnrollment)
                 .filter(
                     SisEnrollment.student_id == student_id,
-                    SisEnrollment.section_id == section_id,
+                    SisEnrollment.course_id == course_id,
                     SisEnrollment.status != "Withdrawn",
                 )
                 .first()
@@ -170,38 +193,77 @@ def consume():
 
             if not enrollment:
                 logger.warning(
-                    "No active enrollment found for student_id=%s section_id=%s",
+                    "No active enrollment found for student_id=%s course_id=%s",
                     student_id,
-                    section_id,
+                    course_id,
                 )
                 continue
 
-            enrollment.final_grade_points = grade_points
+            # Update granular marks if provided in payload
+            updated_fields = []
+
+            if "midterm_marks" in data and data["midterm_marks"] is not None:
+                enrollment.midterm_marks = data["midterm_marks"]
+                updated_fields.append(f"Midterm Marks ({data['midterm_marks']})")
+            if "finalterm_marks" in data and data["finalterm_marks"] is not None:
+                enrollment.finalterm_marks = data["finalterm_marks"]
+                updated_fields.append(f"Final Term Marks ({data['finalterm_marks']})")
+            if "sessional_marks" in data and data["sessional_marks"] is not None:
+                enrollment.sessional_marks = data["sessional_marks"]
+                updated_fields.append(f"Sessional Marks ({data['sessional_marks']})")
+            
+            if grade_points is not None:
+                enrollment.final_grade_points = grade_points
+                updated_fields.append(f"Final Grade GP ({grade_points})")
+            
             db.flush()
 
-            # 2. Determine the semester from the section
-            section = (
-                db.query(LmsSection)
-                .filter(LmsSection.section_id == section_id)
+            # 2. Determine the semester from the course mirror
+            course = (
+                db.query(LmsCourse)
+                .filter(LmsCourse.course_id == course_id)
                 .first()
             )
-            if not section or not section.semester_id:
+
+            # Send Notification if we have updated something
+            if updated_fields:
+                student = db.query(SisStudent).filter(SisStudent.student_id == student_id).first()
+                if student and student.user_id:
+                    course_title = course.title if course else f"Course {course_id}"
+                    try:
+                        # Use current loop or create one for the notification call
+                        try:
+                            loop = asyncio.get_event_loop()
+                        except RuntimeError:
+                            loop = asyncio.new_event_loop()
+                            asyncio.set_event_loop(loop)
+                        
+                        fields_str = ", ".join(updated_fields)
+                        loop.run_until_complete(_send_notification_internal(
+                            user_id=str(student.user_id),
+                            title="Academic Grades Updated",
+                            message=f"Your grades/marks for {course_title} have been updated: {fields_str}."
+                        ))
+                    except Exception as n_exc:
+                        logger.error("Notification error: %s", n_exc)
+
+            if not course or not course.semester_id:
                 logger.warning(
-                    "Section %s has no semester_id; skipping transcript update",
-                    section_id,
+                    "Course %s has no semester_id; skipping transcript update",
+                    course_id,
                 )
                 db.commit()
                 continue
 
             # 3. Recalculate transcript
-            _recalculate_transcript(db, student_id, section.semester_id)
+            _recalculate_transcript(db, student_id, course.semester_id)
 
         except Exception:
             db.rollback()
             logger.exception(
-                "Error processing grade_submitted for student_id=%s section_id=%s",
+                "Error processing grade_submitted for student_id=%s course_id=%s",
                 student_id,
-                section_id,
+                course_id,
             )
         finally:
             db.close()

@@ -422,10 +422,10 @@ const TimetableManagement = () => {
                     <Typography variant="subtitle2" gutterBottom>Working Window</Typography>
                     <Stack spacing={2}>
                       <Grid container spacing={1}>
-                        <Grid item xs={6}><TextField label="Start Hour (0-23)" type="number" fullWidth value={genConfig.start_hour} onChange={e => setGenConfig({...genConfig, start_hour: parseInt(e.target.value)})}/></Grid>
-                        <Grid item xs={6}><TextField label="End Hour (0-23)" type="number" fullWidth value={genConfig.end_hour} onChange={e => setGenConfig({...genConfig, end_hour: parseInt(e.target.value)})}/></Grid>
+                        <Grid item xs={6}><TextField label="Start Hour (0-23)" type="number" fullWidth value={genConfig.start_hour} onChange={e => setGenConfig({...genConfig, start_hour: parseInt(e.target.value)})} inputProps={{ min: 0, max: 23 }} required/></Grid>
+                        <Grid item xs={6}><TextField label="End Hour (0-23)" type="number" fullWidth value={genConfig.end_hour} onChange={e => setGenConfig({...genConfig, end_hour: parseInt(e.target.value)})} inputProps={{ min: 0, max: 23 }} required/></Grid>
                       </Grid>
-                      <TextField label="Lecture Duration (Mins)" type="number" fullWidth value={genConfig.slot_minutes} onChange={e => setGenConfig({...genConfig, slot_minutes: parseInt(e.target.value)})}/>
+                      <TextField label="Lecture Duration (Mins)" type="number" fullWidth value={genConfig.slot_minutes} onChange={e => setGenConfig({...genConfig, slot_minutes: parseInt(e.target.value)})} inputProps={{ min: 15, max: 180 }} required/>
                     </Stack>
                   </CardContent>
                 </Card>
@@ -436,16 +436,16 @@ const TimetableManagement = () => {
                     <Typography variant="subtitle2" gutterBottom>Break / Lunch</Typography>
                     <Stack spacing={2}>
                       <Grid container spacing={1}>
-                        <Grid item xs={6}><TextField label="Break Start" type="number" fullWidth value={genConfig.break_start_hour} onChange={e => setGenConfig({...genConfig, break_start_hour: parseInt(e.target.value)})}/></Grid>
-                        <Grid item xs={6}><TextField label="Break End" type="number" fullWidth value={genConfig.break_end_hour} onChange={e => setGenConfig({...genConfig, break_end_hour: parseInt(e.target.value)})}/></Grid>
+                        <Grid item xs={6}><TextField label="Break Start" type="number" fullWidth value={genConfig.break_start_hour} onChange={e => setGenConfig({...genConfig, break_start_hour: parseInt(e.target.value)})} inputProps={{ min: 0, max: 23 }}/></Grid>
+                        <Grid item xs={6}><TextField label="Break End" type="number" fullWidth value={genConfig.break_end_hour} onChange={e => setGenConfig({...genConfig, break_end_hour: parseInt(e.target.value)})} inputProps={{ min: 0, max: 23 }}/></Grid>
                       </Grid>
-                      <TextField label="Max Lectures per Day" type="number" fullWidth value={genConfig.max_classes_per_day} onChange={e => setGenConfig({...genConfig, max_classes_per_day: parseInt(e.target.value)})}/>
+                      <TextField label="Max Lectures per Day" type="number" fullWidth value={genConfig.max_classes_per_day} onChange={e => setGenConfig({...genConfig, max_classes_per_day: parseInt(e.target.value)})} inputProps={{ min: 1, max: 10 }} required/>
                     </Stack>
                   </CardContent>
                 </Card>
               </Grid>
             </Grid>
-            <TextField label="Draft Name" placeholder="e.g. BSCS-FALL-2024-V1" fullWidth value={draftName} onChange={e => setDraftName(e.target.value)}/>
+            <TextField label="Draft Name" placeholder="e.g. BSCS-FALL-2024-V1" fullWidth value={draftName} onChange={e => setDraftName(e.target.value)} inputProps={{ maxLength: 100 }}/>
           </Stack>
         );
 

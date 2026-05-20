@@ -65,6 +65,7 @@ import {
   Campaign as CampaignIcon,
   Fingerprint as FingerprintIcon,
   Schedule as ScheduleIcon,
+  Grade as GradeIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -86,6 +87,7 @@ const hasUnpaidInvoices = () => false;
 const studentMenuItems = [
   { text: 'Dashboard', icon: DashboardIcon, path: '/dashboard' },
   { text: 'My Courses', icon: SchoolIcon, path: '/lms' },
+  { text: 'Timetable', icon: ScheduleIcon, path: '/student/timetable' },
   { 
     text: 'Attendance', 
     icon: HowToRegIcon, 
@@ -117,6 +119,7 @@ const studentMenuItems = [
   { text: 'Transcript', icon: DescriptionIcon, path: '/transcript' },
   { text: 'Library', icon: MenuBookIcon, path: '/library' },
   { text: 'Alumni Directory', icon: PeopleIcon, path: '/student/alumni-directory' },
+  { text: 'Leave Application', icon: EventIcon, path: '/leaves' },
   { text: 'Grievances', icon: SupportAgentIcon, path: '/grievances' },
   { text: 'Notifications', icon: AssessmentIcon, path: '/notifications' },
 ];
@@ -134,6 +137,8 @@ const adminMenuItems = [
   { text: 'Alumni Management', icon: CardMembershipIcon, path: '/admin/alumni' },
   { text: 'Finance Management', icon: PaymentIcon, path: '/admin/finance' },
   { text: 'Grievances', icon: SupportAgentIcon, path: '/admin/grievances' },
+  { text: 'Leave Management', icon: EventIcon, path: '/leaves' },
+  { text: 'Academic Lifecycle', icon: ScheduleIcon, path: '/admin/promotion' },
   { text: 'Announcements', icon: CampaignIcon, path: '/admin/announcements' },
   { text: 'Timetable Manager', icon: ScheduleIcon, path: '/admin/scheduler' },
   { text: 'Reports', icon: AssessmentIcon, path: '/admin/reports' },
@@ -148,6 +153,8 @@ const adminMenuItems = [
 const teacherMenuItems = [
   { text: 'Dashboard', icon: DashboardIcon, path: '/teacher/dashboard' },
   { text: 'My Courses', icon: SchoolIcon, path: '/teacher/courses' },
+  { text: 'Gradebook', icon: GradeIcon, path: '/teacher/gradebook' },
+  { text: 'My Timetable', icon: ScheduleIcon, path: '/teacher/timetable' },
   { text: 'Students', icon: GroupIcon, path: '/teacher/students' },
   { text: 'Assignments', icon: AssignmentIcon, path: '/teacher/assignments' },
   { text: 'Quizzes', icon: QuizIcon, path: '/teacher/quizzes' },
@@ -156,7 +163,7 @@ const teacherMenuItems = [
     icon: HowToRegIcon, 
     path: '/teacher/attendance',
   },
-    { text: 'Biometric Enrollment', icon: FingerprintIcon, path: '/attendance/biometric-enrollment' },   
+  { text: 'Biometric Enrollment', icon: FingerprintIcon, path: '/attendance/biometric-enrollment' },   
   { text: 'Reports', icon: AssessmentIcon, path: '/teacher/reports', divider: true },
   { text: 'Profile', icon: PersonIcon, path: '/teacher/profile' },
   { text: 'Library', icon: MenuBookIcon, path: '/library' },
@@ -165,6 +172,7 @@ const teacherMenuItems = [
     icon: ChatIcon, 
     path: '/chat',
   },
+  { text: 'Leave Application', icon: EventIcon, path: '/leaves' },
   { text: 'Grievances', icon: SupportAgentIcon, path: '/teacher/grievances' },
 ];
 

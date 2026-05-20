@@ -59,6 +59,7 @@ import PageHeader from '../../components/Common/PageHeader';
 import StatCard from '../../components/Common/StatCard';
 import { fadeInUp, staggerContainer } from '../../utils/animations';
 import { teacherAPI } from '../../api/teacher';
+import { lmsAPI } from '../../api/lms';
 
 const toFiniteNumber = (value, fallback = 0) => {
   const numericValue = Number(value);
@@ -119,12 +120,12 @@ const Quizzes = () => {
         const data = res.data?.quizzes || res.data || [];
         const normalized = (Array.isArray(data) ? data : []).map(normalizeQuiz);
         setQuizzes(normalized);
-        const active = normalized.filter((quiz) => quiz.status === 'active').length;
+        const active = normalized.filter((quiz) => quiz.status === 'active' || quiz.status === 'scheduled').length;
         const totalAttempts = normalized.reduce((sum, quiz) => sum + quiz.attempts, 0);
         const avgScore = normalized.length ? Math.round(normalized.reduce((sum, quiz) => sum + quiz.avgScore, 0) / normalized.length) : 0;
         setStats([
           { title: 'Total Quizzes', value: String(normalized.length), icon: QuizIcon, color: 'primary.main', tooltip: 'Total quizzes created' },
-          { title: 'Active Quizzes', value: String(active), icon: Schedule, color: 'success.main', tooltip: 'Currently open for attempts' },
+          { title: 'Active Quizzes', value: String(active), icon: Schedule, color: 'success.main', tooltip: 'Currently open or scheduled for attempts' },
           { title: 'Total Attempts', value: String(totalAttempts), icon: People, color: 'info.main', tooltip: 'Total student attempts' },
           { title: 'Avg Score', value: `${avgScore}%`, icon: TrendingUp, color: 'warning.main', tooltip: 'Average across all attempts' },
         ]);
@@ -133,7 +134,7 @@ const Quizzes = () => {
     fetchQuizzes();
   }, []);
 
-  const activeQuizzes = quizzes.filter(q => q.status === 'active');
+  const activeQuizzes = quizzes.filter(q => q.status === 'active' || q.status === 'scheduled');
   const completedQuizzes = quizzes.filter(q => q.status === 'completed');
   const draftQuizzes = quizzes.filter(q => q.status === 'draft');
 
@@ -147,10 +148,26 @@ const Quizzes = () => {
     setSelectedQuiz(null);
   };
 
+  const handleDeleteQuiz = async () => {
+    if (!selectedQuiz) return;
+    if (!window.confirm('Are you sure you want to delete this quiz?')) return;
+
+    try {
+      await lmsAPI.deleteQuiz(selectedQuiz.id);
+      setQuizzes(quizzes.filter(q => q.id !== selectedQuiz.id));
+      handleMenuClose();
+    } catch (e) {
+      console.error('Failed to delete quiz', e);
+      alert('Failed to delete quiz');
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'active':
         return 'success';
+      case 'scheduled':
+        return 'info';
       case 'completed':
         return 'default';
       case 'draft':
@@ -406,7 +423,7 @@ const Quizzes = () => {
           <Visibility fontSize="small" sx={{ mr: 1 }} />
           View Results
         </MenuItem>
-        <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>
+        <MenuItem onClick={handleDeleteQuiz} sx={{ color: 'error.main' }}>
           <Delete fontSize="small" sx={{ mr: 1 }} />
           Delete Quiz
         </MenuItem>

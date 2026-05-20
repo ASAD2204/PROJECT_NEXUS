@@ -30,6 +30,8 @@ class SISStudent(Base):
 
     # Relationship
     alumni = relationship("AlumniRegistry", back_populates="student", uselist=False)
+    mentorship_requests = relationship("MentorshipRequest", back_populates="student")
+    job_applications = relationship("JobApplication", back_populates="student")
 
 
 class AlumniRegistry(Base):
@@ -45,12 +47,16 @@ class AlumniRegistry(Base):
         unique=True,
     )
     grad_year = Column(Integer, nullable=False)
+    graduation_year = Column(Integer, nullable=True)
+    degree_verified = Column(Boolean, default=False, server_default="false")
     degree = Column(String(100), nullable=True)
     current_employer = Column(String(100), nullable=True)
     current_position = Column(String(100), nullable=True)
     location = Column(String(100), nullable=True)
     photo_url = Column(String(255), nullable=True)
     linkedin_url = Column(String(255), nullable=True)
+    personal_website = Column(String(255), nullable=True)
+    current_industry = Column(String(100), nullable=True)
     achievements = Column(Text, nullable=True)  # JSON array as text
     expertise = Column(Text, nullable=True)      # JSON array as text
 
@@ -64,6 +70,9 @@ class AlumniRegistry(Base):
     )
     stories = relationship(
         "AlumniSuccessStory", back_populates="alumni", cascade="all, delete-orphan"
+    )
+    mentorship_requests = relationship(
+        "MentorshipRequest", back_populates="alumni", cascade="all, delete-orphan"
     )
 
 
@@ -91,6 +100,7 @@ class AlumniJob(Base):
 
     # Relationship
     alumni = relationship("AlumniRegistry", back_populates="jobs")
+    applications = relationship("JobApplication", back_populates="job", cascade="all, delete-orphan")
 
 
 class AlumniEvent(Base):
@@ -166,3 +176,35 @@ class AlumniSuccessStory(Base):
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
 
     alumni = relationship("AlumniRegistry", back_populates="stories")
+
+
+class MentorshipRequest(Base):
+    """Requests for mentorship from students to alumni."""
+
+    __tablename__ = "mentorship_requests"
+
+    request_id = Column(Integer, primary_key=True, autoincrement=True)
+    student_id = Column(Integer, ForeignKey("sis_students.student_id", ondelete="CASCADE"), nullable=False)
+    alumni_id = Column(Integer, ForeignKey("alumni_registry.alumni_id", ondelete="CASCADE"), nullable=False)
+    message = Column(Text, nullable=False)
+    status = Column(String(20), default="Pending")  # Pending, Accepted, Rejected
+    created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
+
+    student = relationship("SISStudent", back_populates="mentorship_requests")
+    alumni = relationship("AlumniRegistry", back_populates="mentorship_requests")
+
+
+class JobApplication(Base):
+    """Applications submitted by students for alumni-posted jobs."""
+
+    __tablename__ = "job_applications"
+
+    application_id = Column(Integer, primary_key=True, autoincrement=True)
+    job_id = Column(Integer, ForeignKey("alumni_jobs.job_id", ondelete="CASCADE"), nullable=False)
+    student_id = Column(Integer, ForeignKey("sis_students.student_id", ondelete="CASCADE"), nullable=False)
+    resume_url = Column(String(255), nullable=True)
+    status = Column(String(20), default="Pending")
+    applied_at = Column(TIMESTAMP, server_default=func.current_timestamp())
+
+    job = relationship("AlumniJob", back_populates="applications")
+    student = relationship("SISStudent", back_populates="job_applications")

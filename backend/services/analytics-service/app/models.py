@@ -51,6 +51,7 @@ class SisStudent(Base):
     roll_no = Column(String(20))
     current_semester = Column(Integer)
     current_risk_status = Column(String(20), default="Green")
+    created_at = Column(TIMESTAMP, server_default=func.now())
 
     user = relationship("AuthUser", foreign_keys=[user_id], lazy="joined")
     enrollments = relationship("SisEnrollment", back_populates="student")
@@ -79,6 +80,9 @@ class SisEnrollment(Base):
     student_id = Column(Integer, ForeignKey("sis_students.student_id"))
     course_id = Column(Integer, ForeignKey("lms_courses.course_id"))
     status = Column(String(20), default="Enrolled")
+    midterm_marks = Column(Float, nullable=True)
+    finalterm_marks = Column(Float, nullable=True)
+    sessional_marks = Column(Float, nullable=True)
     final_grade_points = Column(Float, nullable=True)
 
     student = relationship("SisStudent", back_populates="enrollments")

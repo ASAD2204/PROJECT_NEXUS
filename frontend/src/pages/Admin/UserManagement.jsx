@@ -54,14 +54,22 @@ import {
   Email,
   Phone,
   LocationOn,
+  PlayCircleFilled,
+  History,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import PageHeader from '../../components/Common/PageHeader';
 import StatusBadge from '../../components/Common/StatusBadge';
 import { useAuth } from '../../contexts/AuthContext';
 import { pageTransition } from '../../utils/animations';
+import { filterName, filterPhone } from '../../utils/validation';
+import { filterAlphanumericDash, filterEmployeeCode } from '../../utils/validation';
 import { authAPI } from '../../api/auth';
 import { sisAPI } from '../../api/sis';
+import LegacyHistoryDialog from '../../components/Admin/LegacyHistoryDialog';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PASSWORD_MIN_LENGTH = 8;
 
 const UserManagement = () => {
   const theme = useTheme();
@@ -75,6 +83,7 @@ const UserManagement = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [openFilterDialog, setOpenFilterDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [openHistoryDialog, setOpenHistoryDialog] = useState(false);
   const [filterDepartment, setFilterDepartment] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [userType, setUserType] = useState('student');
@@ -548,6 +557,14 @@ const UserManagement = () => {
       setSnackbar({ open: true, message: 'Name and email are required.', severity: 'error' });
       return;
     }
+    if (!EMAIL_REGEX.test(String(email).trim())) {
+      setSnackbar({ open: true, message: 'Please enter a valid email address.', severity: 'error' });
+      return;
+    }
+    if (String(password).length < PASSWORD_MIN_LENGTH) {
+      setSnackbar({ open: true, message: `Password must be at least ${PASSWORD_MIN_LENGTH} characters.`, severity: 'error' });
+      return;
+    }
 
     const payload = {
       email,
@@ -561,6 +578,10 @@ const UserManagement = () => {
       const programId = Number(formData.program) || resolveProgramId(formData.program);
       if (!formData.rollNumber || !programId) {
         setSnackbar({ open: true, message: 'Select a department and program for the student.', severity: 'error' });
+        return;
+      }
+      if (!formData.semester || Number(formData.semester) < 1) {
+        setSnackbar({ open: true, message: 'Please enter a valid current semester.', severity: 'error' });
         return;
       }
       payload.roll_no = formData.rollNumber;
@@ -926,6 +947,28 @@ const UserManagement = () => {
     </TableContainer>
   );
 
+  const handleOpenHistory = () => {
+    handleMenuClose();
+    setOpenHistoryDialog(true);
+  };
+
+  const handleFastForward = async () => {
+    if (!selectedUser) return;
+    const targetSem = prompt('Enter target semester (2-8):', '8');
+    if (!targetSem || isNaN(targetSem)) return;
+    
+    try {
+      setSnackbar({ open: true, message: 'Seeding historical data...', severity: 'info' });
+      await sisAPI.fastForwardStudent(selectedUser.id, targetSem);
+      setSnackbar({ open: true, message: `Student fast-forwarded to Semester ${targetSem}`, severity: 'success' });
+      await loadUsers();
+    } catch (e) {
+      setSnackbar({ open: true, message: 'Fast-forward failed', severity: 'error' });
+    } finally {
+      handleMenuClose();
+    }
+  };
+
   return (
     <motion.div {...pageTransition}>
       <Box className="page-container">
@@ -1098,6 +1141,14 @@ const UserManagement = () => {
           <MenuItem onClick={handleEditClick}>
             <Edit fontSize="small" sx={{ mr: 1 }} /> Edit
           </MenuItem>
+          {selectedUser?.role === 'student' && [
+            <MenuItem key="ff" onClick={handleFastForward}>
+              <PlayCircleFilled fontSize="small" sx={{ mr: 1 }} /> Fast-Forward (Seeding)
+            </MenuItem>,
+            <MenuItem key="history" onClick={handleOpenHistory}>
+              <History fontSize="small" sx={{ mr: 1 }} /> Manage Legacy History
+            </MenuItem>
+          ]}
           <MenuItem onClick={handleMenuClose}>
             <Email fontSize="small" sx={{ mr: 1 }} /> Send Email
           </MenuItem>
@@ -1117,21 +1168,28 @@ const UserManagement = () => {
               <TextField
                 fullWidth
                 label="Full Name *"
+                required
                 value={editFormData.fullName}
-                onChange={(e) => setEditFormData({ ...editFormData, fullName: e.target.value })}
+                onChange={(e) => setEditFormData({ ...editFormData, fullName: filterName(e.target.value) })}
+                inputProps={{ minLength: 2, maxLength: 200 }}
+                helperText="Only letters, spaces, hyphens, dots allowed"
               />
               <TextField
                 fullWidth
                 label="Email *"
                 type="email"
+                required
                 value={editFormData.email}
                 onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                inputProps={{ maxLength: 255 }}
               />
               <TextField
                 fullWidth
                 label="Phone"
                 value={editFormData.phone}
-                onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                onChange={(e) => setEditFormData({ ...editFormData, phone: filterPhone(e.target.value) })}
+                inputProps={{ maxLength: 20 }}
+                helperText="Digits, +, -, (, ) only"
               />
               <TextField
                 fullWidth
@@ -1185,9 +1243,12 @@ const UserManagement = () => {
                     <TextField
                       fullWidth
                       label="Full Name *"
+                      required
                       placeholder="e.g., Muhammad Asad"
                       value={formData.fullName}
-                      onChange={handleChange('fullName')}
+                      onChange={(e) => setFormData({ ...formData, fullName: filterName(e.target.value) })}
+                      inputProps={{ minLength: 2, maxLength: 120 }}
+                      helperText="Only letters, spaces, hyphens, dots"
                     />
                   </Grid>
                   <Grid size={{ xs: 12, md: 6 }}>
@@ -1195,22 +1256,27 @@ const UserManagement = () => {
                       fullWidth
                       label="Email *"
                       type="email"
+                      required
                       placeholder="e.g., bit22031@uni.edu.pk"
                       value={formData.email}
                       onChange={handleChange('email')}
+                      inputProps={{ maxLength: 255 }}
                     />
                   </Grid>
                   <Grid size={{ xs: 12, md: 6 }}>
                     <TextField
                       fullWidth
                       label="Roll Number *"
+                      required
                       placeholder="e.g., BIT22031"
                       value={formData.rollNumber}
-                      onChange={handleChange('rollNumber')}
+                      onChange={(e) => setFormData({ ...formData, rollNumber: filterAlphanumericDash(e.target.value) })}
+                      inputProps={{ minLength: 2, maxLength: 20 }}
+                      helperText="Letters, digits, hyphens only (max 20)"
                     />
                   </Grid>
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <FormControl fullWidth>
+                    <FormControl fullWidth required>
                       <InputLabel>Department *</InputLabel>
                       <Select
                         value={formData.department}
@@ -1227,7 +1293,7 @@ const UserManagement = () => {
                     </FormControl>
                   </Grid>
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <FormControl fullWidth>
+                    <FormControl fullWidth required>
                       <InputLabel>Program *</InputLabel>
                       <Select
                         value={formData.program}
@@ -1251,6 +1317,7 @@ const UserManagement = () => {
                       fullWidth
                       label="Current Semester *"
                       type="number"
+                      required
                       placeholder="e.g., 5"
                       value={formData.semester}
                       onChange={handleChange('semester')}
@@ -1261,9 +1328,11 @@ const UserManagement = () => {
                     <TextField
                       fullWidth
                       label="Session *"
+                      required
                       placeholder="e.g., 2022-2026"
                       value={formData.session}
                       onChange={handleChange('session')}
+                      inputProps={{ minLength: 4, maxLength: 15 }}
                     />
                   </Grid>
                   <Grid size={{ xs: 12, md: 4 }}>
@@ -1271,9 +1340,11 @@ const UserManagement = () => {
                       fullWidth
                       label="Initial Password *"
                       type="password"
+                      required
                       placeholder="Auto-generated"
                       value={formData.password}
                       onChange={handleChange('password')}
+                      inputProps={{ minLength: PASSWORD_MIN_LENGTH, maxLength: 128 }}
                     />
                   </Grid>
                 </Grid>
@@ -1286,9 +1357,12 @@ const UserManagement = () => {
                     <TextField
                       fullWidth
                       label="Full Name *"
+                      required
                       placeholder="e.g., Dr. Ghulam Mustafa"
                       value={formData.fullName}
-                      onChange={handleChange('fullName')}
+                      onChange={(e) => setFormData({ ...formData, fullName: filterName(e.target.value) })}
+                      inputProps={{ minLength: 2, maxLength: 120 }}
+                      helperText="Only letters, spaces, hyphens, dots"
                     />
                   </Grid>
                   <Grid size={{ xs: 12, md: 6 }}>
@@ -1296,22 +1370,27 @@ const UserManagement = () => {
                       fullWidth
                       label="Email *"
                       type="email"
+                      required
                       placeholder="Official faculty email"
                       value={formData.email}
                       onChange={handleChange('email')}
+                      inputProps={{ maxLength: 255 }}
                     />
                   </Grid>
                   <Grid size={{ xs: 12, md: 6 }}>
                     <TextField
                       fullWidth
                       label="Employee ID *"
+                      required
                       placeholder="e.g., EMP-102"
                       value={formData.employeeId}
-                      onChange={handleChange('employeeId')}
+                      onChange={(e) => setFormData({ ...formData, employeeId: filterEmployeeCode(e.target.value) })}
+                      inputProps={{ minLength: 2, maxLength: 20 }}
+                      helperText="Letters, digits, hyphens, slashes only (max 20)"
                     />
                   </Grid>
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <FormControl fullWidth>
+                    <FormControl fullWidth required>
                       <InputLabel>Designation *</InputLabel>
                       <Select
                         value={formData.designation}
@@ -1326,7 +1405,7 @@ const UserManagement = () => {
                     </FormControl>
                   </Grid>
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <FormControl fullWidth>
+                    <FormControl fullWidth required>
                       <InputLabel>Department *</InputLabel>
                       <Select
                         value={formData.department}
@@ -1349,10 +1428,11 @@ const UserManagement = () => {
                       placeholder="e.g., Data Science"
                       value={formData.specialization}
                       onChange={handleChange('specialization')}
+                      inputProps={{ maxLength: 100 }}
                     />
                   </Grid>
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <FormControl fullWidth>
+                    <FormControl fullWidth required>
                       <InputLabel>Type *</InputLabel>
                       <Select
                         value={formData.type}
@@ -1370,9 +1450,11 @@ const UserManagement = () => {
                       fullWidth
                       label="Initial Password *"
                       type="password"
+                      required
                       placeholder="Auto-generated"
                       value={formData.password}
                       onChange={handleChange('password')}
+                      inputProps={{ minLength: PASSWORD_MIN_LENGTH, maxLength: 128 }}
                     />
                   </Grid>
                 </Grid>
@@ -1384,9 +1466,12 @@ const UserManagement = () => {
                     <TextField
                       fullWidth
                       label="Full Name *"
+                      required
                       placeholder={userType === 'admin' ? 'e.g., System Administrator' : 'e.g., Library Staff'}
                       value={formData.fullName}
-                      onChange={handleChange('fullName')}
+                      onChange={(e) => setFormData({ ...formData, fullName: filterName(e.target.value) })}
+                      inputProps={{ minLength: 2, maxLength: 120 }}
+                      helperText="Only letters, spaces, hyphens, dots"
                     />
                   </Grid>
                   <Grid size={{ xs: 12 }}>
@@ -1394,9 +1479,11 @@ const UserManagement = () => {
                       fullWidth
                       label="Email *"
                       type="email"
+                      required
                       placeholder="Official email address"
                       value={formData.email}
                       onChange={handleChange('email')}
+                      inputProps={{ maxLength: 255 }}
                     />
                   </Grid>
                   <Grid size={{ xs: 12 }}>
@@ -1404,9 +1491,11 @@ const UserManagement = () => {
                       fullWidth
                       label="Initial Password *"
                       type="password"
+                      required
                       placeholder="Auto-generated if empty"
                       value={formData.password}
                       onChange={handleChange('password')}
+                      inputProps={{ minLength: PASSWORD_MIN_LENGTH, maxLength: 128 }}
                     />
                   </Grid>
                 </Grid>
@@ -1438,6 +1527,12 @@ const UserManagement = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+        <LegacyHistoryDialog 
+           open={openHistoryDialog} 
+           onClose={() => setOpenHistoryDialog(false)} 
+           student={selectedUser} 
+        />
 
         {/* Mapping Dialog */}
         <Dialog open={openMappingDialog} onClose={() => setOpenMappingDialog(false)} maxWidth="md" fullWidth>

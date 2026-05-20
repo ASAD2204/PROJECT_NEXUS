@@ -94,6 +94,16 @@ import StatusBadge from '../../components/Common/StatusBadge';
 import StatCard from '../../components/Common/StatCard';
 import { ProfileSkeleton } from '../../components/Common/LoadingSkeleton';
 import { pageTransition } from '../../utils/animations';
+import {
+  EMAIL_REGEX,
+  PHONE_REGEX,
+  CNIC_REGEX,
+  NAME_REGEX,
+  filterCNIC,
+  filterPhone,
+  filterName,
+  validateField as validateUtil,
+} from '../../utils/validation';
 
 
 const Profile = () => {
@@ -199,12 +209,22 @@ const Profile = () => {
 
   const validateField = (name, value) => {
     let error = '';
-    if (name === 'personalEmail' && value) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(value)) error = 'Invalid email format';
+    if (name === 'fullName') {
+      if (!value || !value.trim()) error = 'Full name is required';
+      else if (value.trim().length < 2) error = 'Name must be at least 2 characters';
+      else if (!NAME_REGEX.test(value.trim())) error = 'Only letters, spaces, hyphens, dots allowed';
+    } else if (name === 'personalEmail' && value) {
+      if (!EMAIL_REGEX.test(value)) error = 'Invalid email format';
     } else if (name === 'cnic' && value) {
-      const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
-      if (!cnicRegex.test(value)) error = 'Format: 12345-6789012-3';
+      if (!CNIC_REGEX.test(value)) error = 'Format: 12345-6789012-3';
+    } else if ((name === 'phone' || name === 'fatherPhone') && value) {
+      if (!PHONE_REGEX.test(value)) error = 'Only digits, +, -, (, ) allowed (7-20 chars)';
+    } else if (name === 'emergencyContact' && value) {
+      if (!PHONE_REGEX.test(value)) error = 'Only digits, +, -, (, ) allowed (7-20 chars)';
+    } else if (name === 'fatherName' && value) {
+      if (!NAME_REGEX.test(value.trim())) error = 'Only letters, spaces, hyphens, dots allowed';
+    } else if (name === 'motherName' && value) {
+      if (!NAME_REGEX.test(value.trim())) error = 'Only letters, spaces, hyphens, dots allowed';
     }
     return error;
   };
@@ -217,7 +237,14 @@ const Profile = () => {
   };
 
   const handleSave = async () => {
-    if (Object.values(errors).some(err => err !== '')) {
+    // Re-validate all required fields before save
+    const saveErrors = {};
+    if (!formData.fullName?.trim()) saveErrors.fullName = 'Full name is required';
+    if (formData.personalEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.personalEmail)) saveErrors.personalEmail = 'Invalid email format';
+    if (formData.cnic && !/^\d{5}-\d{7}-\d{1}$/.test(formData.cnic)) saveErrors.cnic = 'Format: 12345-6789012-3';
+    if (formData.phone && !/^[0-9+\-()\s]{7,20}$/.test(formData.phone)) saveErrors.phone = 'Invalid phone number';
+    setErrors(prev => ({ ...prev, ...saveErrors }));
+    if (Object.values({ ...errors, ...saveErrors }).some(err => err !== '')) {
       showSnackbar('Please fix all errors before saving', 'error');
       return;
     }
@@ -276,7 +303,11 @@ const Profile = () => {
   };
 
   const handlePasswordChange = async () => {
-    if (!settings.newPassword || settings.newPassword !== settings.confirmPassword) {
+    if (!settings.newPassword || settings.newPassword.length < 8) {
+      showSnackbar('Password must be at least 8 characters', 'error');
+      return;
+    }
+    if (settings.newPassword !== settings.confirmPassword) {
       showSnackbar('Passwords do not match', 'error');
       return;
     }
@@ -365,8 +396,8 @@ const Profile = () => {
               <Typography variant="h6" fontWeight="bold" gutterBottom>Personal Details</Typography>
               <Divider sx={{ mb: 3 }} />
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}><TextField fullWidth label="Full Name" value={formData.fullName} onChange={(e) => handleFieldChange('fullName', e.target.value)} disabled={!isEditing} /></Grid>
-                <Grid item xs={12} sm={6}><TextField fullWidth label="CNIC" value={formData.cnic} onChange={(e) => handleFieldChange('cnic', e.target.value)} disabled={!isEditing} placeholder="12345-6789012-3" error={!!errors.cnic} helperText={errors.cnic} /></Grid>
+                <Grid item xs={12} sm={6}><TextField fullWidth label="Full Name" required value={formData.fullName} onChange={(e) => handleFieldChange('fullName', filterName(e.target.value))} disabled={!isEditing} inputProps={{ minLength: 2, maxLength: 200 }} error={!!errors.fullName} helperText={errors.fullName || 'Only letters, spaces, hyphens, dots'} /></Grid>
+                <Grid item xs={12} sm={6}><TextField fullWidth label="CNIC" value={formData.cnic} onChange={(e) => handleFieldChange('cnic', filterCNIC(e.target.value))} disabled={!isEditing} placeholder="12345-6789012-3" inputProps={{ maxLength: 15 }} error={!!errors.cnic} helperText={errors.cnic || 'Format: 12345-6789012-3 (digits & dash only)'} /></Grid>
                 <Grid item xs={12} sm={6}><TextField fullWidth label="Date of Birth" type="date" value={formData.dob} onChange={(e) => handleFieldChange('dob', e.target.value)} disabled={!isEditing} InputLabelProps={{ shrink: true }} /></Grid>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth disabled={!isEditing}>
@@ -384,8 +415,8 @@ const Profile = () => {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={6}><TextField fullWidth label="Phone" value={formData.phone} onChange={(e) => handleFieldChange('phone', e.target.value)} disabled={!isEditing} /></Grid>
-                <Grid item xs={12}><TextField fullWidth label="Address" value={formData.address} onChange={(e) => handleFieldChange('address', e.target.value)} disabled={!isEditing} multiline rows={2} /></Grid>
+                <Grid item xs={12} sm={6}><TextField fullWidth label="Phone" value={formData.phone} onChange={(e) => handleFieldChange('phone', filterPhone(e.target.value))} disabled={!isEditing} inputProps={{ maxLength: 20 }} error={!!errors.phone} helperText={errors.phone || 'Digits, +, -, (, ) only'} placeholder="e.g. +92 300 1234567" /></Grid>
+                <Grid item xs={12}><TextField fullWidth label="Address" value={formData.address} onChange={(e) => handleFieldChange('address', e.target.value)} disabled={!isEditing} multiline rows={2} inputProps={{ maxLength: 500 }} /></Grid>
               </Grid>
             </CardContent>
           </Card>
@@ -452,9 +483,9 @@ const Profile = () => {
               <Typography variant="h6" fontWeight="bold" gutterBottom>Security</Typography>
               <Divider sx={{ mb: 3 }} />
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}><TextField fullWidth label="New Password" type="password" value={settings.newPassword} onChange={(e) => setSettings({...settings, newPassword: e.target.value})} /></Grid>
-                <Grid item xs={12} sm={6}><TextField fullWidth label="Confirm Password" type="password" value={settings.confirmPassword} onChange={(e) => setSettings({...settings, confirmPassword: e.target.value})} /></Grid>
-                <Grid item xs={12}><Button variant="contained" onClick={handlePasswordChange}>Update Password</Button></Grid>
+                <Grid item xs={12} sm={6}><TextField fullWidth label="New Password" type="password" required value={settings.newPassword} onChange={(e) => setSettings({...settings, newPassword: e.target.value})} inputProps={{ minLength: 8, maxLength: 128 }} helperText="Minimum 8 characters" /></Grid>
+                <Grid item xs={12} sm={6}><TextField fullWidth label="Confirm Password" type="password" required value={settings.confirmPassword} onChange={(e) => setSettings({...settings, confirmPassword: e.target.value})} inputProps={{ minLength: 8, maxLength: 128 }} error={settings.confirmPassword !== '' && settings.newPassword !== settings.confirmPassword} helperText={settings.confirmPassword !== '' && settings.newPassword !== settings.confirmPassword ? 'Passwords do not match' : ''} /></Grid>
+                <Grid item xs={12}><Button variant="contained" onClick={handlePasswordChange} disabled={!settings.newPassword || settings.newPassword.length < 8 || settings.newPassword !== settings.confirmPassword}>Update Password</Button></Grid>
               </Grid>
             </CardContent>
           </Card>

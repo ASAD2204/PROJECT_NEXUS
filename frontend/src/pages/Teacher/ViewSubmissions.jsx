@@ -126,6 +126,29 @@ const ViewSubmissions = () => {
     setGradeDialog(false);
   };
 
+  const handleDownload = async (submission) => {
+    try {
+      const fileId = submission.file_ref_id || submission.fileRefId || submission.file_id;
+      if (!fileId) {
+        alert('No file attached to this submission');
+        return;
+      }
+      const res = await lmsAPI.downloadFile(fileId);
+      const blob = new Blob([res.data], { type: res.headers['content-type'] || 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `submission_${submission.studentId}_${submission.id}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Failed to download', e);
+      alert('Failed to download file');
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'graded': return 'success';
@@ -263,16 +286,22 @@ const ViewSubmissions = () => {
                   </TableCell>
                   <TableCell>{submission.studentName}</TableCell>
                   <TableCell>
-                    {submission.submittedDate 
-                      ? new Date(submission.submittedDate).toLocaleDateString()
+                    {submission.submittedDate || submission.submittedAt || submission.submitted_at
+                      ? new Date(submission.submittedDate || submission.submittedAt || submission.submitted_at).toLocaleDateString(undefined, {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })
                       : '-'}
                   </TableCell>
                   <TableCell>
                     <Chip 
-                      label={submission.status.replace('-', ' ').toUpperCase()}
-                      color={getStatusColor(submission.status)}
+                      label={(submission.status || 'pending').replace(/-/g, ' ').toUpperCase()}
+                      color={getStatusColor(submission.status || 'pending')}
                       size="small"
-                      sx={{ fontWeight: 'bold' }}
+                      sx={{ fontWeight: 'bold', fontSize: '0.7rem' }}
                     />
                   </TableCell>
                   <TableCell>
@@ -296,7 +325,11 @@ const ViewSubmissions = () => {
                           <IconButton size="small" color="primary">
                             <Visibility />
                           </IconButton>
-                          <IconButton size="small" color="primary">
+                          <IconButton 
+                            size="small" 
+                            color="primary"
+                            onClick={() => handleDownload(submission)}
+                          >
                             <GetApp />
                           </IconButton>
                           <Button

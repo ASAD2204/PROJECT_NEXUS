@@ -14,7 +14,7 @@ export const teacherAPI = {
 
   // ── Courses ──
   getMyCourses: () => client.get('/lms/courses/my-courses'),
-  getCourse: (id) => client.get(`/lms/sections/${id}`),
+  getCourse: (id) => client.get(`/lms/courses/${id}`),
   getMyStudents: () => client.get('/sis/faculty/me/students'),
 
   // ── Assignments ──

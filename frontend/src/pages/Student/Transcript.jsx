@@ -31,10 +31,13 @@ import {
   TableRow,
   Chip,
   Divider,
+  Stack,
+  Paper,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import { Download, School, TrendingUp, AssignmentTurnedIn, EmojiEvents } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSnackbar } from '../../contexts/SnackbarContext';
 import { studentAPI } from '../../api/student';
 import client from '../../api/client';
 import PageHeader from '../../components/Common/PageHeader';
@@ -45,6 +48,7 @@ import { pageTransition } from '../../utils/animations';
 
 const Transcript = () => {
   const { user } = useAuth();
+  const { showSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(true);
   const [downloadLoading, setDownloadLoading] = useState(false);
   const [profile, setProfile] = useState(null);
@@ -70,7 +74,10 @@ const Transcript = () => {
         if (coursesRes.status === 'fulfilled') {
           setEnrolledCourses(coursesRes.value.data?.courses || coursesRes.value.data || []);
         }
-      } catch { /* fallback empty */ }
+      } catch (err) { 
+        console.error(err);
+        showSnackbar('Failed to load transcript data', 'error');
+      }
       setLoading(false);
     };
     fetchTranscript();
@@ -231,71 +238,76 @@ const Transcript = () => {
             </Typography>
           </CardContent>
         </Card>
-      ) : transcript.map((semester) => (
-        <Card key={semester.id || semester.transcriptId || semester.semesterId} sx={{ mb: 3 }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+      ) : transcript.map((sem) => {
+        // Find courses for this semester (assuming enrolledCourses has semester info)
+        // Or if not, we show all courses in the most recent semester block
+        // For project nexus, we group enrolledCourses by semesterId
+        const semesterCourses = enrolledCourses.filter(c => 
+          String(c.semesterId || c.semester_id) === String(sem.semesterId)
+        );
+
+        return (
+          <Card key={sem.id || sem.transcriptId || sem.semesterId} sx={{ mb: 4, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
+            <Box sx={{ p: 2, bgcolor: 'primary.main', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="h6" fontWeight="bold">
-                {semester.semester}
+                {sem.semester}
               </Typography>
-              <Chip
-                label={`SGPA: ${Number(semester.semesterGPA ?? semester.sgpa ?? 0).toFixed(2)}`}
-                color="primary"
-                sx={{ fontWeight: 'bold' }}
-              />
+              <Stack direction="row" spacing={2}>
+                <Chip label={`SGPA: ${Number(sem.semesterGPA ?? sem.sgpa ?? 0).toFixed(2)}`} size="small" sx={{ bgcolor: 'white', color: 'primary.main', fontWeight: 'bold' }} />
+                <Chip label={`CGPA: ${Number(sem.cumulativeGPA ?? sem.cgpa ?? 0).toFixed(2)}`} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }} />
+              </Stack>
             </Box>
-            <Divider sx={{ mb: 2 }} />
-            <TableContainer>
-              <Table>
-                <TableHead>
+            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0 }}>
+              <Table size="small">
+                <TableHead sx={{ bgcolor: 'background.neutral' }}>
                   <TableRow>
-                    <TableCell>
-                      <strong>Semester</strong>
-                    </TableCell>
-                    <TableCell align="center">
-                      <strong>SGPA</strong>
-                    </TableCell>
-                    <TableCell align="center">
-                      <strong>CGPA</strong>
-                    </TableCell>
-                    <TableCell>
-                      <strong>Generated On</strong>
-                    </TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Course Code</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Course Title</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 'bold' }}>Credits</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 'bold' }}>Grade Points</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 'bold' }}>Status</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  <TableRow hover>
-                    <TableCell>{semester.semester}</TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        label={Number(semester.semesterGPA ?? semester.sgpa ?? 0).toFixed(2)}
-                        size="small"
-                        color="primary"
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        label={Number(semester.cumulativeGPA ?? semester.cgpa ?? 0).toFixed(2)}
-                        size="small"
-                        color="success"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {semester.generatedAt
-                        ? new Date(semester.generatedAt).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
-                        : 'Recently'}
-                    </TableCell>
-                  </TableRow>
+                  {semesterCourses.length > 0 ? (
+                    semesterCourses.map((course) => (
+                      <TableRow key={course.id} hover>
+                        <TableCell><Typography variant="body2" fontWeight="600">{course.code}</Typography></TableCell>
+                        <TableCell>{course.title}</TableCell>
+                        <TableCell align="center">{course.creditHours || course.credit_hours}</TableCell>
+                        <TableCell align="center">
+                          <Chip 
+                            label={(course.status === 'Completed' || course.status === 'Graded') && course.finalGradePoints !== null 
+                              ? Number(course.finalGradePoints).toFixed(2) 
+                              : '—'} 
+                            size="small" 
+                            variant="outlined"
+                            color={(course.status === 'Completed' || course.status === 'Graded') && Number(course.finalGradePoints) >= 2.0 ? 'success' : 'default'}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip 
+                            label={course.status === 'Completed' || course.status === 'Graded' ? 'Finalized' : 'In-Progress'} 
+                            size="small"
+                            color={course.status === 'Completed' || course.status === 'Graded' ? 'success' : 'warning'}
+                            variant={course.status === 'Completed' || course.status === 'Graded' ? 'filled' : 'outlined'}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center" sx={{ py: 3, color: 'text.secondary', fontStyle: 'italic' }}>
+                        No course records found for this semester.
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>
-          </CardContent>
-        </Card>
-      ))}
+          </Card>
+        );
+      })}
 
       {/* Summary Card */}
       <Card>

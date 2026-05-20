@@ -672,6 +672,7 @@ const Grievances = () => {
                 value={formData.subject}
                 onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                 placeholder="Brief summary of your concern"
+                inputProps={{ minLength: 3, maxLength: 200 }}
               />
             </Grid>
             <Grid size={12}>
@@ -684,7 +685,8 @@ const Grievances = () => {
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Provide detailed information about your grievance..."
-                helperText={`${formData.description.length} characters`}
+                inputProps={{ minLength: 10, maxLength: 4000 }}
+                helperText={`${formData.description.length}/4000 characters`}
               />
               {formData.description.length > 50 && (
                 <Button size="small" onClick={handleAutoFill} sx={{ mt: 1 }}>
@@ -736,7 +738,7 @@ const Grievances = () => {
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
           <Button onClick={() => setSubmitModalOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit} startIcon={<Send />}>
+          <Button variant="contained" onClick={handleSubmit} startIcon={<Send />} disabled={!formData.category || !formData.priority || !formData.subject?.trim() || !formData.description?.trim()}>
             Submit Grievance
           </Button>
         </DialogActions>

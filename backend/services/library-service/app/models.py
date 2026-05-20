@@ -83,6 +83,7 @@ class LibBook(Base):
     language = Column(String(30), default="English")
     total_copies = Column(Integer, nullable=False, default=1)
     available_copies = Column(Integer, nullable=False, default=1)
+    digital_link = Column(String(500), nullable=True) # PDF/E-book link
     shelf_location = Column(String(50), nullable=True)
 
     # Relationships
@@ -118,6 +119,7 @@ class LibIssue(Base):
     status = Column(String(20), nullable=False, default="Issued")  # Issued | Returned | Lost
     fine_amount = Column(Numeric(10, 2), default=0.0)
     days_overdue = Column(Integer, default=0)
+    return_condition = Column(String(50), nullable=True)
 
     # Relationships
     student = relationship("SisStudent", back_populates="issues")

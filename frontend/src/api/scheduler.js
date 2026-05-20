@@ -35,10 +35,8 @@ export const schedulerAPI = {
   exportTimetableSet: (setId) => client.get(`/scheduler/sets/${setId}/export`, { responseType: 'blob' }),
 
   // ── View Timetable ──
-  getCourseTimetable: (courseId) => client.get(`/scheduler/timetable/course/${courseId}`),
-  getStudentTimetable: () => client.get('/scheduler/timetable/student'),
-  getFacultyTimetable: () => client.get('/scheduler/timetable/faculty'),
-  getRoomTimetable: (roomNo) => client.get(`/scheduler/timetable/room/${roomNo}`),
+  getMyTimetable: () => client.get('/scheduler/my-timetable'),
+  getPublishedTimetable: () => client.get('/scheduler/published'),
 };
 
 export default schedulerAPI;

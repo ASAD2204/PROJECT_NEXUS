@@ -131,7 +131,7 @@ Source: frontend/src/api/attendance.js
 | getHistory | GET /attendance/history | Implemented |
 | getStats | GET /attendance/stats | Implemented |
 | getMyStats | GET /attendance/stats/me | Implemented |
-| enrollFace | POST /attendance/enroll | Implemented via compatibility alias |
+| enrollFace | POST /attendance/enroll | Implemented |
 | getActiveSessions | GET /attendance/sessions/active | Implemented |
 | createSession | POST /attendance/sessions | Implemented |
 | getAll | GET /attendance/records | Implemented |
@@ -170,7 +170,7 @@ Source: frontend/src/api/chat.js
 | createSession | POST /chat/sessions | Implemented |
 | sendMessage | POST /chat/messages/{session_id} | Implemented |
 | getMessages | GET /chat/messages/{session_id} | Implemented |
-| getOnlineUsers | GET /chat/online | Not present in current backend routes |
+| getOnlineUsers | GET /chat/online | Implemented |
 | createWebSocket | WS /api/v1/chat/ws | Handled by gateway and chat service |
 
 ### Finance Module
@@ -290,10 +290,7 @@ Source: frontend/src/api/alumni.js
 ## Recommended Next Alignment Tasks
 
 1. Add missing backend endpoints or adjust frontend calls for:
-   - GET /chat/online
-   - POST /attendance/enroll
    - PUT /library/reservations/{reservation_id}
-   - POST /ops/grievances/{ticket_id}/comments
    - GET /finance/invoices, POST /finance/invoices, GET /finance/fines
    - LMS update and delete routes for course and quiz where required
 2. Keep this file updated when either frontend API modules or backend routes change.

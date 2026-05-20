@@ -315,15 +315,19 @@ const HelpSupport = () => {
                   <TextField
                     label="Subject"
                     fullWidth
+                    required
                     value={ticketForm.subject}
                     onChange={(e) => handleChange('subject', e.target.value)}
                     placeholder="Brief description of your issue"
+                    inputProps={{ minLength: 3, maxLength: 200 }}
+                    helperText={`${ticketForm.subject.length}/200 characters`}
                   />
 
                   <TextField
                     select
                     label="Category"
                     fullWidth
+                    required
                     value={ticketForm.category}
                     onChange={(e) => handleChange('category', e.target.value)}
                     SelectProps={{ native: true }}
@@ -341,11 +345,14 @@ const HelpSupport = () => {
                   <TextField
                     label="Description"
                     fullWidth
+                    required
                     multiline
                     rows={6}
                     value={ticketForm.description}
                     onChange={(e) => handleChange('description', e.target.value)}
                     placeholder="Provide detailed information about your issue..."
+                    inputProps={{ minLength: 10, maxLength: 4000 }}
+                    helperText={`${ticketForm.description.length}/4000 characters (min 10)`}
                   />
 
                   <Alert severity="info" icon={<Feedback />}>

@@ -98,6 +98,8 @@ class SisSemester(Base):
     title = Column(String(50), nullable=False)
     start_date = Column(Date)
     end_date = Column(Date)
+    results_date = Column(Date)
+    status = Column(String(20), default="Active") # Registration, Active, Exams, Results, Completed
     is_active = Column(Boolean, default=False)
 
     # relationships
@@ -122,6 +124,10 @@ class SisStudent(Base):
     current_risk_status = Column(String(20), default="Green")
     profile_image_id = Column(String(100))
     scholarship_percentage = Column(Float, default=0.0)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    
+    is_graduated = Column(Boolean, default=False)
+    graduation_date = Column(Date)
 
     # relationships
     user = relationship("AuthUser", backref=backref("student_profile", uselist=False))
@@ -195,6 +201,12 @@ class SisEnrollment(Base):
     student_id = Column(Integer, ForeignKey("sis_students.student_id"), nullable=False)
     course_id = Column(Integer, ForeignKey("lms_courses.course_id"), nullable=False)
     status = Column(String(20), default="Enrolled")
+    is_historical = Column(Boolean, default=False)
+    
+    # Marks tracking (synchronized from LMS)
+    midterm_marks = Column(Float)
+    finalterm_marks = Column(Float)
+    sessional_marks = Column(Float)
     final_grade_points = Column(Float)
 
     # relationships

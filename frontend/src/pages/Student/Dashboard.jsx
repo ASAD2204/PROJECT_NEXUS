@@ -29,6 +29,7 @@ import {
   Avatar,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Skeleton,
@@ -37,6 +38,8 @@ import {
   Divider,
   Stack,
   alpha,
+  Alert,
+  AlertTitle,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import {
@@ -81,8 +84,10 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSnackbar } from '../../contexts/SnackbarContext';
 import { studentAPI } from '../../api/student';
 import { chatAPI } from '../../api/chat';
+import { analyticsAPI } from '../../api/analytics';
 import StatCard from '../../components/Common/StatCard';
 import { pageTransition, staggerContainer, fadeInUp } from '../../utils/animations';
 
@@ -90,9 +95,11 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { user } = useAuth();
+  const { showSnackbar } = useSnackbar();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
+  const [riskData, setRiskData] = useState(null);
   const [sectionsLoaded, setSectionsLoaded] = useState([]);
 
   // Data state — loaded from APIs
@@ -115,12 +122,13 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [coursesRes, assignRes, invoiceRes, statsRes, announcementsRes] = await Promise.allSettled([
+        const [coursesRes, assignRes, invoiceRes, statsRes, announcementsRes, riskRes] = await Promise.allSettled([
           studentAPI.getEnrolledCourses(),
           studentAPI.getAssignments(),
           studentAPI.getInvoices(),
           studentAPI.getAttendanceStats(),
           studentAPI.getAnnouncements(),
+          analyticsAPI.getMyRisk(),
         ]);
         const profileRes = await studentAPI.getProfile().catch(() => null);
         const transcriptRes = await studentAPI.getTranscript().catch(() => null);
@@ -139,6 +147,7 @@ const Dashboard = () => {
           });
         }
         if (announcementsRes.status === 'fulfilled') setAnnouncements(announcementsRes.value.data?.announcements || announcementsRes.value.data || []);
+        if (riskRes.status === 'fulfilled') setRiskData(riskRes.value.data);
 
         const transcriptRows = transcriptRes?.data?.rows || transcriptRes?.data?.transcripts || transcriptRes?.data?.semesters || [];
         setGpaHistory(
@@ -151,7 +160,10 @@ const Dashboard = () => {
         // Sync academic chat contacts — moved to a separate login-only or periodic check
         // if needed, but not on every dashboard mount to avoid 429
         // chatAPI.syncContacts().catch(() => {});
-      } catch { /* swallow */ }
+      } catch (err) { 
+        console.error('Dashboard load error:', err);
+        showSnackbar('Some dashboard data failed to load. Please refresh.', 'warning');
+      }
       setLoading(false);
     };
     fetchData();
@@ -304,8 +316,41 @@ const Dashboard = () => {
         </CardContent>
       </Card>
 
+      {/* Risk Alert Banner */}
+      {riskData && (riskData.risk_level === 'Red' || riskData.risk_level === 'Yellow') && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Alert 
+            severity={riskData.risk_level === 'Red' ? 'error' : 'warning'}
+            variant="filled"
+            sx={{ 
+              mb: 3, 
+              borderRadius: 2, 
+              boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+              background: riskData.risk_level === 'Red' 
+                ? 'linear-gradient(135deg, #d32f2f 0%, #ab003c 100%)' 
+                : 'linear-gradient(135deg, #ed6c02 0%, #b26a00 100%)',
+              color: 'white',
+              '& .MuiAlert-icon': {
+                color: 'white',
+              }
+            }}
+          >
+            <AlertTitle sx={{ fontWeight: 'bold' }}>
+              {riskData.risk_level === 'Red' ? 'Critical Academic Standing Alert' : 'Academic Standing Warning'}
+            </AlertTitle>
+            {riskData.risk_level === 'Red' 
+              ? 'You are currently identified as High Risk. Please schedule a meeting with your academic advisor or department head immediately to outline a remediation plan.' 
+              : 'You are currently identified as Medium Risk. We recommend scheduling an appointment with your instructor or academic advisor to improve your course progress.'}
+          </Alert>
+        </motion.div>
+      )}
+
       {/* 2. STATISTICS GRID */}
-      <Grid
+    <Grid
         container
         spacing={3}
         component={motion.div}
@@ -322,7 +367,7 @@ const Dashboard = () => {
             color="primary"
             trend={gpaHistory.length >= 2 ? { direction: (gpaHistory[gpaHistory.length - 1]?.gpa || 0) >= (gpaHistory[gpaHistory.length - 2]?.gpa || 0) ? 'up' : 'down', value: `GPA ${gpaHistory[gpaHistory.length - 1]?.gpa || ''}` } : undefined}
             subtitle={gpaHistory.length > 0 ? `Last: ${gpaHistory[gpaHistory.length - 1]?.semester || 'Semester'}` : 'Loading...'}
-            tooltip="Cumulative Grade Point Average across all completed semesters. Higher CGPA indicates better overall academic performance."
+            tooltip="Cumulative Grade Point Average across all completed semesters."
             loading={loading}
           />
         </Grid>
@@ -333,29 +378,43 @@ const Dashboard = () => {
             icon={HowToReg}
             color="success"
             subtitle={`${attendanceStats.attended}/${attendanceStats.totalClasses} classes`}
-            tooltip="Overall attendance percentage. Maintain above 75% to avoid attendance shortage issues."
+            tooltip="Overall attendance percentage. Maintain above 75%."
             loading={loading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
           <StatCard
-            title="Pending Tasks"
-            value={pendingAssignments}
-            icon={AssignmentIcon}
-            color="warning"
-            subtitle={`${assignments.length} total assignments`}
-            tooltip="Number of assignments pending submission. Complete them before the deadline to avoid penalties."
+            title="Credits Earned"
+            value={profile?.credits_earned ?? '0'}
+            icon={SchoolIcon}
+            color="info"
+            subtitle={`Goal: ${profile?.total_credits_required || 130}`}
+            tooltip="Total credit hours successfully completed."
             loading={loading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }} component={motion.div} variants={fadeInUp}>
           <StatCard
-            title="Fee Status"
-            value={unpaidFees.length > 0 ? `PKR ${totalUnpaid.toLocaleString()}` : 'All Paid'}
-            icon={PaymentIcon}
-            color={unpaidFees.length > 0 ? 'error' : 'success'}
-            subtitle={unpaidFees.length > 0 ? `${unpaidFees.length} invoice(s) due` : 'No pending fees'}
-            tooltip={unpaidFees.length > 0 ? 'Outstanding fee amount that needs to be paid.' : 'All your fees are paid up to date!'}
+            title="Academic Standing"
+            value={
+              riskData?.risk_level === 'Red' ? 'High Risk' :
+              riskData?.risk_level === 'Yellow' ? 'Medium Risk' :
+              riskData?.risk_level === 'Green' ? 'Good Standing' :
+              (Number(profile?.cgpa || 0) >= 2.0 ? 'Good' : 'At Risk')
+            }
+            icon={CheckCircleIcon}
+            color={
+              riskData?.risk_level === 'Red' ? 'error' :
+              riskData?.risk_level === 'Yellow' ? 'warning' :
+              riskData?.risk_level === 'Green' ? 'success' :
+              (Number(profile?.cgpa || 0) >= 2.0 ? 'success' : 'error')
+            }
+            subtitle={
+              riskData?.risk_level === 'Red' ? 'Action Required' :
+              riskData?.risk_level === 'Yellow' ? 'Under Observation' :
+              (Number(profile?.cgpa || 0) >= 3.5 ? "Dean's List" : "Regular")
+            }
+            tooltip="Your current academic status based on AI risk prediction."
             loading={loading}
           />
         </Grid>
@@ -729,6 +788,7 @@ const Dashboard = () => {
                   return (
                     <React.Fragment key={index}>
                       <ListItem sx={{ px: 0 }}>
+                        <ListItemButton onClick={activity.onClick} sx={{ borderRadius: 2 }}>
                         <ListItemIcon>
                           <Box
                             sx={{
@@ -755,6 +815,7 @@ const Dashboard = () => {
                             fontSize: '0.8rem',
                           }}
                         />
+                        </ListItemButton>
                       </ListItem>
                       {index < recentActivities.length - 1 && <Divider variant="inset" component="li" />}
                     </React.Fragment>

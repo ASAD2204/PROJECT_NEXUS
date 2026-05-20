@@ -102,9 +102,8 @@ const LibrarianDashboard = () => {
   }, []);
 
   const stats = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const activeIssues = transactions.filter(t => t.status === 'issued');
-    const overdueCount = activeIssues.filter(t => new Date(t.due_date || t.dueDate) < new Date()).length;
+    const activeIssues = transactions.filter(t => t.status === 'issued' || t.status === 'overdue');
+    const overdueCount = transactions.filter(t => t.status === 'overdue').length;
     const totalFines = transactions.reduce((sum, t) => sum + (t.fine_amount || t.fine || 0), 0);
     
     return {
@@ -165,7 +164,7 @@ const LibrarianDashboard = () => {
   const handleReturnSearch = () => {
     const searchVal = returnSearch.toLowerCase();
     const loan = transactions.find(
-      (t) => t.status === 'issued' && 
+      (t) => (t.status === 'issued' || t.status === 'overdue') && 
       (String(t.isbn || t.bookIsbn || '').toLowerCase() === searchVal || 
        String(t.studentRollNo || t.studentId || '').toLowerCase() === searchVal)
     );
@@ -184,7 +183,12 @@ const LibrarianDashboard = () => {
     try {
       setSubmitting(true);
       const res = await libraryAPI.returnBook(activeLoan.id || activeLoan.issue_id, { condition: bookCondition });
-      showSnackbar(`Return processed. Fine: ${res.data?.fine_amount || 0} PKR`, 'success');
+      const fineApplied = res.data?.fine_amount ?? 0;
+      const successMsg = res.data?.message || (fineApplied > 0
+        ? `Return processed. Fine of PKR ${fineApplied} has been applied!`
+        : 'Return processed successfully.');
+      
+      showSnackbar(successMsg, fineApplied > 0 ? 'warning' : 'success');
       
       setActiveLoan(null);
       setReturnSearch('');
@@ -352,7 +356,7 @@ const LibrarianDashboard = () => {
                 <Stack spacing={2.5}>
                   <Autocomplete
                     fullWidth
-                    options={transactions.filter(t => t.status === 'issued')}
+                    options={transactions.filter(t => t.status === 'issued' || t.status === 'overdue')}
                     getOptionLabel={(option) => `${option.bookTitle || option.book?.title || 'Unknown'} - ${option.studentName || 'Student'} (${option.isbn || option.bookIsbn || ''})`}
                     value={activeLoan}
                     onChange={(e, newValue) => {
@@ -448,29 +452,70 @@ const LibrarianDashboard = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {transactions.slice(0, 5).map((t) => (
-                        <TableRow key={t.id || t.issue_id} hover>
-                          <TableCell>
-                            <Chip 
-                              label={(t.status || 'Issued').toUpperCase()} 
-                              size="small" 
-                              color={t.status === 'returned' ? 'success' : 'primary'}
-                              variant={t.status === 'returned' ? 'filled' : 'outlined'}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight={700}>{t.bookTitle || t.book?.title || 'Unknown Book'}</Typography>
-                            <Typography variant="caption" color="text.secondary">{t.isbn || t.bookIsbn}</Typography>
-                          </TableCell>
-                          <TableCell>{t.studentName || `Roll: ${t.studentRollNo}`}</TableCell>
-                          <TableCell>{t.dueDate || '—'}</TableCell>
-                          <TableCell align="right">
-                            <Typography variant="body2" fontWeight={700} color={t.fine_amount > 0 ? 'error.main' : 'text.primary'}>
-                              {t.fine_amount || t.fine || 0} PKR
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {transactions.slice(0, 5).map((t) => {
+                        const status = String(t.status || 'issued').toLowerCase();
+                        const isOverdue = status === 'overdue';
+                        const isReturned = status === 'returned';
+                        const isLost = status === 'lost';
+                        
+                        let chipColor = 'primary';
+                        let chipVariant = 'outlined';
+                        let chipLabel = 'ISSUED';
+                        let chipSx = {};
+                        
+                        if (isReturned) {
+                          chipColor = 'success';
+                          chipVariant = 'filled';
+                          const cond = t.returnCondition || t.return_condition;
+                          chipLabel = cond && cond !== 'Good' ? `RETURNED (${cond.toUpperCase()})` : 'RETURNED';
+                        } else if (isOverdue) {
+                          chipColor = 'error';
+                          chipVariant = 'filled';
+                          chipLabel = 'OVERDUE';
+                        } else if (isLost) {
+                          chipLabel = 'LOST';
+                          chipVariant = 'filled';
+                          chipSx = { bgcolor: '#374151', color: '#F3F4F6', fontWeight: 'bold' };
+                        }
+                        
+                        return (
+                          <TableRow key={t.id || t.issue_id} hover>
+                            <TableCell>
+                              <Chip 
+                                label={chipLabel} 
+                                size="small" 
+                                color={isLost ? undefined : chipColor}
+                                variant={chipVariant}
+                                sx={chipSx}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+                                <Typography variant="body2" fontWeight={700}>
+                                  {t.bookTitle || t.book?.title || 'Unknown Book'}
+                                </Typography>
+                                {t.returnCondition && t.returnCondition !== 'Good' && (
+                                  <Chip
+                                    label={t.returnCondition}
+                                    size="small"
+                                    color="warning"
+                                    variant="outlined"
+                                    sx={{ height: 18, fontSize: '0.65rem', fontWeight: 800 }}
+                                  />
+                                )}
+                              </Box>
+                              <Typography variant="caption" color="text.secondary">{t.isbn || t.bookIsbn}</Typography>
+                            </TableCell>
+                            <TableCell>{t.studentName || `Roll: ${t.studentRollNo}`}</TableCell>
+                            <TableCell>{t.dueDate || '—'}</TableCell>
+                            <TableCell align="right">
+                              <Typography variant="body2" fontWeight={700} color={(t.fine_amount || t.fine) > 0 ? 'error.main' : 'text.primary'}>
+                                {t.fine_amount || t.fine || 0} PKR
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                       {transactions.length === 0 && (
                         <TableRow><TableCell colSpan={5} align="center" sx={{ py: 3 }}>No recent circulation activity.</TableCell></TableRow>
                       )}

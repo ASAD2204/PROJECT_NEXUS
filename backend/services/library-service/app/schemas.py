@@ -22,6 +22,7 @@ class BookCreate(BaseModel):
     language: Optional[str] = Field("English", max_length=30)
     total_copies: int = Field(1, ge=1)
     available_copies: Optional[int] = Field(None, ge=0)
+    digital_link: Optional[str] = Field(None, max_length=500)
     shelf_location: Optional[str] = Field(None, max_length=50)
 
 
@@ -38,6 +39,7 @@ class BookUpdate(BaseModel):
     language: Optional[str] = Field(None, max_length=30)
     total_copies: Optional[int] = Field(None, ge=1)
     available_copies: Optional[int] = Field(None, ge=0)
+    digital_link: Optional[str] = Field(None, max_length=500)
     shelf_location: Optional[str] = Field(None, max_length=50)
 
 
@@ -55,6 +57,7 @@ class BookOut(BaseModel):
     language: Optional[str] = None
     total_copies: int
     available_copies: int
+    digital_link: Optional[str] = None
     shelf_location: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -84,6 +87,7 @@ class IssueOut(BaseModel):
     status: str
     fine_amount: Optional[float] = 0.0
     days_overdue: Optional[int] = 0
+    return_condition: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

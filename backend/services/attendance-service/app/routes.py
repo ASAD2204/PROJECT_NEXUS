@@ -317,6 +317,34 @@ def verify_liveness(
     )
 
 
+# ========================= VOICE LIVENESS ================================
+
+@router.get("/voice-challenge", response_model=VoiceChallengeResponse)
+async def get_voice_challenge(_current_user: dict = Depends(get_current_user)):
+    """
+    Step 2 (Alternative): Get a random word for the voice liveness challenge.
+    """
+    word = random.choice(CHALLENGE_WORDS)
+    return VoiceChallengeResponse(challenge_word=word)
+
+
+@router.post("/verify-voice", response_model=VoiceChallengeVerifyResponse)
+async def verify_voice(
+    payload: VoiceChallengeVerifyRequest,
+    _current_user: dict = Depends(get_current_user),
+):
+    """
+    Verify the audio recording against the target challenge word.
+    """
+    audio_bytes = base64.b64decode(payload.audio_data)
+    is_correct, message = verify_voice_challenge(audio_bytes, payload.target_word)
+    
+    return VoiceChallengeVerifyResponse(
+        voice_verified=is_correct,
+        detected_text=message,
+    )
+
+
 # ========================= STEP 3 -- Face Verification ====================
 
 @router.post("/verify-face", response_model=FaceVerifyResponse)
@@ -540,6 +568,58 @@ def get_my_attendance(
     student = _resolve_student_for_user(db, current_user)
     return db.query(Attendance).filter(Attendance.student_id == student.student_id).order_by(Attendance.date.desc()).all()
 
+@router.get("/history/me", response_model=List[AttendanceOut])
+def get_my_history(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Frontend alias for student's own attendance history."""
+    return get_my_attendance(current_user, db)
+
+
+@router.post("/enroll", response_model=MessageResponse)
+async def enroll_face(
+    request: FaceEnrollRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Standard enrollment endpoint for a single face image.
+    Decodes base64 image, extracts encodings, and saves to ChromaDB.
+    """
+    student = _resolve_student_for_user(db, current_user)
+    student_id = student.student_id
+
+    # 1. Decode and Validate
+    raw_bytes = _decode_image_bytes(request.image_data)
+    rgb_img = _image_to_numpy(raw_bytes)
+    if rgb_img is None:
+        raise HTTPException(status_code=400, detail="Invalid image data.")
+
+    # 2. Extract Face Encodings
+    encodings = get_face_encodings_enhanced(rgb_img)
+    if not encodings:
+        raise HTTPException(status_code=400, detail="No face detected in the image.")
+    
+    # Use the first encoding
+    encoding = encodings[0].tolist()
+
+    # 3. Store in ChromaDB
+    collection = _get_chroma_collection()
+    if not collection:
+        raise HTTPException(status_code=500, detail="Biometric storage unavailable.")
+
+    try:
+        collection.upsert(
+            ids=[str(student_id)],
+            embeddings=[encoding],
+            metadatas=[{"student_id": student_id, "enrolled_at": datetime.utcnow().isoformat()}]
+        )
+        return MessageResponse(message="Face biometric enrolled successfully.")
+    except Exception as exc:
+        logger.error("Failed to save to ChromaDB: %s", exc)
+        raise HTTPException(status_code=500, detail="Failed to save biometric data.")
+
 
 @router.get("/history", dependencies=[Depends(require_role("admin", "faculty"))])
 def get_history(
@@ -604,7 +684,7 @@ def get_records(
 
         student_list.append({
             "id": student.student_id,
-            "name": user.full_name if user else f"Student {student.student_id}",
+            "name": f"{user.first_name or ''} {user.last_name or ''}".strip() if user else f"Student {student.student_id}",
             "rollNo": student.roll_no,
             "todayStatus": status,
         })

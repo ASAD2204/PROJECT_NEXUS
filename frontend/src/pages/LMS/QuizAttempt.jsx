@@ -68,7 +68,12 @@ const QuizAttempt = () => {
   const [timeLeft, setTimeLeft] = useState(null);
   const timerRef = useRef(null);
 
+  const STORAGE_KEY_ANSWERS = `quiz_answers_${id}`;
+  const STORAGE_KEY_TIMER = `quiz_timer_${id}`;
+
   const returnToCourse = () => {
+    localStorage.removeItem(STORAGE_KEY_ANSWERS);
+    localStorage.removeItem(STORAGE_KEY_TIMER);
     const courseId = location.state?.courseId || quiz?.section_id || quiz?.course_id;
     navigate(courseId ? `/lms/course/${courseId}` : '/lms');
   };
@@ -81,9 +86,25 @@ const QuizAttempt = () => {
         const q = res.data;
         setQuiz(q);
 
-        // Set initial timer
-        if (q.duration_minutes) {
-          setTimeLeft(q.duration_minutes * 60);
+        // Recover answers
+        const savedAnswers = localStorage.getItem(STORAGE_KEY_ANSWERS);
+        if (savedAnswers) {
+          setAnswers(JSON.parse(savedAnswers));
+        }
+
+        // Timer recovery logic
+        const savedEndTime = localStorage.getItem(STORAGE_KEY_TIMER);
+        if (savedEndTime) {
+          const remaining = Math.floor((Number(savedEndTime) - Date.now()) / 1000);
+          if (remaining > 0) {
+            setTimeLeft(remaining);
+          } else {
+            setTimeLeft(0);
+          }
+        } else if (q.duration_minutes) {
+          const durationSeconds = q.duration_minutes * 60;
+          setTimeLeft(durationSeconds);
+          localStorage.setItem(STORAGE_KEY_TIMER, String(Date.now() + durationSeconds * 1000));
         }
 
         // Check if already attempted
@@ -91,6 +112,8 @@ const QuizAttempt = () => {
           const statusRes = await lmsAPI.getQuizAttemptStatus(id);
           if (statusRes.data?.attempted) {
             setEligibility({ allowed: false, reason: 'You have already completed this quiz.' });
+            localStorage.removeItem(STORAGE_KEY_ANSWERS);
+            localStorage.removeItem(STORAGE_KEY_TIMER);
             setResult({ 
               success: true, 
               message: 'Attempt Completed', 
@@ -114,6 +137,13 @@ const QuizAttempt = () => {
     };
     fetchQuiz();
   }, [id]);
+
+  // Save answers to localStorage
+  useEffect(() => {
+    if (Object.keys(answers).length > 0) {
+      localStorage.setItem(STORAGE_KEY_ANSWERS, JSON.stringify(answers));
+    }
+  }, [answers, STORAGE_KEY_ANSWERS]);
 
   // Timer logic
   useEffect(() => {
@@ -151,9 +181,10 @@ const QuizAttempt = () => {
     setAnswers((prev) => {
       const current = Array.isArray(prev[questionId]) ? prev[questionId] : [];
       const exists = current.includes(optionValue);
+      const next = exists ? current.filter((item) => item !== optionValue) : [...current, optionValue];
       return {
         ...prev,
-        [questionId]: exists ? current.filter((item) => item !== optionValue) : [...current, optionValue],
+        [questionId]: next,
       };
     });
   };
@@ -175,12 +206,19 @@ const QuizAttempt = () => {
 
       const res = await lmsAPI.submitQuiz(id, payload);
       setResult(res.data || { success: true });
+      localStorage.removeItem(STORAGE_KEY_ANSWERS);
+      localStorage.removeItem(STORAGE_KEY_TIMER);
       clearInterval(timerRef.current);
     } catch (err) {
       setResult({ success: false, error: err.response?.data?.detail || 'Submission failed' });
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleSaveProgress = () => {
+    localStorage.setItem(STORAGE_KEY_ANSWERS, JSON.stringify(answers));
+    alert('Progress saved to local storage!');
   };
 
   if (loading) {
@@ -451,7 +489,7 @@ const QuizAttempt = () => {
                   variant="outlined" 
                   startIcon={<Save />} 
                   sx={{ borderRadius: 3 }}
-                  onClick={() => alert('Progress is auto-saved!')}
+                  onClick={handleSaveProgress}
                 >
                   Save Progress
                 </Button>

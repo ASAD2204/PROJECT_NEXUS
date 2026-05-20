@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box,
@@ -28,7 +28,16 @@ import {
   Popover,
   Menu as MuiMenu,
   MenuItem as MuiMenuItem,
+  Divider,
+  CircularProgress,
+  Chip,
+  Skeleton,
+  FormControlLabel,
+  Checkbox,
+  Fade,
+  Zoom,
 } from '@mui/material';
+import { alpha, styled } from '@mui/material/styles';
 import {
   Send,
   SmartToy,
@@ -43,6 +52,22 @@ import {
   Group as GroupIcon,
   Close,
   Check,
+  DoneAll,
+  Security,
+  LocalLibrary,
+  Work,
+  School,
+  Delete,
+  FileDownload,
+  InsertDriveFile,
+  Image as ImageIcon,
+  PictureAsPdf,
+  QuestionAnswer,
+  History,
+  AutoAwesome,
+  Info,
+  ChevronRight,
+  Hub,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -50,22 +75,78 @@ import { chatAPI } from '../../api/chat';
 import { aiAPI } from '../../api/ai';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 import { sisAPI } from '../../api/sis';
+import MarkdownRenderer from '../../components/Common/MarkdownRenderer';
 
 const AI_ASSISTANT_CHAT = {
-  name: 'Nexus AI Assistant',
+  name: 'Nexus Intelligence Core',
   avatar: '🤖',
   status: 'online',
   id: 'ai-assistant',
   session_id: 'ai-assistant'
 };
 
-const whatsappGreen = '#128C7E';
-const whatsappDarkGreen = '#075E54';
+const reactionList = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
-// --- Helper Functions (Moved outside) ---
+// --- Styled Components for Visual Perfection ---
 
-const normalizeConversation = (item, index = 0) => {
+const GlassSidebarHeader = styled(Box)(({ theme, bgcolor }) => ({
+  padding: theme.spacing(2.5),
+  background: bgcolor,
+  color: 'white',
+  position: 'relative',
+  overflow: 'hidden',
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: '100%',
+    height: '100%',
+    background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 100%)',
+    pointerEvents: 'none',
+  }
+}));
+
+const ChatInputWrapper = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(2),
+  background: theme.palette.background.paper,
+  borderTop: `1px solid ${theme.palette.divider}`,
+  boxShadow: '0 -4px 20px rgba(0,0,0,0.03)',
+  zIndex: 10,
+}));
+
+const ModernListItem = styled(ListItemButton)(({ theme, selected }) => ({
+  margin: theme.spacing(0.5, 1.5),
+  borderRadius: theme.spacing(1.5),
+  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+  border: '1px solid transparent',
+  ...(selected && {
+    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+    borderColor: alpha(theme.palette.primary.main, 0.1),
+    '& .MuiListItemText-primary': {
+      fontWeight: 800,
+    }
+  }),
+  '&:hover': {
+    backgroundColor: alpha(theme.palette.primary.main, 0.04),
+    transform: 'translateX(4px)',
+  }
+}));
+
+// --- Helper Functions ---
+
+const getAvatarColor = (name) => {
+  const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722'];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+};
+
+const normalizeConversation = (item, index = 0, onlineUsers = []) => {
   const sessionId = item.session_id || item.id || `conversation-${index + 1}`;
+  const participants = item.participants || [];
+  const isOnline = participants.some(p => onlineUsers.includes(String(p)));
+
   const participantLabel = Array.isArray(item.participants) && item.participants.length > 0
     ? item.participants.map((p) => String(p).slice(0, 8)).join(', ')
     : 'Direct chat';
@@ -75,13 +156,14 @@ const normalizeConversation = (item, index = 0) => {
     id: sessionId,
     session_id: sessionId,
     name,
-    avatar: item.avatar || name[0]?.toUpperCase() || 'C',
-    status: item.status || 'online',
+    avatar: item.avatar,
+    status: isOnline ? 'online' : 'offline',
     lastMessage: item.last_message || 'No messages yet',
     lastTime: item.last_message_at ? new Date(item.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now',
     role: item.role || participantLabel,
     members: item.members ?? (item.participants?.length || 0),
     participants: item.participants || [],
+    is_group: item.is_group || false
   };
 };
 
@@ -93,369 +175,120 @@ const normalizeGroup = (item, index = 0) => {
     id: sessionId,
     session_id: sessionId,
     name,
-    avatar: item.avatar || name[0]?.toUpperCase() || 'G',
+    avatar: item.avatar,
     lastMessage: item.last_message || 'No messages yet',
     lastTime: item.last_message_at ? new Date(item.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now',
     members: item.members ?? (item.participants?.length || 0),
     participants: item.participants || [],
+    is_group: true
   };
 };
 
-// --- Sub-components extracted to fix focus loss ---
+const getFileIcon = (type) => {
+  if (!type) return <InsertDriveFile />;
+  if (type.includes('image')) return <ImageIcon />;
+  if (type.includes('pdf')) return <PictureAsPdf />;
+  return <InsertDriveFile />;
+};
 
-const ChatList = ({ 
-  theme, isMobile, navigate, mode, setMode, 
-  setMessages, setAddContactOpen, setCreateGroupOpen, searchQuery, setSearchQuery,
-  currentTab, setCurrentTab, contacts, groups, teachers, selectedChat, 
-  handleContactClick, handleGroupClick, user
-}) => (
-  <Box
-    sx={{
-      width: { xs: '100%', md: 360, lg: 400 },
-      height: '100%',
-      borderRight: { xs: 'none', md: `1px solid ${theme.palette.divider}` },
-      display: 'flex',
-      flexDirection: 'column',
-      backgroundColor: theme.palette.mode === 'dark' ? '#111B21' : '#FFFFFF',
-    }}
+// --- Components ---
+
+const MessageBubble = ({ msg, isUser, theme, userBubbleColor, otherBubbleColor, onReaction }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    transition={{ duration: 0.2 }}
+    style={{ alignSelf: isUser ? 'flex-end' : 'flex-start', maxWidth: '80%', position: 'relative', marginBottom: '16px' }}
   >
-    {/* Header */}
-    <Box
-      sx={{
-        background: `linear-gradient(135deg, ${whatsappGreen} 0%, ${whatsappDarkGreen} 100%)`,
-        color: 'white',
-        p: { xs: 1.5, md: 2 },
+    <Paper 
+      elevation={0}
+      onContextMenu={(e) => { e.preventDefault(); onReaction(e, msg.id); }}
+      sx={{ 
+        p: 1.8, 
+        bgcolor: isUser ? userBubbleColor : otherBubbleColor, 
+        borderRadius: isUser ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
+        color: isUser && theme.palette.mode === 'light' ? 'inherit' : 'text.primary',
+        boxShadow: isUser ? '0 4px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.05)',
+        position: 'relative',
+        transition: 'all 0.2s ease',
+        border: '1px solid',
+        borderColor: alpha(theme.palette.divider, 0.05),
+        '&:hover': {
+          boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+          transform: 'translateY(-1px)',
+        }
       }}
     >
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={{ xs: 1, md: 2 }}>
-        <Stack direction="row" spacing={{ xs: 1, md: 2 }} alignItems="center">
-          <IconButton onClick={() => navigate('/dashboard')} sx={{ color: 'white', p: { xs: 0.5, md: 1 } }}>
-            <ArrowBack fontSize={isMobile ? 'small' : 'medium'} />
-          </IconButton>
-          <Typography variant={isMobile ? 'subtitle1' : 'h6'} fontWeight="bold">
-            Nexus Chat
-          </Typography>
-        </Stack>
-        <Stack direction="row" spacing={1}>
-          <Tooltip title="Add New Contact">
-            <IconButton
-              onClick={() => setAddContactOpen(true)}
-              sx={{ color: 'white', backgroundColor: 'rgba(255,255,255,0.15)', '&:hover': { backgroundColor: 'rgba(255,255,255,0.25)' } }}
-              size={isMobile ? 'small' : 'medium'}
-            >
-              <Add />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Create Group">
-            <IconButton
-              onClick={() => setCreateGroupOpen(true)}
-              sx={{ color: 'white', backgroundColor: 'rgba(255,255,255,0.15)', '&:hover': { backgroundColor: 'rgba(255,255,255,0.25)' } }}
-              size={isMobile ? 'small' : 'medium'}
-            >
-              <GroupIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={mode === 'ai' ? 'Switch to Human Chat' : 'Switch to AI Assistant'}>
-            <IconButton
-              onClick={() => {
-                setMode(mode === 'ai' ? 'human' : 'ai');
-                setMessages([]);
-              }}
-              sx={{
-                color: 'white',
-                backgroundColor: 'rgba(255,255,255,0.15)',
-                '&:hover': { backgroundColor: 'rgba(255,255,255,0.25)' },
-                p: { xs: 0.75, md: 1 },
-              }}
-              size={isMobile ? 'small' : 'medium'}
-            >
-              {mode === 'ai' ? <Person fontSize={isMobile ? 'small' : 'medium'} /> : <SmartToy fontSize={isMobile ? 'small' : 'medium'} />}
-            </IconButton>
-          </Tooltip>
-        </Stack>
+      {!isUser && msg.senderName && (
+        <Typography variant="caption" color="primary" fontWeight="900" sx={{ display: 'block', mb: 0.8, fontSize: '0.65rem', letterSpacing: 0.8, textTransform: 'uppercase' }}>
+          {msg.senderName}
+        </Typography>
+      )}
+      
+      {/* Attachments Section */}
+      {msg.attachments?.map((att, i) => (
+        <Box key={i} sx={{ 
+          mb: 1.5, 
+          p: 1.5, 
+          border: '1px solid', 
+          borderColor: 'divider', 
+          borderRadius: 2, 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1.5, 
+          bgcolor: alpha(theme.palette.background.paper, 0.6),
+          backdropFilter: 'blur(8px)'
+        }}>
+           <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main', width: 36, height: 32 }}>
+             {getFileIcon(att.file_type)}
+           </Avatar>
+           <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography variant="caption" noWrap fontWeight="700" display="block">{att.file_name}</Typography>
+              <Typography variant="caption" sx={{ opacity: 0.6, fontSize: '0.6rem' }}>{att.file_type.split('/')[1]?.toUpperCase() || 'FILE'}</Typography>
+           </Box>
+           <IconButton size="small" component="a" href={att.file_url} download sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', '&:hover': { bgcolor: 'primary.main', color: 'white' } }}>
+             <FileDownload fontSize="small" />
+           </IconButton>
+        </Box>
+      ))}
+
+      <Box className="message-content" sx={{ '& table': { my: 1, borderCollapse: 'collapse', width: '100%' } }}>
+        <MarkdownRenderer text={msg.text} />
+      </Box>
+      
+      <Stack direction="row" spacing={0.8} alignItems="center" justifyContent="flex-end" sx={{ mt: 1, opacity: 0.5 }}>
+        <Typography variant="caption" sx={{ fontSize: '0.6rem', fontWeight: 600 }}>{msg.timestamp}</Typography>
+        {isUser && (msg.is_read ? <DoneAll sx={{ fontSize: 14, color: '#34B7F1' }} /> : <Check sx={{ fontSize: 14 }} />)}
       </Stack>
 
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-          backgroundColor: 'rgba(255,255,255,0.15)',
-          borderRadius: '20px',
-          px: { xs: 1.5, md: 2 },
-          py: { xs: 0.4, md: 0.5 },
-        }}
-      >
-        {mode === 'ai' ? <SmartToy fontSize="small" /> : <Person fontSize="small" />}
-        <Typography variant={isMobile ? 'caption' : 'body2'} fontWeight="600">
-          {mode === 'ai' ? 'AI Assistant Mode' : 'Human Chat Mode'}
-        </Typography>
-      </Box>
-    </Box>
-
-    {mode === 'human' && (
-      <Box sx={{ p: { xs: 1.5, md: 2 }, backgroundColor: theme.palette.mode === 'dark' ? '#111B21' : '#F0F2F5' }}>
-        <TextField
-          fullWidth
-          size="small"
-          placeholder="Search conversations..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          InputProps={{
-            startAdornment: <Search sx={{ color: 'text.secondary', mr: 1, fontSize: { xs: '1rem', md: '1.25rem' } }} />,
-            sx: {
-              backgroundColor: theme.palette.mode === 'dark' ? '#2A3942' : '#FFFFFF',
-              borderRadius: '10px',
-              fontSize: { xs: '0.875rem', md: '1rem' },
-            },
-          }}
-        />
-      </Box>
-    )}
-
-    {mode === 'human' && (
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: theme.palette.mode === 'dark' ? '#111B21' : 'white' }}>
-        <Tabs
-          value={currentTab}
-          onChange={(e, val) => setCurrentTab(val)}
-          variant="fullWidth"
-          sx={{
-            '& .MuiTab-root': { color: whatsappGreen, fontWeight: 600 },
-            '& .Mui-selected': { color: whatsappGreen },
-            '& .MuiTabs-indicator': { backgroundColor: whatsappGreen },
-          }}
-        >
-          <Tab label={`Contacts (${contacts.length})`} />
-          <Tab label={`Groups (${groups.length})`} />
-        </Tabs>
-      </Box>
-    )}
-
-    <Box sx={{ flex: 1, overflowY: 'auto' }}>
-      {mode === 'ai' ? (
-        <ListItemButton
-          selected={selectedChat?.name === 'Nexus AI Assistant'}
-          onClick={() => handleContactClick(AI_ASSISTANT_CHAT)}
-          sx={{
-            py: 1.5, px: 2,
-            backgroundColor: selectedChat?.name === 'Nexus AI Assistant' ? (theme.palette.mode === 'dark' ? '#2A3942' : '#F0F2F5') : 'transparent',
-            '&:hover': { backgroundColor: theme.palette.mode === 'dark' ? '#2A3942' : '#F5F6F6' },
-          }}
-        >
-          <ListItemAvatar>
-            <Avatar sx={{ bgcolor: whatsappGreen, width: 50, height: 50 }}><SmartToy /></Avatar>
-          </ListItemAvatar>
-          <ListItemText primary={<Typography variant="subtitle1" fontWeight="600">Nexus AI Assistant</Typography>} secondary={<Typography variant="body2" color="text.secondary" noWrap>Your intelligent campus companion</Typography>} />
-        </ListItemButton>
-      ) : (
-        <List disablePadding>
-          {currentTab === 0 && teachers.length > 0 && (
-            <>
-              <Box sx={{ px: 2, py: 1, backgroundColor: 'rgba(18, 140, 126, 0.05)' }}>
-                <Typography variant="caption" fontWeight="bold" color={whatsappGreen} sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>Course Teachers</Typography>
-              </Box>
-              {teachers.map((teacher) => (
-                <ListItemButton
-                  key={`teacher-${teacher.faculty_id}`}
-                  onClick={() => {
-                    chatAPI.createSession({ participant_ids: [teacher.user_id, user.user_id] })
-                      .then(res => handleContactClick(normalizeConversation(res.data)));
-                  }}
-                  sx={{ py: 1.5, px: 2 }}
-                >
-                  <ListItemAvatar><Avatar sx={{ bgcolor: theme.palette.primary.main }}>{teacher.name?.[0] || 'T'}</Avatar></ListItemAvatar>
-                  <ListItemText primary={<Typography variant="subtitle1" fontWeight="600">{teacher.name || teacher.designation}</Typography>} secondary={<Typography variant="caption" color="text.secondary">{teacher.designation} (ID: {teacher.employee_code})</Typography>} />
-                </ListItemButton>
-              ))}
-              <Box sx={{ borderBottom: '1px solid', borderColor: 'divider', my: 1 }} />
-            </>
-          )}
-          {currentTab === 0
-            ? contacts.filter(c => (c.name || '').toLowerCase().includes(searchQuery.toLowerCase())).map((contact) => (
-                <ListItemButton
-                  key={contact.id}
-                  onClick={() => handleContactClick(contact)}
-                  selected={selectedChat?.id === contact.id}
-                  sx={{ py: 1.5, px: 2, backgroundColor: selectedChat?.id === contact.id ? (theme.palette.mode === 'dark' ? '#2A3942' : '#F0F2F5') : 'transparent', '&:hover': { backgroundColor: theme.palette.mode === 'dark' ? '#2A3942' : '#F5F6F6' } }}
-                >
-                  <ListItemAvatar>
-                    <Badge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} badgeContent={<Box sx={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid white', bgcolor: contact.status === 'online' ? '#25D366' : '#999' }} />}>
-                      <Avatar sx={{ width: 50, height: 50 }}>{contact.name?.[0] || 'C'}</Avatar>
-                    </Badge>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={<Stack direction="row" justifyContent="space-between" alignItems="center"><Typography variant="subtitle1" fontWeight="600">{contact.name}</Typography><Typography variant="caption" color="text.secondary">{contact.lastTime}</Typography></Stack>}
-                    secondary={<Stack><Typography variant="caption" color={whatsappGreen} fontWeight="500">{contact.role}</Typography><Typography variant="body2" color="text.secondary" noWrap>{contact.lastMessage}</Typography></Stack>}
-                  />
-                </ListItemButton>
-              ))
-            : groups.filter(g => (g.name || '').toLowerCase().includes(searchQuery.toLowerCase())).map((group) => (
-                <ListItemButton
-                  key={group.id}
-                  onClick={() => handleGroupClick(group)}
-                  selected={selectedChat?.id === group.id}
-                  sx={{ py: 1.5, px: 2, backgroundColor: selectedChat?.id === group.id ? (theme.palette.mode === 'dark' ? '#2A3942' : '#F0F2F5') : 'transparent', '&:hover': { backgroundColor: theme.palette.mode === 'dark' ? '#2A3942' : '#F5F6F6' } }}
-                >
-                  <ListItemAvatar><Avatar sx={{ width: 50, height: 50, bgcolor: whatsappGreen, fontSize: 24 }}>{group.avatar}</Avatar></ListItemAvatar>
-                  <ListItemText
-                    primary={<Stack direction="row" justifyContent="space-between" alignItems="center"><Typography variant="subtitle1" fontWeight="600">{group.name}</Typography><Typography variant="caption" color="text.secondary">{group.lastTime}</Typography></Stack>}
-                    secondary={<Stack><Typography variant="caption" color="text.secondary">{group.members} members</Typography><Typography variant="body2" color="text.secondary" noWrap>{group.lastMessage}</Typography></Stack>}
-                  />
-                </ListItemButton>
-              ))}
-        </List>
-      )}
-    </Box>
-
-    {mode === 'human' && currentTab === 1 && (
-      <Box sx={{ p: 2 }}>
-        <Button fullWidth variant="contained" startIcon={<Add />} onClick={() => setCreateGroupOpen(true)} sx={{ bgcolor: whatsappGreen, color: 'white', fontWeight: 600, borderRadius: '25px', py: 1.5, '&:hover': { bgcolor: whatsappDarkGreen } }}>Create New Group</Button>
-      </Box>
-    )}
-  </Box>
-);
-
-const ChatWindow = ({
-  selectedChat, isMobile, setSelectedChat, mode, chatBgColor, messages, 
-  userBubbleColor, otherBubbleColor, isTyping, messagesEndRef, 
-  handleFileAttach, fileInputRef, handleFileChange, attachedFile, 
-  inputMessage, inputRef, setInputMessage, handleSendMessage, theme,
-  handleClearChat
-}) => {
-  const [emojiAnchor, setEmojiAnchor] = useState(null);
-  const [menuAnchor, setMenuAnchor] = useState(null);
-  const { showSnackbar } = useSnackbar();
-
-  const handleEmojiClick = (emoji) => {
-    setInputMessage(prev => prev + emoji);
-    setEmojiAnchor(null);
-    inputRef.current?.focus();
-  };
-
-  const handleMenuAction = (action) => {
-    setMenuAnchor(null);
-    if (action === 'clear') {
-      handleClearChat();
-      showSnackbar('Chat cleared locally', 'info');
-    }
-  };
-
-  const EMOJI_LIST = ['😀', '😂', '😅', '😍', '🥰', '😎', '🤩', '😘', '😋', '😊', '😉', '😌', '🤔', '🤨', '😐', '😑', '😶', '🙄', '😏', '😣', '😥', '😮', '🤐', '😯', '😪', '😫', '🥱', '😴', '😌', '😛', '😜', '😝', '🤤', '😒', '😓', '😔', '😕', '🙃', '🤑', '😲', '☹️', '🙁', '😖', '😞', '😟', '😤', '😢', '😭', '😦', '😧', '😨', '😩', '🤯', '😬', '😰', '😱', '🥵', '🥶', '😳', '🤪', '😵', '😡', '😠', '🤬', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '😇', '🥳', '🥺', '🤠', '🤡', '🤥', '🤫', '🤭', '🧐', '🤓', '😈', '👿', '👍', '👎', '👏', '🤝', '🙌', '🎉', '🎊', '🔥', '✨', '🎈', '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '✅', '❌', '❓', '❕', '💯'];
-
-  return (
-    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: chatBgColor }}>
-      {selectedChat ? (
-        <>
-          <Box sx={{ background: `linear-gradient(135deg, ${whatsappGreen} 0%, ${whatsappDarkGreen} 100%)`, color: 'white', p: { xs: 1.5, md: 2 }, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Stack direction="row" spacing={{ xs: 1, md: 2 }} alignItems="center">
-              {isMobile && <IconButton onClick={() => setSelectedChat(null)} sx={{ color: 'white', p: 0.5 }}><ArrowBack fontSize="small" /></IconButton>}
-              <Avatar sx={{ width: { xs: 40, md: 45 }, height: { xs: 40, md: 45 }, bgcolor: 'rgba(255,255,255,0.2)' }}>{selectedChat.avatar || selectedChat.name?.[0] || 'C'}</Avatar>
-              <Box><Typography variant={isMobile ? 'body1' : 'subtitle1'} fontWeight="600">{selectedChat.name}</Typography><Typography variant="caption">{mode === 'ai' ? 'Online • Always available' : (selectedChat.status === 'online' ? 'Online' : 'Offline')}</Typography></Box>
-            </Stack>
-            <IconButton onClick={(e) => setMenuAnchor(e.currentTarget)} sx={{ color: 'white' }}><MoreVert /></IconButton>
-            <MuiMenu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
-              <MuiMenuItem onClick={() => handleMenuAction('clear')}>Clear Chat</MuiMenuItem>
-            </MuiMenu>
-          </Box>
-
-          <Box sx={{ flex: 1, overflowY: 'auto', p: { xs: 1, md: 2 }, backgroundImage: theme.palette.mode === 'dark' ? 'none' : 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 0h100v100H0z\' fill=\'%23E5DDD5\' /%3E%3Cpath d=\'M25 25l10 10M75 25l-10 10M25 75l10-10M75 75l-10-10\' stroke=\'%23D1CBC1\' stroke-width=\'1\' /%3E%3C/svg%3E")' }}>
-            <Stack spacing={1}>
-              {messages.map((msg) => (
-                <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} style={{ display: 'flex', justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
-                  <Paper sx={{ maxWidth: { xs: '85%', md: '70%' }, px: { xs: 1.5, md: 2 }, py: { xs: 0.75, md: 1 }, bgcolor: msg.sender === 'user' ? userBubbleColor : otherBubbleColor, color: msg.sender === 'user' ? '#000' : 'text.primary', borderRadius: msg.sender === 'user' ? '12px 12px 0 12px' : '12px 12px 12px 0', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>
-                    {msg.senderName && <Typography variant="caption" fontWeight="600" color={whatsappGreen}>{msg.senderName}</Typography>}
-                    {msg.attachments && msg.attachments.length > 0 && msg.attachments.map((file, idx) => (
-                      <Box key={idx} sx={{ mt: 0.5, mb: msg.text ? 1 : 0, p: 1, bgcolor: 'rgba(0,0,0,0.05)', borderRadius: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <AttachFile fontSize="small" />
-                        <a href={file.file_url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline', fontSize: '0.85rem', wordBreak: 'break-all' }}>
-                          {file.file_name || 'View Attachment'}
-                        </a>
-                      </Box>
-                    ))}
-                    {msg.text && <Typography variant={isMobile ? 'body2' : 'body1'} sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.text}</Typography>}
-                    <Typography variant="caption" sx={{ display: 'block', textAlign: 'right', mt: 0.5, opacity: 0.7 }}>{msg.timestamp}</Typography>
-                  </Paper>
-                </motion.div>
-              ))}
-              {isTyping && <Box sx={{ display: 'flex', gap: 0.5, p: 1 }}>{[0, 0.2, 0.4].map((d, i) => <Box key={i} component={motion.div} animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: d }} sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: whatsappGreen }} />)}</Box>}
-              <div ref={messagesEndRef} />
-            </Stack>
-          </Box>
-
-          <Box sx={{ p: { xs: 1.5, md: 2 }, backgroundColor: theme.palette.mode === 'dark' ? '#1E2428' : '#F0F2F5' }}>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <IconButton onClick={(e) => setEmojiAnchor(e.currentTarget)} size={isMobile ? 'small' : 'medium'}><EmojiEmotions /></IconButton>
-              <Popover 
-                open={Boolean(emojiAnchor)} 
-                anchorEl={emojiAnchor} 
-                onClose={() => setEmojiAnchor(null)} 
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }} 
-                transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-              >
-                <Box sx={{ width: 300, height: 200, p: 1, overflowY: 'auto', display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {EMOJI_LIST.map((emoji, i) => (
-                    <IconButton key={i} size="small" onClick={() => handleEmojiClick(emoji)}>{emoji}</IconButton>
-                  ))}
-                </Box>
-              </Popover>
-              <IconButton onClick={handleFileAttach} size={isMobile ? 'small' : 'medium'}><AttachFile /></IconButton>
-              <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} />
-              <TextField
-                fullWidth multiline maxRows={3} placeholder={attachedFile ? `Attached: ${attachedFile.name}` : "Type a message"} value={inputMessage} inputRef={inputRef}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '25px', backgroundColor: theme.palette.mode === 'dark' ? '#2A3942' : '#FFFFFF' } }}
+      {/* Reactions */}
+      {Object.keys(msg.reactions || {}).length > 0 && (
+        <Box sx={{ position: 'absolute', bottom: -12, left: isUser ? 'auto' : 12, right: isUser ? 12 : 'auto', display: 'flex', gap: 0.5, zIndex: 2 }}>
+          {Object.entries(msg.reactions).map(([emoji, users]) => (
+            <Tooltip key={emoji} title={`${users.length} reaction(s)`}>
+              <Chip 
+                label={`${emoji} ${users.length}`} 
+                size="small" 
+                sx={{ 
+                  height: 24, 
+                  bgcolor: 'background.paper', 
+                  border: '1px solid', 
+                  borderColor: 'divider',
+                  fontSize: '0.7rem',
+                  fontWeight: '900',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+                  '&:hover': { transform: 'scale(1.1)' }
+                }} 
               />
-              <IconButton onClick={handleSendMessage} disabled={!inputMessage.trim() && !attachedFile} sx={{ bgcolor: whatsappGreen, color: 'white', '&:hover': { bgcolor: whatsappDarkGreen } }}><Send /></IconButton>
-            </Stack>
-          </Box>
-        </>
-      ) : (
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-          <Avatar sx={{ width: 100, height: 100, bgcolor: whatsappGreen }}><SmartToy sx={{ fontSize: 60 }} /></Avatar>
-          <Typography variant="h5" fontWeight="600" color="text.secondary">Nexus Chat Portal</Typography>
-          <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ maxWidth: 400 }}>{mode === 'ai' ? 'Start a conversation with Nexus AI' : 'Select a contact or group to start chatting'}</Typography>
+            </Tooltip>
+          ))}
         </Box>
       )}
-    </Box>
-  );
-};
-
-const CreateGroupDialog = ({ open, onClose, name, setName, contacts, selectedMembers, onToggle, onCreate }) => (
-  <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-    <DialogTitle>Create New Group</DialogTitle>
-    <DialogContent>
-      <Stack spacing={3} sx={{ mt: 1 }}>
-        <TextField fullWidth label="Group Name" value={name} onChange={(e) => setName(e.target.value)} />
-        <List sx={{ maxHeight: 300, overflowY: 'auto' }}>
-          {contacts.map((c) => (
-            <ListItem key={c.id} button onClick={() => onToggle(c.id)} secondaryAction={selectedMembers.includes(c.id) ? <Check color="success" /> : null}>
-              <ListItemAvatar><Avatar>{c.name?.[0]}</Avatar></ListItemAvatar>
-              <ListItemText primary={c.name} secondary={c.role} />
-            </ListItem>
-          ))}
-        </List>
-      </Stack>
-    </DialogContent>
-    <DialogActions>
-      <Button onClick={onClose}>Cancel</Button>
-      <Button variant="contained" onClick={onCreate} disabled={!name.trim() || selectedMembers.length < 1} sx={{ bgcolor: whatsappGreen }}>Create</Button>
-    </DialogActions>
-  </Dialog>
+    </Paper>
+  </motion.div>
 );
 
-const AddContactDialog = ({ open, onClose, email, setEmail, onAdd }) => (
-  <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-    <DialogTitle>Add New Contact</DialogTitle>
-    <DialogContent>
-      <TextField fullWidth label="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} sx={{ mt: 1 }} />
-    </DialogContent>
-    <DialogActions>
-      <Button onClick={onClose}>Cancel</Button>
-      <Button variant="contained" onClick={onAdd} disabled={!email.trim()} sx={{ bgcolor: whatsappGreen }}>Add</Button>
-    </DialogActions>
-  </Dialog>
-);
+// --- Main Chat Portal ---
 
 const ChatPortal = () => {
   const { user } = useAuth();
@@ -463,276 +296,579 @@ const ChatPortal = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
+  // Refs
   const messagesEndRef = useRef(null);
-  const inputRef = useRef(null);
+  const fileInputRef = useRef(null);
   const socketRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
-  const [mode, setMode] = useState('ai');
+  // Core State
+  const [mode, setMode] = useState('human');
   const [currentTab, setCurrentTab] = useState(0);
   const [selectedChat, setSelectedChat] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [inputMessage, setInputMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState([]);
   const [attachedFile, setAttachedFile] = useState(null);
-  const fileInputRef = useRef(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Dialogs
   const [addContactOpen, setAddContactOpen] = useState(false);
   const [addContactEmail, setAddContactEmail] = useState('');
-  const [teachers, setTeachers] = useState([]);
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [selectedMembers, setSelectedMembers] = useState([]);
+
+  // AI & Socket States
   const [aiSessionId, setAiSessionId] = useState(null);
   const [contacts, setContacts] = useState([]);
   const [groups, setGroups] = useState([]);
+  const [reactionAnchor, setReactionAnchor] = useState({ el: null, msgId: null });
 
-  const userBubbleColor = '#DCF8C6';
-  const otherBubbleColor = theme.palette.mode === 'dark' ? '#2A2A2A' : '#FFFFFF';
-  const chatBgColor = theme.palette.mode === 'dark' ? '#0D1418' : '#E5DDD5';
+  // --- Role-Based Theme ---
+  const roleTheme = useMemo(() => {
+    const role = user?.role?.toLowerCase();
+    switch (role) {
+      case 'admin': return { primary: '#1E3A8A', secondary: '#1e40af', bubble: theme.palette.mode === 'dark' ? '#1a237e' : '#e3f2fd', icon: <Security />, label: 'Admin Command' };
+      case 'faculty': case 'teacher': return { primary: '#4C1D95', secondary: '#5b21b6', bubble: theme.palette.mode === 'dark' ? '#311b92' : '#f3e5f5', icon: <School />, label: 'Faculty Hub' };
+      case 'alumni': return { primary: '#92400E', secondary: '#b45309', bubble: theme.palette.mode === 'dark' ? '#3e2723' : '#fff8e1', icon: <Work />, label: 'Alumni Core' };
+      case 'librarian': return { primary: '#065F46', secondary: '#047857', bubble: theme.palette.mode === 'dark' ? '#004d40' : '#e0f2f1', icon: <LocalLibrary />, label: 'Library Nexus' };
+      default: return { primary: '#128C7E', secondary: '#075E54', bubble: theme.palette.mode === 'dark' ? '#1b5e20' : '#e8f5e9', icon: <Person />, label: 'Nexus Social' };
+    }
+  }, [user?.role, theme.palette.mode]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const whatsappGreen = roleTheme.primary;
+  const whatsappDarkGreen = roleTheme.secondary;
+  const userBubbleColor = roleTheme.bubble;
+  const otherBubbleColor = theme.palette.mode === 'dark' ? '#262626' : '#FFFFFF';
+  const chatBgColor = theme.palette.mode === 'dark' ? '#121212' : '#F5F7FB';
+
+  const scrollToBottom = () => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); };
+  useEffect(() => { scrollToBottom(); }, [messages, isTyping]);
+
+  // Online Presence
+  const fetchOnlineUsers = useCallback(async () => {
+    try {
+      const res = await chatAPI.getOnlineUsers();
+      setOnlineUsers(res.data.online_users || []);
+    } catch (e) { console.error(e); }
+  }, []);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isTyping]);
+    if (mode === 'human') { 
+      fetchOnlineUsers(); 
+      const interval = setInterval(fetchOnlineUsers, 30000); 
+      return () => clearInterval(interval); 
+    }
+  }, [mode, fetchOnlineUsers]);
 
+  // Data Loading
   const loadHumanData = useCallback(async () => {
+    setLoading(true);
     try {
-      const [contactsRes, groupsRes, teachersRes] = await Promise.allSettled([
-        chatAPI.getConversations(),
+      const [contactsRes, groupsRes] = await Promise.allSettled([
+        chatAPI.getConversations(), 
         chatAPI.getGroups(),
-        user?.role === 'student' ? sisAPI.getMyTeachers() : Promise.resolve({ data: [] }),
       ]);
       if (contactsRes.status === 'fulfilled') {
         const rows = contactsRes.value.data?.conversations || contactsRes.value.data || [];
-        setContacts(rows.map((item, index) => normalizeConversation(item, index)));
+        setContacts(rows.map((item, index) => normalizeConversation(item, index, onlineUsers)));
       }
       if (groupsRes.status === 'fulfilled') {
         const rows = groupsRes.value.data?.groups || groupsRes.value.data || [];
         setGroups(rows.map((item, index) => normalizeGroup(item, index)));
       }
-      if (teachersRes.status === 'fulfilled') setTeachers(teachersRes.value.data || []);
-    } catch (e) { console.error(e); }
-  }, [user?.role]);
+    } catch (e) { console.error(e); } finally { setLoading(false); }
+  }, [onlineUsers]);
+
+  useEffect(() => { if (mode === 'human') loadHumanData(); }, [mode, loadHumanData]);
 
   const loadConversationMessages = useCallback(async (sessionId) => {
+    if (!sessionId || sessionId === 'ai-assistant') return;
     try {
       const res = await chatAPI.getMessages(sessionId);
       const rows = res.data?.messages || res.data || [];
-      setMessages(rows.map((item, index) => ({
-        id: item.message_id || item.id || index,
-        text: item.content || '',
-        sender: item.sender_id === user?.user_id ? 'user' : 'other',
-        senderName: item.sender_name,
-        attachments: item.attachments || [],
-        timestamp: item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now',
+      setMessages(rows.map((item, index) => ({ 
+        id: item.message_id || item._id || index, 
+        text: item.content || '', 
+        sender: item.sender_id === user?.user_id ? 'user' : 'other', 
+        senderName: item.sender_name, 
+        attachments: item.attachments || [], 
+        is_read: item.is_read || false,
+        reactions: item.reactions || {},
+        timestamp: item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now' 
       })));
     } catch (e) { setMessages([]); }
   }, [user?.user_id]);
 
-  const loadAiHistory = useCallback(async () => {
-    try {
-      const res = await aiAPI.getHistory();
-      const history = res.data?.messages || res.data || [];
-      setMessages(history.map((item, index) => ({
-        id: index,
-        text: item.content || '',
-        sender: item.role === 'assistant' ? 'ai' : 'user',
-        attachments: item.attachments || [],
-        timestamp: item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now',
-      })));
-    } catch (e) { console.error(e); }
-  }, []);
-
-  // ── WebSocket Logic ──
-  useEffect(() => {
-    if (mode === 'human' && selectedChat?.session_id && selectedChat.id !== 'ai-assistant') {
-      // Close existing socket
-      if (socketRef.current) {
-        socketRef.current.close();
-      }
-
-      try {
-        const ws = chatAPI.createWebSocket(selectedChat.session_id);
-        socketRef.current = ws;
-
-        ws.onmessage = (event) => {
-          const data = JSON.parse(event.data);
-          setMessages(prev => {
-            // Avoid duplicates
-            if (prev.find(m => m.id === data.message_id)) return prev;
-            return [...prev, {
-              id: data.message_id,
-              text: data.content,
-              sender: data.sender_id === user?.user_id ? 'user' : 'other',
-              senderName: data.sender_name,
-              attachments: data.attachments || [],
-              timestamp: new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            }];
-          });
-        };
-
-        ws.onerror = () => {
-          console.error('WebSocket Error');
-          showSnackbar('Real-time connection failed. Messages may be delayed.', 'warning');
-        };
-
-        ws.onclose = () => {
-          console.log('WebSocket Closed');
-        };
-      } catch (err) {
-        console.error('Failed to create WebSocket', err);
-      }
-    }
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.close();
-        socketRef.current = null;
-      }
-    };
-  }, [selectedChat?.session_id, mode, user?.user_id, showSnackbar, selectedChat?.id]);
-
-  useEffect(() => {
-    if (mode === 'human') loadHumanData();
-    else {
-      setSelectedChat(AI_ASSISTANT_CHAT);
-      loadAiHistory();
-    }
-  }, [mode, loadHumanData, loadAiHistory]);
-
+  // Handlers
   const handleSendMessage = async () => {
     if (!inputMessage.trim() && !attachedFile) return;
-    const text = inputMessage;
-    const fileToUpload = attachedFile;
-    setInputMessage('');
-    setAttachedFile(null);
-
+    const text = inputMessage; setInputMessage(''); setAttachedFile(null);
     let attachments = [];
-    if (fileToUpload) {
+    if (attachedFile) {
       try {
-        const formData = new FormData();
-        formData.append('file', fileToUpload);
-        const uploadRes = await chatAPI.uploadFile(formData);
-        attachments.push({
-          file_url: uploadRes.data.file_url,
-          file_type: uploadRes.data.file_type,
-          file_name: uploadRes.data.file_name
-        });
-      } catch (err) {
-        showSnackbar('Failed to upload file', 'error');
-        return;
-      }
+        const formData = new FormData(); formData.append('file', attachedFile);
+        const res = await chatAPI.uploadFile(formData);
+        attachments.push({ file_url: res.data.file_url, file_type: res.data.file_type, file_name: res.data.file_name });
+      } catch (err) { showSnackbar('Upload failed', 'error'); return; }
     }
-
+    
     if (mode === 'ai') {
       setIsTyping(true);
+      setMessages(prev => [...prev, { id: Date.now(), text, sender: 'user', attachments, timestamp: 'Now' }]);
       try {
-        // Optimistically add user message
-        const userMsgId = Date.now();
-        setMessages(prev => [...prev, { 
-          id: userMsgId, 
-          text: text, 
-          sender: 'user', 
-          attachments: attachments,
-          timestamp: 'Now' 
-        }]);
-
         const res = await aiAPI.chat(text, aiSessionId, attachments);
         if (res.data?.session_id) setAiSessionId(res.data.session_id);
         setMessages(prev => [...prev, { id: Date.now() + 1, text: res.data.response, sender: 'ai', timestamp: 'Now' }]);
-      } catch (err) {
-        showSnackbar('AI Assistant is currently unavailable', 'error');
-      } finally { setIsTyping(false); }
+      } catch (err) { showSnackbar('AI unavailable', 'error'); } finally { setIsTyping(false); }
     } else {
-      const sid = selectedChat?.session_id;
-      if (!sid) return;
-
-      // If WebSocket is active, send through it
-      if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-        socketRef.current.send(JSON.stringify({
-          content: text,
-          message_type: attachments.length > 0 ? 'file' : 'text',
-          attachments: attachments
-        }));
+      if (socketRef.current?.readyState === WebSocket.OPEN) {
+        socketRef.current.send(JSON.stringify({ content: text, message_type: attachments.length > 0 ? 'file' : 'text', attachments }));
       } else {
-        // Fallback to REST
-        try {
-          await chatAPI.sendMessage(sid, { 
-            content: text,
-            message_type: attachments.length > 0 ? 'file' : 'text',
-            attachments: attachments
-          });
-          loadConversationMessages(sid);
-        } catch (err) {
-          showSnackbar('Failed to send message', 'error');
-        }
+        try { 
+          await chatAPI.sendMessage(selectedChat.session_id, { content: text, message_type: attachments.length > 0 ? 'file' : 'text', attachments }); 
+          loadConversationMessages(selectedChat.session_id); 
+        } catch (err) { showSnackbar('Failed to send', 'error'); }
       }
     }
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setAttachedFile(file);
-      showSnackbar(`Attached: ${file.name}`, 'info');
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  const handleAddContact = async () => {
+    if (!addContactEmail) return;
+    try {
+      const res = await chatAPI.createSessionByEmail(addContactEmail);
+      showSnackbar('Contact added successfully', 'success');
+      setAddContactOpen(false);
+      setAddContactEmail('');
+      await loadHumanData();
+      const newChat = normalizeConversation(res.data, 0, onlineUsers);
+      setSelectedChat(newChat);
+      loadConversationMessages(newChat.session_id);
+    } catch (e) {
+      showSnackbar(e.response?.data?.detail || 'Failed to add contact', 'error');
     }
   };
 
   const handleCreateGroup = async () => {
-    if (!newGroupName.trim() || selectedMembers.length < 1) return;
+    if (!newGroupName || selectedMembers.length < 1) {
+       showSnackbar('Please enter group name and select members', 'warning');
+       return;
+    }
     try {
-      await chatAPI.createGroup({
-        name: newGroupName,
-        participant_ids: selectedMembers
-      });
+      const res = await chatAPI.createGroup({ name: newGroupName, participant_ids: selectedMembers });
       showSnackbar('Group created successfully', 'success');
       setCreateGroupOpen(false);
       setNewGroupName('');
       setSelectedMembers([]);
-      loadHumanData();
-    } catch (err) {
-      showSnackbar('Failed to create group', 'error');
+      await loadHumanData();
+      const newGroup = normalizeGroup(res.data);
+      setSelectedChat(newGroup);
+      loadConversationMessages(newGroup.session_id);
+    } catch (e) {
+      showSnackbar('Failed to create group. Database validation failed.', 'error');
     }
   };
 
   return (
-    <Box sx={{ height: 'calc(100vh - 64px)', display: 'flex', overflow: 'hidden' }}>
-      {(!isMobile || !selectedChat || selectedChat.id === 'ai-assistant' && mode === 'human') && (
-        <ChatList 
-          theme={theme} isMobile={isMobile} navigate={navigate} mode={mode} setMode={setMode}
-          setMessages={setMessages} setAddContactOpen={setAddContactOpen} setCreateGroupOpen={setCreateGroupOpen}
-          searchQuery={searchQuery} setSearchQuery={setSearchQuery} currentTab={currentTab} setCurrentTab={setCurrentTab}
-          contacts={contacts} groups={groups} teachers={teachers} selectedChat={selectedChat}
-          handleContactClick={(c) => { setSelectedChat(c); if(c.session_id) loadConversationMessages(c.session_id); }}
-          handleGroupClick={(g) => { setSelectedChat(normalizeGroup(g)); if(g.session_id) loadConversationMessages(g.session_id); }} user={user}
-        />
+    <Box sx={{ height: 'calc(100vh - 64px)', display: 'flex', overflow: 'hidden', bgcolor: 'background.default' }}>
+      {/* 1. SIDEBAR */}
+      {(!isMobile || !selectedChat) && (
+        <Box sx={{ 
+          width: { xs: '100%', md: 360, lg: 400 }, 
+          height: '100%', 
+          borderRight: 1, 
+          borderColor: 'divider', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          bgcolor: 'background.paper',
+          zIndex: 10,
+          boxShadow: '4px 0 20px rgba(0,0,0,0.02)'
+        }}>
+          {/* Header */}
+          <GlassSidebarHeader bgcolor={whatsappGreen}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Stack direction="row" spacing={1.8} alignItems="center">
+                 <Avatar sx={{ 
+                    bgcolor: 'rgba(255,255,255,0.15)', 
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    width: 44, height: 44,
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+                 }}>
+                   {roleTheme.icon}
+                 </Avatar>
+                 <Box>
+                    <Typography variant="subtitle1" fontWeight="900" sx={{ lineHeight: 1.1, letterSpacing: -0.5 }}>{roleTheme.label}</Typography>
+                    <Typography variant="caption" sx={{ opacity: 0.7, fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase' }}>Academic Intelligence</Typography>
+                 </Box>
+              </Stack>
+              <Stack direction="row" spacing={0.5}>
+                <Tooltip title="Mode Switch"><IconButton onClick={() => { setMode(mode === 'ai' ? 'human' : 'ai'); setSelectedChat(null); }} size="small" sx={{ color: 'white', bgcolor: 'rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}>{mode === 'ai' ? <QuestionAnswer fontSize="small"/> : <SmartToy fontSize="small"/>}</IconButton></Tooltip>
+              </Stack>
+            </Stack>
+          </GlassSidebarHeader>
+          
+          {mode === 'human' && (
+            <Tabs 
+              value={currentTab} 
+              onChange={(e,v) => setCurrentTab(v)} 
+              variant="fullWidth" 
+              sx={{ 
+                borderBottom: 1, 
+                borderColor: 'divider',
+                minHeight: 48,
+                '& .MuiTab-root': { fontWeight: '800', fontSize: '0.75rem', color: 'text.secondary' },
+                '& .Mui-selected': { color: 'primary.main' }
+              }}
+            >
+              <Tab icon={<Person sx={{ fontSize: 18 }}/>} iconPosition="start" label="PERSONAL" />
+              <Tab icon={<GroupIcon sx={{ fontSize: 18 }}/>} iconPosition="start" label="GROUPS" />
+            </Tabs>
+          )}
+
+          <Box sx={{ flex: 1, overflowY: 'auto', py: 1 }}>
+            <AnimatePresence mode="wait">
+              {loading ? (
+                <List key="loading">{[1,2,3,4].map(i=><ListItem key={i} sx={{ px: 2 }}><ListItemAvatar><Skeleton variant="circular" width={44} height={44}/></ListItemAvatar><ListItemText primary={<Skeleton width="60%"/>} secondary={<Skeleton width="40%"/>}/></ListItem>)}</List>
+              ) : mode === 'ai' ? (
+                <motion.div key="ai" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
+                  <ModernListItem selected onClick={() => { setSelectedChat(AI_ASSISTANT_CHAT); setMessages([]); }}>
+                    <ListItemAvatar>
+                      <Badge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} badgeContent={<AutoAwesome sx={{ fontSize: 10, color: 'white' }}/>} sx={{ '& .MuiBadge-badge': { bgcolor: 'primary.main', border: '2px solid white' } }}>
+                        <Avatar sx={{ bgcolor: whatsappGreen, color: 'white', width: 44, height: 44 }}><SmartToy /></Avatar>
+                      </Badge>
+                    </ListItemAvatar>
+                    <ListItemText primary="Nexus Intelligence" secondary="Real-time Knowledge Engine" secondaryTypographyProps={{ color: 'primary', fontWeight: '700', fontSize: '0.7rem' }} />
+                    <ChevronRight sx={{ opacity: 0.3 }} />
+                  </ModernListItem>
+                </motion.div>
+              ) : (
+                <motion.div key="human" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
+                  <List disablePadding>
+                    {(currentTab === 0 ? contacts : groups).map(chat => (
+                      <ModernListItem key={chat.id} selected={selectedChat?.id === chat.id} onClick={() => { setSelectedChat(chat); loadConversationMessages(chat.session_id); }}>
+                        <ListItemAvatar>
+                          <Badge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} variant="dot" color={chat.status === 'online' ? 'success' : 'default'}>
+                            <Avatar sx={{ 
+                              border: '1px solid', 
+                              borderColor: alpha(getAvatarColor(chat.name), 0.3), 
+                              width: 44, height: 44, 
+                              bgcolor: alpha(getAvatarColor(chat.name), 0.1),
+                              color: getAvatarColor(chat.name),
+                              fontWeight: '900',
+                              fontSize: '1.2rem'
+                            }}>
+                               {chat.is_group ? <GroupIcon sx={{ fontSize: '1.4rem' }}/> : chat.name[0]}
+                            </Avatar>
+                          </Badge>
+                        </ListItemAvatar>
+                        <ListItemText 
+                          primary={chat.name} 
+                          secondary={chat.lastMessage} 
+                          primaryTypographyProps={{ fontSize: '0.9rem', color: 'text.primary' }}
+                          secondaryTypographyProps={{ noWrap: true, fontSize: '0.75rem', mt: -0.2 }} 
+                        />
+                        <Stack alignItems="flex-end" spacing={0.5}>
+                          {chat.lastTime && <Typography variant="caption" sx={{ opacity: 0.5, fontSize: '0.6rem', fontWeight: 600 }}>{chat.lastTime}</Typography>}
+                        </Stack>
+                      </ModernListItem>
+                    ))}
+                    { (currentTab === 0 ? contacts : groups).length === 0 && (
+                      <Box sx={{ textAlign: 'center', py: 10, px: 4 }}>
+                        <Avatar sx={{ width: 64, height: 64, mx: 'auto', mb: 2, bgcolor: alpha(theme.palette.text.disabled, 0.1) }}>{currentTab === 0 ? <Person sx={{ color: 'text.disabled' }}/> : <GroupIcon sx={{ color: 'text.disabled' }}/>}</Avatar>
+                        <Typography variant="body2" color="text.secondary" fontWeight="700">No {currentTab === 0 ? 'contacts' : 'groups'} yet</Typography>
+                        <Button variant="outlined" size="small" startIcon={<Add />} onClick={() => currentTab === 0 ? setAddContactOpen(true) : setCreateGroupOpen(true)} sx={{ mt: 2, borderRadius: 2, borderWidth: 2, '&:hover': { borderWidth: 2 } }}>{currentTab === 0 ? 'Add Contact' : 'Create Group'}</Button>
+                      </Box>
+                    )}
+                  </List>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Box>
+          
+          {mode === 'human' && (
+            <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+               <Button fullWidth startIcon={<Add />} variant="contained" onClick={() => currentTab === 0 ? setAddContactOpen(true) : setCreateGroupOpen(true)} sx={{ borderRadius: 2.5, py: 1.2, bgcolor: whatsappGreen, fontWeight: 800, boxShadow: `0 8px 20px ${alpha(whatsappGreen, 0.3)}` }}>
+                  NEW {currentTab === 0 ? 'CONTACT' : 'GROUP'}
+               </Button>
+            </Box>
+          )}
+        </Box>
       )}
-      {(!isMobile || selectedChat && (selectedChat.id !== 'ai-assistant' || mode === 'ai')) && (
-        <ChatWindow 
-          selectedChat={selectedChat} isMobile={isMobile} setSelectedChat={setSelectedChat}
-          mode={mode} chatBgColor={chatBgColor} messages={messages} userBubbleColor={userBubbleColor}
-          otherBubbleColor={otherBubbleColor} isTyping={isTyping} messagesEndRef={messagesEndRef}
-          handleFileAttach={() => fileInputRef.current?.click()} fileInputRef={fileInputRef}
-          handleFileChange={handleFileChange} attachedFile={attachedFile} inputMessage={inputMessage}
-          inputRef={inputRef} setInputMessage={setInputMessage} handleSendMessage={handleSendMessage} theme={theme}
-          handleClearChat={() => setMessages([])}
-        />
+
+      {/* 2. CHAT WINDOW */}
+      {(!isMobile || selectedChat) && (
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', bgcolor: chatBgColor, position: 'relative' }}>
+          {selectedChat ? (
+            <>
+              {/* Header */}
+              <Box sx={{ 
+                p: 1.5, 
+                px: 3,
+                bgcolor: alpha(theme.palette.background.paper, 0.8), 
+                backdropFilter: 'blur(12px)',
+                borderBottom: 1, 
+                borderColor: 'divider', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 2, 
+                zIndex: 5,
+                boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
+              }}>
+                {isMobile && <IconButton onClick={() => setSelectedChat(null)}><ArrowBack /></IconButton>}
+                <Avatar sx={{ 
+                    width: 44, height: 44, 
+                    border: '1px solid', borderColor: 'divider',
+                    bgcolor: alpha(getAvatarColor(selectedChat.name), 0.1),
+                    color: getAvatarColor(selectedChat.name),
+                    fontWeight: '900'
+                }}>
+                    {selectedChat.is_group ? <GroupIcon /> : selectedChat.name[0]}
+                </Avatar>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                   <Typography variant="subtitle1" fontWeight="900" sx={{ letterSpacing: -0.2 }}>{selectedChat.name}</Typography>
+                   <Stack direction="row" spacing={0.8} alignItems="center">
+                      <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: selectedChat.status === 'online' || selectedChat.id === 'ai-assistant' ? '#4CAF50' : '#9E9E9E', border: '2px solid white' }} />
+                      <Typography variant="caption" sx={{ opacity: 0.6, fontWeight: 700 }}>{selectedChat.id === 'ai-assistant' ? 'Database Grounded' : selectedChat.status === 'online' ? 'Online' : 'Offline'}</Typography>
+                   </Stack>
+                </Box>
+                <Stack direction="row" spacing={0.5}>
+                  <IconButton sx={{ bgcolor: 'action.hover' }}><Search fontSize="small" /></IconButton>
+                  <IconButton sx={{ bgcolor: 'action.hover' }}><MoreVert fontSize="small" /></IconButton>
+                </Stack>
+              </Box>
+
+              {/* Messages Area */}
+              <Box sx={{ 
+                flex: 1, 
+                overflowY: 'auto', 
+                p: 3,
+                display: 'flex',
+                flexDirection: 'column',
+                backgroundImage: theme.palette.mode === 'dark' ? 'none' : 'url("https://w0.peakpx.com/wallpaper/580/650/wallpaper-whatsapp-background.jpg")',
+                backgroundSize: '400px',
+                backgroundBlendMode: 'overlay',
+                backgroundColor: alpha(chatBgColor, 0.95),
+                scrollBehavior: 'smooth',
+                '&::-webkit-scrollbar': { width: 6 },
+                '&::-webkit-scrollbar-thumb': { backgroundColor: alpha(theme.palette.text.disabled, 0.2), borderRadius: 3 }
+              }}>
+                <AnimatePresence>
+                  {messages.map((msg) => (
+                    <MessageBubble 
+                      key={msg.id} 
+                      msg={msg} 
+                      isUser={msg.sender === 'user'} 
+                      theme={theme} 
+                      userBubbleColor={userBubbleColor} 
+                      otherBubbleColor={otherBubbleColor} 
+                      onReaction={(e, id) => setReactionAnchor({ el: e.currentTarget, msgId: id })}
+                    />
+                  ))}
+                  {isTyping && (
+                    <Box sx={{ alignSelf: 'flex-start', p: 1.8, bgcolor: otherBubbleColor, borderRadius: '20px 20px 20px 4px', display: 'flex', gap: 0.6, mb: 2, boxShadow: 1 }}>
+                       {[0,0.2,0.4].map(d=><Box key={d} component={motion.div} animate={{y:[0,-5,0]}} transition={{repeat:Infinity,duration:0.6,delay:d}} sx={{width:7,height:7,borderRadius:'50%',bgcolor:whatsappGreen}}/>)}
+                    </Box>
+                  )}
+                </AnimatePresence>
+                <div ref={messagesEndRef} />
+              </Box>
+
+              {/* Input Area */}
+              <ChatInputWrapper>
+                {attachedFile && (
+                  <Zoom in={Boolean(attachedFile)}>
+                    <Paper sx={{ mb: 2, p: 2, display: 'flex', alignItems: 'center', gap: 2, bgcolor: alpha(whatsappGreen, 0.05), border: '1px dashed', borderColor: whatsappGreen, borderRadius: 3 }}>
+                      <Avatar sx={{ bgcolor: whatsappGreen, width: 36, height: 36 }}>{getFileIcon(attachedFile.type)}</Avatar>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="caption" fontWeight="800" noWrap display="block">{attachedFile.name}</Typography>
+                        <Typography variant="caption" sx={{ opacity: 0.6, fontSize: '0.6rem' }}>Ready for upload</Typography>
+                      </Box>
+                      <IconButton size="small" onClick={() => setAttachedFile(null)} sx={{ color: 'error.main', bgcolor: 'background.paper' }}><Close fontSize="small" /></IconButton>
+                    </Paper>
+                  </Zoom>
+                )}
+                
+                <Stack direction="row" spacing={1.5} alignItems="flex-end">
+                  <Stack direction="row" spacing={0.5}>
+                    <IconButton size="small" sx={{ mb: 0.5, bgcolor: 'action.hover' }}><EmojiEmotions fontSize="small"/></IconButton>
+                    <IconButton size="small" sx={{ mb: 0.5, bgcolor: 'action.hover' }} onClick={() => fileInputRef.current.click()}><AttachFile fontSize="small"/></IconButton>
+                  </Stack>
+                  <input type="file" ref={fileInputRef} hidden onChange={(e)=>setAttachedFile(e.target.files[0])} />
+                  
+                  <TextField 
+                    fullWidth 
+                    multiline 
+                    maxRows={5} 
+                    placeholder={mode === 'ai' ? "Ask about grades, attendance, or fees..." : "Type a message..."}
+                    value={inputMessage} 
+                    onChange={(e)=>setInputMessage(e.target.value)} 
+                    onKeyPress={(e)=>{if(e.key==='Enter' && !e.shiftKey){e.preventDefault(); handleSendMessage();}}} 
+                    sx={{ 
+                      '& .MuiOutlinedInput-root': { 
+                        borderRadius: 3, 
+                        bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#F0F2F5',
+                        fontSize: '0.9rem',
+                        transition: 'all 0.2s',
+                        '&:hover': { bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : '#E8EAED' }
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
+                    }}
+                  />
+                  
+                  <IconButton 
+                    onClick={handleSendMessage} 
+                    disabled={!inputMessage.trim() && !attachedFile}
+                    sx={{ 
+                      bgcolor: whatsappGreen, 
+                      color: 'white', 
+                      mb: 0.5,
+                      width: 48, height: 48,
+                      boxShadow: `0 6px 15px ${alpha(whatsappGreen, 0.4)}`,
+                      '&:hover': { bgcolor: whatsappDarkGreen, transform: 'scale(1.05)' },
+                      '&.Mui-disabled': { bgcolor: 'action.disabledBackground', boxShadow: 'none' }
+                    }}
+                  >
+                    <Send />
+                  </IconButton>
+                </Stack>
+              </ChatInputWrapper>
+            </>
+          ) : (
+            <Fade in={!selectedChat}>
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, p: 4, textAlign: 'center' }}>
+                <Box sx={{ position: 'relative' }}>
+                  <Avatar sx={{ 
+                    width: 140, height: 140, 
+                    bgcolor: alpha(whatsappGreen, 0.05), 
+                    border: '2px dashed', 
+                    borderColor: alpha(whatsappGreen, 0.3),
+                    transition: 'all 0.5s ease',
+                    '&:hover': { borderColor: whatsappGreen, transform: 'rotate(5deg)' }
+                  }}>
+                    {mode === 'ai' ? <SmartToy sx={{ fontSize: 70, color: whatsappGreen }} /> : <Person sx={{ fontSize: 70, color: whatsappGreen }} />}
+                  </Avatar>
+                  <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ repeat: Infinity, duration: 3 }} style={{ position: 'absolute', top: 0, right: 0 }}>
+                    <AutoAwesome sx={{ color: whatsappGreen, fontSize: 36 }} />
+                  </motion.div>
+                </Box>
+                <Box>
+                  <Typography variant="h4" fontWeight="1000" color="text.primary" gutterBottom sx={{ letterSpacing: -1 }}>
+                    {mode === 'ai' ? 'Intelligence Core' : 'Campus Messenger'}
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 450, mx: 'auto', lineHeight: 1.6 }}>
+                    {mode === 'ai' 
+                      ? 'Secure, database-grounded RAG agent at your service. Query your academic performance, financial history, or campus knowledge graph.' 
+                      : 'Connect instantly with the Nexus community. Real-time, encrypted communication for the modern campus.'}
+                  </Typography>
+                </Box>
+                {mode === 'ai' && (
+                   <Stack direction="row" spacing={1.5} flexWrap="wrap" justifyContent="center">
+                      <Chip icon={<History />} label="Session History" onClick={() => loadConversationMessages('ai-assistant')} variant="outlined" sx={{ borderRadius: 2, px: 1, fontWeight: 700 }} />
+                      <Chip icon={<Info />} label="Privacy Shield" onClick={() => showSnackbar('End-to-end encrypted session active.', 'info')} variant="outlined" sx={{ borderRadius: 2, px: 1, fontWeight: 700 }} />
+                   </Stack>
+                )}
+              </Box>
+            </Fade>
+          )}
+        </Box>
       )}
-      <CreateGroupDialog 
-        open={createGroupOpen} onClose={() => setCreateGroupOpen(false)} name={newGroupName} setName={setNewGroupName}
-        contacts={contacts} selectedMembers={selectedMembers} onToggle={(id) => setSelectedMembers(prev => prev.includes(id) ? prev.filter(x => x!==id) : [...prev, id])}
-        onCreate={handleCreateGroup}
-      />
-      <AddContactDialog 
-        open={addContactOpen} onClose={() => setAddContactOpen(false)} email={addContactEmail} setEmail={setAddContactEmail}
-        onAdd={() => chatAPI.addByEmail(addContactEmail).then(() => { loadHumanData(); setAddContactOpen(false); setAddContactEmail(''); showSnackbar('Contact added', 'success'); })}
-      />
+
+      {/* 3. DIALOGS */}
+      
+      <Dialog open={addContactOpen} onClose={() => setAddContactOpen(false)} PaperProps={{ sx: { borderRadius: 4, width: 420, p: 1 } }}>
+        <DialogTitle sx={{ fontWeight: '900', fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+           <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main' }}><Person /></Avatar>
+           Add Contact
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary', fontWeight: 500 }}>Link a university email to your personal terminal to start chatting.</Typography>
+          <TextField 
+            fullWidth 
+            label="Nexus Email ID" 
+            placeholder="student@nexus.edu"
+            value={addContactEmail} 
+            onChange={(e) => setAddContactEmail(e.target.value)} 
+            autoFocus
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+            InputProps={{ startAdornment: <InputAdornment position="start"><Search /></InputAdornment> }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 0 }}>
+          <Button onClick={() => setAddContactOpen(false)} color="inherit" sx={{ fontWeight: 800 }}>CANCEL</Button>
+          <Button variant="contained" onClick={handleAddContact} sx={{ bgcolor: whatsappGreen, fontWeight: 800, px: 4, borderRadius: 2.5 }}>SYNC CONTACT</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={createGroupOpen} onClose={() => setCreateGroupOpen(false)} PaperProps={{ sx: { borderRadius: 4, width: 480, p: 1 } }}>
+        <DialogTitle sx={{ fontWeight: '900', fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+           <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main' }}><GroupIcon /></Avatar>
+           Create Space
+        </DialogTitle>
+        <DialogContent>
+          <TextField 
+            fullWidth 
+            label="Group Name" 
+            placeholder="e.g. Research Squad"
+            value={newGroupName} 
+            onChange={(e) => setNewGroupName(e.target.value)} 
+            sx={{ mt: 1, mb: 3, '& .MuiOutlinedInput-root': { borderRadius: 3 } }} 
+          />
+          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: '900', fontSize: '0.75rem', color: 'primary.main', textTransform: 'uppercase' }}>Select Members ({selectedMembers.length})</Typography>
+          <Paper variant="outlined" sx={{ maxHeight: 300, overflow: 'auto', borderRadius: 3, bgcolor: alpha(theme.palette.action.hover, 0.3) }}>
+            <List disablePadding>
+              {contacts.filter(c => !c.is_group).map((c, idx) => {
+                const otherUid = c.participants?.find(p=>p!==user?.user_id);
+                if (!otherUid) return null;
+
+                const isSelected = selectedMembers.includes(otherUid);
+                return (
+                  <ListItem key={otherUid} disablePadding divider={idx < contacts.length - 1}>
+                    <ListItemButton onClick={() => {
+                      if (isSelected) setSelectedMembers(selectedMembers.filter(id => id !== otherUid));
+                      else setSelectedMembers([...selectedMembers, otherUid]);
+                    }} sx={{ px: 2, py: 1.5 }}>
+                      <ListItemAvatar>
+                         <Avatar sx={{ bgcolor: alpha(getAvatarColor(c.name), 0.1), color: getAvatarColor(c.name), fontWeight: 'bold' }}>{c.name[0]}</Avatar>
+                      </ListItemAvatar>
+                      <ListItemText primary={c.name} secondary={c.role || 'Member'} primaryTypographyProps={{ fontWeight: 700 }} />
+                      <Checkbox checked={isSelected} sx={{ '&.Mui-checked': { color: whatsappGreen } }} />
+                    </ListItemButton>
+                  </ListItem>
+                );
+              })}
+              {contacts.length === 0 && <Box sx={{ p: 4, textAlign: 'center' }}><Typography variant="caption" color="text.secondary" fontWeight="700">Add contacts to build your team</Typography></Box>}
+            </List>
+          </Paper>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 0 }}>
+          <Button onClick={() => setCreateGroupOpen(false)} color="inherit" sx={{ fontWeight: 800 }}>CANCEL</Button>
+          <Button variant="contained" onClick={handleCreateGroup} disabled={!newGroupName || selectedMembers.length < 1} sx={{ bgcolor: whatsappGreen, fontWeight: 800, px: 4, borderRadius: 2.5, boxShadow: `0 8px 15px ${alpha(whatsappGreen, 0.2)}` }}>LAUNCH SPACE</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Reaction Popover */}
+      <Popover 
+        open={Boolean(reactionAnchor.el)} 
+        anchorEl={reactionAnchor.el} 
+        onClose={() => setReactionAnchor({ el: null, msgId: null })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Paper sx={{ p: 1, borderRadius: 10, display: 'flex', gap: 0.5, bgcolor: 'background.paper', boxShadow: 12 }}>
+          {reactionList.map(emoji => (
+            <IconButton key={emoji} onClick={() => {
+              if (socketRef.current?.readyState === WebSocket.OPEN) {
+                socketRef.current.send(JSON.stringify({ type: 'reaction', message_id: reactionAnchor.msgId, reaction: emoji }));
+              }
+              setReactionAnchor({ el: null, msgId: null });
+            }} size="small" sx={{ '&:hover': { transform: 'scale(1.3)', bgcolor: 'action.hover' }, transition: 'all 0.2s' }}>{emoji}</IconButton>
+          ))}
+        </Paper>
+      </Popover>
     </Box>
   );
 };

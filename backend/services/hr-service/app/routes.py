@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_user, require_role
+from app.kafka_producer import publish_hr_notification
 from app.models import (
     AuthUser,
     HrNotification,
@@ -96,20 +97,11 @@ def _coerce_uuid(value):
 
 
 def _push_notification_service(user_id: str, title: str, message: str, notif_type: str = "info"):
-    # Best-effort bridge to centralized notification service.
-    url = f"{settings.NOTIFICATION_SERVICE_URL.rstrip('/')}/notify/internal/notifications"
-    headers = {"X-Internal-Api-Key": settings.INTERNAL_API_KEY}
-    payload = {
-        "user_id": user_id,
-        "title": title,
-        "message": message,
-        "type": notif_type,
-        "priority": "medium",
-    }
-    try:
-        requests.post(url, json=payload, headers=headers, timeout=3)
-    except Exception:
-        pass
+    """
+    Bridge to centralized notification service via Kafka events.
+    Replaces synchronous HTTP calls with event-driven architecture.
+    """
+    publish_hr_notification(user_id, title, message, notif_type)
 
 
 def _serialize_leave(db: Session, leave: OpsLeave) -> LeaveOut:
@@ -270,6 +262,23 @@ def _mark_student_leave_attendance(db: Session, leave: OpsLeave):
         current_day += timedelta(days=1)
 
 
+@router.post("/leaves/reset-quotas", response_model=MessageResponse)
+def reset_all_leave_quotas(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_role("admin")),
+):
+    """
+    Reset all faculty leave balances to default values.
+    Should be triggered at the start of each academic year.
+    """
+    db.query(SisFaculty).update({
+        SisFaculty.casual_leave_balance: 20,
+        SisFaculty.sick_leave_balance: 10
+    })
+    db.commit()
+    return MessageResponse(message="Successfully reset leave quotas for all faculty members.")
+
+
 # ── Leave Management ─────────────────────────────────────────────────────
 
 @router.post("/leaves/apply", response_model=LeaveOut, status_code=status.HTTP_201_CREATED)
@@ -283,15 +292,21 @@ def apply_leave(
 
     requested_days = _leave_days(payload.start_date, payload.end_date)
 
-    # Validate casual leave balance
-    if payload.leave_type == "Casual":
-        used = _get_casual_leave_used(db, current_user["user_id"], date.today().year)
-        remaining = CASUAL_LEAVE_QUOTA - used
-        if requested_days > remaining:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Insufficient leave balance. Requested {requested_days}, remaining {remaining}.",
-            )
+    # Validate leave balance from database
+    faculty = db.query(SisFaculty).filter(SisFaculty.user_id == current_user["user_id"]).first()
+    if faculty:
+        if payload.leave_type == "Casual":
+            if requested_days > faculty.casual_leave_balance:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Insufficient casual leave balance. Requested {requested_days}, remaining {faculty.casual_leave_balance}.",
+                )
+        elif payload.leave_type == "Sick":
+            if requested_days > faculty.sick_leave_balance:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Insufficient sick leave balance. Requested {requested_days}, remaining {faculty.sick_leave_balance}.",
+                )
 
     leave = OpsLeave(
         user_id=current_user["user_id"],
