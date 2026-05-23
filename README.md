@@ -1,7 +1,7 @@
 <div align="center">
 
 # 🎓 Project Nexus
-### The Unified Intelligent Polyglot Campus Platform
+### The Unified Intelligent Campus Platform
 
 **Final Year Design Project (FYDP) — BS Information Technology**  
 **Project ID:** `FYDP-BSIT-2504`
